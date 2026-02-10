@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3 uid="uid://b07sbghi1bo2k"]
+
+[ext_resource type="Script" uid="uid://biuha7ykmyh1e" path="res://MonsterData.gd" id="1_grwtr"]
+
+[resource]
+script = ExtResource("1_grwtr")
+monster_name = "Sapling"
+tier = 1
+is_pure = true
+type_1 = 1
+type_2 = 6
+base_health = 110
+base_attack = 8
+base_defense = 8
+base_speed = 4
+metadata/_custom_type_script = "uid://biuha7ykmyh1e"

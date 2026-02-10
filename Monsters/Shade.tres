@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3 uid="uid://co6pwxmkc3xtt"]
+
+[ext_resource type="Script" uid="uid://biuha7ykmyh1e" path="res://MonsterData.gd" id="1_mo68k"]
+
+[resource]
+script = ExtResource("1_mo68k")
+monster_name = "Shade"
+tier = 1
+is_pure = true
+type_1 = 4
+type_2 = 6
+base_health = 80
+base_attack = 12
+base_defense = 4
+base_speed = 8
+metadata/_custom_type_script = "uid://biuha7ykmyh1e"

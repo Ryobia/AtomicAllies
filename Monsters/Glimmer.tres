@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://MonsterData.gd" id="1_mo68k"]
+
+[resource]
+script = ExtResource("1_mo68k")
+monster_name = "Glimmer"
+tier = 1
+is_pure = true
+type_1 = 3
+type_2 = 6
+base_health = 85
+base_attack = 10
+base_defense = 5
+base_speed = 11
