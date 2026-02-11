@@ -2,8 +2,8 @@ extends Node
 
 # Dictionary to hold the paths to your scenes
 var scenes = {
-	"main_menu": "res://scenes/menus/MainMenu.tscn",
-	"collection": "res://scenes/collection/CollectionGrid.tscn",
+	"main_menu": "res://Scenes/MainMenu.tscn",
+	"collection": "res://Scenes/CollectionGrid.tscn",
 	# We'll add "nexus", "nursery", and "battle" here later
 }
 

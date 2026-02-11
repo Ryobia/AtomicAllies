@@ -5,12 +5,12 @@ var owned_monsters: Array[MonsterData] = []
 # For the MVP, we'll pre-load the 6 common monsters so the collection isn't empty.
 # NOTE: You'll need to create these .tres files first!
 var starter_monster_paths = [
-	"res://data/monsters/Cinder.tres",
-	"res://data/monsters/Sprout.tres",
-	"res://data/monsters/Droplet.tres",
-	"res://data/monsters/Spark.tres",
-	"res://data/monsters/Mote.tres",
-	"res://data/monsters/Pulse.tres"
+	"res://Data/monsters/Cinder.tres",
+	"res://Data/monsters/Sprout.tres",
+	"res://Data/monsters/Droplet.tres",
+	"res://Data/monsters/Spark.tres",
+	"res://Data/monsters/Mote.tres",
+	"res://Data/monsters/Pulse.tres"
 ]
 
 func _ready():

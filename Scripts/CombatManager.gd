@@ -2,8 +2,8 @@ extends Node
 
 # NOTE: For this to work globally, add this script to your Project Settings -> Autoload tab.
 
-# Reference the Types enum from the global MonsterData class
-const Types = MonsterData.Types
+# Define our 2 loops from the design document
+enum Types { FIRE, NATURE, WATER, LIGHT, DARK, MIND, NONE }
 
 # The "Strong Against" Map
 var strengths = {

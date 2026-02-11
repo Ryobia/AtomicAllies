@@ -4,7 +4,7 @@ extends Control
 @onready var back_button = $BackButton
 
 # Preload the card scene we will create next
-const MONSTER_CARD = preload("res://scenes/ui/MonsterCard.tscn")
+const MONSTER_CARD = preload("res://Scenes/MonsterCard.tscn")
 
 func _ready():
 	back_button.pressed.connect(func(): GlobalManager.switch_scene("main_menu"))

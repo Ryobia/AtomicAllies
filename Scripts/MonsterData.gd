@@ -1,5 +1,4 @@
 extends Resource
-# This class defines the data structure for all monsters
 class_name MonsterData
 
 # --- Core Info ---
