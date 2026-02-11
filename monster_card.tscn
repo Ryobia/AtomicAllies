@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://deeit4dexuhou"]
+
+[ext_resource type="Script" uid="uid://bsheb8x7eudql" path="res://MonsterCard.gd" id="1_k4rt3"]
+
+[node name="MonsterCard" type="PanelContainer" unique_id=1232387721]
+script = ExtResource("1_k4rt3")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=775737383]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer" unique_id=696556731]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer" unique_id=218133595]
+layout_mode = 2

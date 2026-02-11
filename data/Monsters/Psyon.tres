@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3 uid="uid://da7pwk6igafar"]
+
+[ext_resource type="Script" uid="uid://biuha7ykmyh1e" path="res://MonsterData.gd" id="1_mo68k"]
+
+[resource]
+script = ExtResource("1_mo68k")
+monster_name = "Psyon"
+type_1 = 5
+metadata/_custom_type_script = "uid://biuha7ykmyh1e"

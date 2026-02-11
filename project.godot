@@ -11,19 +11,21 @@ config_version=5
 [application]
 
 config/name="Nexus"
-run/main_scene="res://control.tscn"
+run/main_scene="uid://858qgy3euybd"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
 
+GlobalManager="*uid://dxre5uej5lm67"
 SceneManager="*uid://bh1u5ldtfbkuf"
 CombatManager="*uid://cabdcso0eq5to"
+PlayerData="*uid://casdb1lyk128y"
 
 [display]
 
-window/size/viewport_width=1280
-window/size/viewport_height=720
+window/size/viewport_width=1080
+window/size/viewport_height=1920
 window/stretch/aspect="expand"
 
 [physics]

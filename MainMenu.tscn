@@ -2,14 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://MainMenu.gd" id="1_0fbet"]
 
-[sub_resource type="Gradient" id="Gradient_62e2m"]
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_qtu10"]
-gradient = SubResource("Gradient_62e2m")
-fill_from = Vector2(1, 0)
-fill_to = Vector2(1, 1)
-
-[node name="Control" type="Control" unique_id=167432749]
+[node name="MainMenu" type="Control" unique_id=167432749]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -22,15 +15,20 @@ script = ExtResource("1_0fbet")
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1654497667]
 texture_filter = 1
-layout_mode = 0
-offset_right = 1280.0
-offset_bottom = 720.0
-texture = SubResource("GradientTexture2D_qtu10")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1341224499]
-layout_mode = 0
-offset_right = 1280.0
-offset_bottom = 720.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="VBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=574365345]
 layout_mode = 2
@@ -40,15 +38,25 @@ alignment = 2
 layout_mode = 2
 alignment = 1
 
+[node name="Battle" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1929649840]
+layout_mode = 2
+text = "Battle"
+
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1091476035]
 layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1929649840]
+[node name="Collection" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1306101744]
 layout_mode = 2
-text = "Battle"
+text = "Collection"
 
-[node name="Button3" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1306101744]
+[node name="Label2" type="Label" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1961298202]
 layout_mode = 2
-text = "Monsters"
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="Nexus" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=203896288]
+layout_mode = 2
+text = "Nexus
+"

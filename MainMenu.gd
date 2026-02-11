@@ -1,13 +1,9 @@
 extends Control
 
+@onready var collection_button = $VBoxContainer/CollectionButton
+
 func _ready():
-	# Connect signals (Like onClick)
-	$MarginContainer/VBoxContainer/BattleButton.pressed.connect(_on_battle_pressed)
-	$MarginContainer/VBoxContainer/BreedingButton.pressed.connect(_on_breeding_pressed)
-	print("SceneManager is online!")
+	collection_button.pressed.connect(_on_collection_button_pressed)
 
-func _on_battle_pressed():
-	SceneManager.goto_scene("battle")
-
-func _on_breeding_pressed():
-	SceneManager.goto_scene("breeding")
+func _on_collection_button_pressed():
+	GlobalManager.switch_scene("collection")
