@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://b7y4q5yso4v84"]
+
+[ext_resource type="Script" path="res://BattleManager.gd" id="1_k25vj"]
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_dcbb6"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_u8cu3"]
+
+[node name="BattleScene" type="Node2D" unique_id=587158746 script=ExtResource("1_k25vj")]
+
+[node name="PlayerMonsterSprite" type="Sprite2D" parent="." unique_id=1869744426]
+position = Vector2(300, 352)
+scale = Vector2(143, 122.999985)
+texture = SubResource("PlaceholderTexture2D_dcbb6")
+
+[node name="EnemyMonsterSprite" type="Sprite2D" parent="." unique_id=150455493]
+position = Vector2(853.00006, 352)
+scale = Vector2(132.75003, 131.25)
+texture = SubResource("PlaceholderTexture2D_u8cu3")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=789862763]
+
+[node name="PlayerHealthBar" type="ProgressBar" parent="UI" unique_id=349532318]
+offset_left = 215.0
+offset_top = 255.0
+offset_right = 379.0
+offset_bottom = 285.0
+
+[node name="EnemyHealthBar" type="ProgressBar" parent="UI" unique_id=311336869]
+offset_left = 770.0
+offset_top = 255.0
+offset_right = 932.0
+offset_bottom = 285.0
+
+[node name="AttackButton" type="Button" parent="UI" unique_id=1812484546]
+offset_left = 149.0
+offset_top = 602.0
+offset_right = 371.0
+offset_bottom = 641.0
+text = "ATTACK
+"
+
+[node name="TurnResultLabel" type="Label" parent="UI" unique_id=1435905260]
+anchors_preset = -1
+offset_left = 386.0
+offset_top = 592.0
+offset_right = 976.0
+offset_bottom = 653.0
+text = "placeholder"

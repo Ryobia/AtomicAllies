@@ -1,5 +1,4 @@
 extends Node
-const MonsterDataScript = preload("res://MonsterData.gd")
 
 var owned_monsters: Array[MonsterData] = []
 var pity_essence: float = 0.0

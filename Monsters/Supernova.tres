@@ -4,12 +4,12 @@
 
 [resource]
 script = ExtResource("1_mo68k")
-monster_name = "Droplet"
-tier = 1
+monster_name = "Supernova"
+tier = 3
 is_pure = true
-type_1 = 2
+type_1 = 0
 type_2 = 6
-base_health = 100
-base_attack = 10
-base_defense = 10
-base_speed = 5
+base_health = 200
+base_attack = 35
+base_defense = 15
+base_speed = 18

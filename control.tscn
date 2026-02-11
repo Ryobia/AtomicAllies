@@ -14,6 +14,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -1.0
+offset_right = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_0fbet")
@@ -46,10 +48,6 @@ vertical_alignment = 2
 [node name="Button" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1929649840]
 layout_mode = 2
 text = "Battle"
-
-[node name="Button2" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=428606974]
-layout_mode = 2
-text = "Nexus"
 
 [node name="Button3" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1306101744]
 layout_mode = 2
