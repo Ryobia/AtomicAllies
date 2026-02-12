@@ -1,10 +1,19 @@
+# c:\Users\ryobi\Projects\nexus\Scripts\MonsterCard.gd
 extends PanelContainer
 
-@onready var icon_texture = $VBoxContainer/TextureRect
-@onready var name_label = $VBoxContainer/Label
-
-func setup(data: MonsterData):
-	# This function receives the monster data and updates the UI
-	if data.texture:
-		icon_texture.texture = data.texture
-	name_label.text = data.monster_name
+# Call this function to update the UI with specific monster data
+func set_monster(data: MonsterData):
+	# We look for nodes named "TextureRect" and "Label" inside this card
+	var icon_node = find_child("TextureRect", true, false)
+	var name_node = find_child("Label", true, false)
+	
+	if icon_node and data.texture:
+		icon_node.texture = data.texture
+		# Automatically adjust height to match the image's aspect ratio
+		icon_node.expand_mode = TextureRect.EXPAND_FIT_WIDTH
+		icon_node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	
+	if name_node:
+		name_node.text = data.monster_name
+	else:
+		print("Warning: Could not find a node named 'Label' in MonsterCard!")

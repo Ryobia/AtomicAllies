@@ -6,11 +6,11 @@ var owned_monsters: Array[MonsterData] = []
 # NOTE: You'll need to create these .tres files first!
 var starter_monster_paths = [
 	"res://Data/monsters/Cinder.tres",
-	"res://Data/monsters/Sprout.tres",
+	"res://Data/monsters/Sapling.tres",
 	"res://Data/monsters/Droplet.tres",
-	"res://Data/monsters/Spark.tres",
-	"res://Data/monsters/Mote.tres",
-	"res://Data/monsters/Pulse.tres"
+	"res://Data/monsters/Glimmer.tres",
+	"res://Data/monsters/Shade.tres",
+	"res://Data/monsters/Psyon.tres"
 ]
 
 func _ready():
@@ -22,4 +22,4 @@ func _ready():
 				owned_monsters.append(monster_resource)
 		else:
 			print("MISSING FILE: " + path)
-			print("Make sure you created the folder 'data' and 'monsters' and saved the .tres files there!")
+			print("Make sure you created the folder 'Data' and 'Monsters' and saved the .tres files there!")

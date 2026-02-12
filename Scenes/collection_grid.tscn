@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://c0xtiv7eij2mk"]
 
-[ext_resource type="Script" uid="uid://btge3tmbjwsc6" path="res://CollectionGrid.gd" id="1_hr6p1"]
+[ext_resource type="Script" uid="uid://btge3tmbjwsc6" path="res://Scripts/CollectionGrid.gd" id="1_hr6p1"]
+[ext_resource type="PackedScene" uid="uid://deeit4dexuhou" path="res://Scenes/monster_card.tscn" id="2_q7dv8"]
 
-[node name="CollectionGrid" type="Control" unique_id=167236088]
+[node name="CollectionGrid" type="Control" unique_id=1304090810]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -10,22 +11,24 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_hr6p1")
-
-[node name="BackButton" type="Button" parent="." unique_id=294508113]
-layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
-text = "BACK"
+monster_card_scene = ExtResource("2_q7dv8")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=113249070]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 0
+offset_left = 20.0
+offset_top = 73.0
+offset_right = 1060.0
+offset_bottom = 1900.0
 
 [node name="GridContainer" type="GridContainer" parent="ScrollContainer" unique_id=941014855]
 layout_mode = 2
 size_flags_horizontal = 3
 columns = 3
+
+[node name="Button" type="Button" parent="." unique_id=1201560079]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 47.0
+grow_horizontal = 2
+text = "BACK"
