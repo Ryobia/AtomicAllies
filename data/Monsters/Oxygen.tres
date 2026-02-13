@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Oxygen"
+atomic_number = 8
+symbol = "O"
+atomic_mass = 16.0
+group = 0
+base_health = 160.0
+base_attack = 50.0
+base_defense = 10.0
+base_speed = 25.0

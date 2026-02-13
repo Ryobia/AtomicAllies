@@ -1,10 +1,18 @@
 [gd_scene format=3 uid="uid://b7y4q5yso4v84"]
 
+[ext_resource type="Script" uid="uid://cha11yh01g6rk" path="res://Scripts/BattleManager.gd" id="1_wvl2i"]
+
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_dcbb6"]
 
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_u8cu3"]
 
 [node name="BattleScene" type="Node2D" unique_id=587158746]
+script = ExtResource("1_wvl2i")
+
+[node name="BackButton" type="Button" parent="." unique_id=2007097920]
+offset_right = 106.0
+offset_bottom = 44.0
+text = "BACK"
 
 [node name="PlayerMonsterSprite" type="Sprite2D" parent="." unique_id=1869744426]
 position = Vector2(300, 352)
@@ -44,3 +52,5 @@ offset_top = 592.0
 offset_right = 976.0
 offset_bottom = 653.0
 text = "placeholder"
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]

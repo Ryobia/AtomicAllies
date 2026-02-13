@@ -1,0 +1,81 @@
+[gd_scene format=3 uid="uid://2c6fujsuf5nu"]
+
+[ext_resource type="Script" uid="uid://cld3h0d5cobg5" path="res://Scripts/DetailView.gd" id="1_mhro5"]
+[ext_resource type="Texture2D" uid="uid://56c1oo0rip31" path="res://Images/HydrogenAtom.png" id="2_51vr3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mhro5"]
+bg_color = Color(0.002583448, 0.032369856, 0.074585386, 1)
+
+[node name="DetailView" type="Control" unique_id=414824210]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mhro5")
+
+[node name="Panel" type="Panel" parent="." unique_id=329396431]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mhro5")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=612980991]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1724025783]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1804778207]
+layout_mode = 2
+
+[node name="NumberLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=736871060]
+layout_mode = 2
+
+[node name="IconTexture" type="TextureRect" parent="MarginContainer/VBoxContainer" unique_id=1310145462]
+layout_mode = 2
+texture = ExtResource("2_51vr3")
+
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1785362234]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=1875957834]
+layout_mode = 2
+columns = 2
+
+[node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=204995007]
+layout_mode = 2
+
+[node name="AttackLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=1711693444]
+layout_mode = 2
+
+[node name="DefenseLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=1889266181]
+layout_mode = 2
+
+[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=937785622]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="." unique_id=10320781]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 68.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 30
+text = "BACK"
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]

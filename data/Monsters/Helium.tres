@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Helium"
+atomic_number = 2
+symbol = "He"
+atomic_mass = 4.002
+group = 1
+base_health = 40.0
+base_attack = 20.0
+base_defense = 15.0
+base_speed = 50.0

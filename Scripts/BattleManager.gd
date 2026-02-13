@@ -11,7 +11,6 @@ extends Node2D
 @onready var player_health_bar = $UI/PlayerHealthBar
 @onready var enemy_health_bar = $UI/EnemyHealthBar
 @onready var attack_button = $UI/AttackButton
-@onready var turn_timer = $TurnTimer # Add a Timer node to your scene and name it TurnTimer
 @onready var turn_result_label = $UI/TurnResultLabel
 
 # In-battle stats
@@ -19,13 +18,33 @@ var player_current_health: float
 var enemy_current_health: float
 var player_has_surge: bool = false
 var enemy_has_surge: bool = false
+var turn_timer: Timer
 
 
 # --- Godot Functions ---
 func _ready():
+	# Create the timer programmatically if it doesn't exist in the scene
+	turn_timer = find_child("TurnTimer", true, false)
+	if not turn_timer:
+		turn_timer = Timer.new()
+		turn_timer.name = "TurnTimer"
+		turn_timer.one_shot = true # We only want it to fire once per turn
+		turn_timer.wait_time = 1.0 # 1 second delay between turns
+		add_child(turn_timer)
+
 	# Connect the button's "pressed" signal to our function
 	attack_button.pressed.connect(_on_attack_button_pressed)
-	turn_timer.timeout.connect(enemy_turn)
+	
+	if not turn_timer.timeout.is_connected(enemy_turn):
+		turn_timer.timeout.connect(enemy_turn)
+	
+	# Connect the Back Button automatically
+	var back_btn = find_child("BackButton", true, false)
+	if back_btn:
+		back_btn.z_index = 10 # Force button to render on top of everything else
+		back_btn.move_to_front() # Reorder node to be drawn last (on top)
+		if not back_btn.pressed.is_connected(_on_back_button_pressed):
+			back_btn.pressed.connect(_on_back_button_pressed)
 	
 	# Initialize the battle
 	setup_battle()
@@ -91,3 +110,7 @@ func enemy_turn():
 
 	# It's the player's turn again
 	attack_button.disabled = false
+
+
+func _on_back_button_pressed() -> void:
+	GlobalManager.switch_scene("main_menu")

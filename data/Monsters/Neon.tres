@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Neon"
+atomic_number = 10
+symbol = "Ne"
+atomic_mass = 20.18
+group = 1
+base_health = 200.0
+base_attack = 60.0
+base_defense = 15.0
+base_speed = 22.0

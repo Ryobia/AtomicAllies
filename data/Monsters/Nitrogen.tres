@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Nitrogen"
+atomic_number = 7
+symbol = "N"
+atomic_mass = 14.0
+group = 0
+base_health = 140.0
+base_attack = 45.0
+base_defense = 8.0
+base_speed = 27.0

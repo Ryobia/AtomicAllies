@@ -2783,3 +2783,1138 @@ Notification: TimeManager signals the timer is done → Player goes to nursery t
 Persistence: Every time a major change happens (hatch, level up), call PlayerData.save_game().
 
 Would you like to build the "Selection UI" for the Nexus next? (This is the screen where the player picks which two monsters to put into the breeder.)
+
+You said
+Hey so I'm coding this project and I'm trying to set a scroll container in the collection grid to have a full rect layout but I don't see that option
+
+Gemini said
+Ah, the classic Godot UI hurdle! If you are looking for the "Full Rect" button that used to be prominent in Godot 3, it has been moved and renamed in Godot 4.
+
+In Godot 4, this is now under the Anchors Preset menu.
+
+How to set Full Rect:
+Select your ScrollContainer in the Scene Tree.
+
+At the very top of the 2D Viewport (the main window where you see your UI), look for the button that looks like a small square with green corners. It is labeled "Layout" or "Anchors Preset".
+
+Click it and select "Full Rect" (usually the last option in the "Top Wide" or "Presets" section).
+
+Important Note: "Top-Level" vs. "Child"
+If your ScrollContainer is a child of a VBoxContainer or GridContainer, the Anchors Preset button will be hidden.
+
+Why? Containers (like VBox/HBox) take total control over their children's size and position. You can't tell a child to be "Full Rect" if its parent is telling it exactly where to sit.
+
+The Fix: If it's inside a Container, look at the Inspector under Control -> Size Flags. Set both Horizontal and Vertical to "Expand" and "Fill". This is the "Container version" of Full Rect.
+
+Pro-Tip for your Collection Grid:
+Since you're building a grid of monsters, make sure your hierarchy looks like this:
+
+ScrollContainer (Set to Full Rect or Expand/Fill)
+
+GridContainer (Set Columns to 3 or 4 in the Inspector)
+
+MonsterIcon1
+
+MonsterIcon2...
+
+The GridContainer should have its "Horizontal Size Flag" set to "Expand" and "Fill" as well, otherwise, it will stay collapsed on the left side of the scroll area even if the scroll container is huge.
+
+Are you having trouble getting the icons inside the grid to scale properly, or are they currently bunching up in the corner?
+
+You said
+Yes! the images are getting all stretched funny
+
+Gemini said
+This is the "Aspect Ratio Nightmare" of Godot UI. When you set a TextureRect (your monster's image) to Expand and Fill inside a grid, Godot tries to stretch the pixels to fill every available millimeter of that grid cell, ignoring the original shape of the art.
+
+To fix this, you need to change how the TextureRect handles its proportions.
+
+1. Fix the Stretching (The "Keep Aspect" Setting)
+Select your TextureRect (the monster icon) and look at the Inspector:
+
+Expand: Make sure this is On (checked).
+
+Stretch Mode: Change this from "Scale" to "Keep Aspect Centered". This ensures the monster stays in its original proportions and sits right in the middle of the cell.
+
+2. Control the "Box" Size
+Because GridContainer is bossy, it will try to make the "box" as small as possible. You need to give the icons a Minimum Size.
+
+Go to Control -> Layout -> Custom Minimum Size.
+
+Set it to something like (200, 200) or (250, 250) depending on your screen resolution.
+
+Now, even if there's no texture loaded, the grid will reserve a square space for it.
+
+3. The "Ugly MVP" Layout Cheat Sheet
+If you want that clean Dragon City or Pokémon PC box look, set up your hierarchy exactly like this:
+
+ScrollContainer (Size Flags: Horizontal Expand/Fill, Vertical Expand/Fill)
+
+MarginContainer (Add 20-50px of padding in the "Theme Overrides/Constants" so the icons don't touch the screen edges).
+
+GridContainer (Columns: 3, Size Flags: Horizontal Expand/Fill).
+
+MonsterSlot (This is your custom scene).
+
+Background (ColorRect or Panel): Set a min-size of (250, 250).
+
+Icon (TextureRect): Set to "Full Rect" layout, Stretch Mode "Keep Aspect Centered".
+
+4. Why they might still look "Small"
+If the icons look tiny in the middle of a big empty space, check the GridContainer settings:
+
+Theme Overrides -> Constants -> H Separation / V Separation: Set these to 10 or 20 to give the icons breathing room without pushing them off-screen.
+
+Are your icons currently just the raw monster images, or have you put them inside a "Panel" or "ColorRect" yet to give them a background frame? Adding a background usually makes it much easier to see where the stretching is happening!
+
+You said
+Slightly new topic of discussion, i want to have unique or at least creative names for the different areas of the game. Currently its collection (which is fine), battlegrounds, Main menu and nexus(breeding). We've got Attunement chamber which is cool and we can keep that but what are some better names for all the rooms/ areas of my app that follow the fundamental forces of nature/universe theme
+
+Gemini said
+If we're leaning into the Fundamental Forces and Cosmic Physics vibe, we want names that sound like they belong in a high-tech observatory or a sanctuary at the end of time.
+
+Here are some thematic upgrades for your game areas that bridge the gap between science and mysticism:
+
+1. The Hub (Main Menu)
+The Singularity: In physics, this is the point of infinite density where everything starts. It fits perfectly as the "home base."
+
+The Event Horizon: The threshold of a black hole. It implies that once you enter, there's no turning back from the journey.
+
+The Core: Simple, grounded, and implies this is the heart of the "Forces."
+
+2. The Collection (Monster Index)
+The Manifest: Sounds like a formal registry of reality itself.
+
+The Resonance Gallery: Since your monsters represent different frequencies of force, "Resonance" fits the vibe of them co-existing.
+
+The Codex of Entropy: If your monsters represent the order of the universe, the Codex is where you record them before they fade.
+
+3. The Nexus (Breeding Area)
+The Synthesis Chamber: Moves away from "biological" breeding and more toward "fusing fundamental energies."
+
+The Particle Collider: A bit more "Hard Science." You're literally smashing two forces together to see what new particle (monster) is created.
+
+The Fusion Well: Implies a deep, powerful place where two things become one.
+
+4. The Nursery (Incubation)
+The Stellar Cradle: Nebulas are often called "Stellar Nurseries" where stars are born. This sounds much more epic than "Egg Room."
+
+The Gravity Well: Implies that the energy is condensing and gaining mass until it "pops" into existence.
+
+The Primordial Soup: A bit more "Origin of Life" themed, but very scientific.
+
+5. The Battlegrounds (Combat)
+The Crucible: A classic term for a place where different elements interact under great pressure to create something new (or destroy the weak).
+
+The Friction Zones: Since combat is basically just forces rubbing against each other, this sounds very "Physics-lite."
+
+The Entropy Spire: Since you have 60 floors, a "Spire" works well. Entropy is the inevitable decline into disorder—fighting it is the ultimate challenge.
+
+The Final "Map" Concept
+Current Name	Thematic Name	Why it works
+Main Menu	The Singularity	The point of origin for your session.
+Collection	The Manifest	A formal record of the forces you've harnessed.
+Nexus (Breeding)	The Synthesis Chamber	Where two distinct forces are fused into one.
+Incubator	The Stellar Cradle	Where potential energy becomes a physical form.
+Attunement	The Attunement Chamber	(Keep it—it's already great!)
+Battlegrounds	The Crucible	Where your forces are tested by conflict.
+The 60 Floors	The Monoliths	6 Spires of 10 floors each.
+Pro-Tip: The "Vibe" Transition
+Since you're using a Scene Manager, when you switch to The Synthesis Chamber, you could make the background a deep purple/black with moving "particle" effects to really sell the name. In Godot, a simple GPUParticles2D node with some "floaty" white dots can make an "ugly" UI feel like a high-end cosmic lab.
+
+Would you like to try building a custom "Header" for these screens that shows the Thematic Name in a cool, sci-fi font? (I can help you with the code to make the text "flicker" slightly like a holographic display.)
+
+You said
+I've just had an idea, it would change a lot about the theme and some mechanics but on paper i think it sounds incredibly cool- what if every monster is modeled after an element on the periodic table? It would pretty much get rid of the type chart i think but we could change the balance to be around the weight or something about the elements. Thoughts?
+
+Gemini said
+That is a massive pivot, but as a developer, you have to love the "Scientific Hardness" it adds to your world. It moves the game from "Fantasy Monster Battler" to something that feels like Alchemical Warfare.
+
+The Periodic Table is essentially the world’s oldest, most balanced game manual. Using it as your "Type Chart" is brilliant because the logic is already written for you by the universe.
+
+Here is how you handle this without losing your mind over 118 different variables.
+
+1. The "Type Chart" becomes "Groups"
+You don't need 118 types. You group them by their columns on the table. This keeps the "6-8 Elements" feel but makes it much more creative.
+
+Group	Vibe / "Type"	Strategy
+Noble Gases (He, Ne, Ar...)	The Tanks	High stability, hard to hit, immune to "Reactions."
+Alkali Metals (Li, Na, K...)	The Volatiles	Highly reactive, explosive damage, but low defense.
+Halogens (F, Cl, Br...)	The Corrosives	Damage over time (DoT), "toxic" debuffs.
+Transition Metals (Fe, Au, Ti...)	The Vanguards	Massive defense and physical "Direct Strike" power.
+Radioactives (U, Pu, Rn...)	The Glass Cannons	Massive damage, but they take "Decay" damage every turn.
+2. Balancing via "Atomic Weight"
+This replaces the "Tier" system.
+
+Light Elements (H, He, Li): High Speed, Low HP. These fill their ATB bars incredibly fast because they have less "inertia."
+
+Heavy Elements (U, Og, Pb): Massive HP and Attack, but painfully slow.
+
+The Physics-Based Formula:
+If you want to be nerdy about it, you can set a monster's Base Speed (S) as an inverse of its Atomic Mass (M)$:
+
+S= 
+M
+
+​
+ 
+k
+​
+ 
+
+(Where k is a constant to keep the numbers playable). This creates a natural balance: A player can use a heavy Lead (Pb) monster to tank, but a tiny Hydrogen (H) monster might get three turns for every one turn the Lead monster takes.
+
+3. The "Reaction" System (The New Type Chart)
+Instead of "Water beats Fire," you use Chemistry Logic:
+
+Oxidation: Oxygen-based attacks deal extra damage to Metals.
+
+Corrosion: Halogens melt Metals.
+
+Inertia: Noble Gases are neutral to almost everything (the perfect defensive switch).
+
+Explosion: Alkali Metals + Water = Surge instantly.
+
+4. The "Collection" (The Manifest)
+This is where this idea wins. Your "Index" UI is the Periodic Table.
+
+Grayed-out boxes for elements the player hasn't "Synthesized" yet.
+
+Colored boxes for the ones they own.
+
+The Milestone: "Collect the entire Halogen Group to unlock the Chlorine Surge skin."
+
+5. The Challenge: Art & Scope
+The biggest risk here is Scope Creep.
+
+The Reality: Designing 118 unique monsters is a nightmare.
+
+The Solution: Start with Period 1 and 2 (The first 10 elements). That gives you Hydrogen through Neon. That is more than enough for an MVP. You can "patch in" the rest of the table as "Expansions."
+
+How this affects the "Synthesis Chamber" (Breeding)
+Breeding now becomes Nuclear Fusion.
+
+You don't "Breed" a Cinder and a Droplet.
+
+You Fuse two Hydrogen atoms to get a Helium.
+
+You Combine Lithium and Chlorine to get a Salt (A unique hybrid monster).
+
+Would you like to try mapping out the "Starter Trio" using this new Periodic system? (e.g., Who are the three monsters a player chooses from at the start of the game?)
+
+You said
+Yeah let's see where this takes us, and i agree, there's no way i want to do all 118 elements from the beginning
+
+Gemini said
+Limiting the scope to Period 1 and Period 2 is the smartest move you can make. That gives you exactly 10 monsters to start with. In the world of game dev, 10 unique, well-balanced units is infinitely better than 118 buggy ones.
+
+Here is how we translate the first two rows of the Periodic Table into your "First 10" roster and your Starter Trio.
+
+1. The Starter Trio: The "Foundational Forces"
+Instead of Fire/Water/Grass, your starters represent the three main "Phases" of matter and their tactical roles.
+
+Monster	Element	Role	Why?
+Proto	Hydrogen (H)	The Speedster	Atomic Mass: 1. It is the fastest thing in the game. Glass cannon but can take two turns for every one turn a heavy enemy takes.
+Aegis	Helium (He)	The Guardian	Noble Gas. It doesn't react with anything. High Defense and resistance to debuffs (poison, burn, etc.). Your perfect Vanguard.
+Grit	Carbon (C)	The Bruiser	Forms the strongest bonds (diamonds/graphite). High Physical Attack and HP. Reliable, sturdy, and scales well with leveling.
+2. The "First 10" Roster (Your MVP Catalog)
+By sticking to these ten, you have every tactical niche covered:
+
+Hydrogen (Gas): High Speed / Low HP.
+
+Helium (Noble Gas): High Defense / Immune to Reactions.
+
+Lithium (Alkali Metal): High Surge Gain / "Explosive" attacks.
+
+Beryllium (Alkaline Earth): Solid Vanguard / Physical Shielding.
+
+Boron (Metalloid): The "Buffer" / Increases team stats.
+
+Carbon (Non-metal): High Attack / Critical Hit specialist.
+
+Nitrogen (Gas): The "Slower" / Freezes enemy ATB bars.
+
+Oxygen (Non-metal): The "Combustor" / Deals extra damage to Metals.
+
+Fluorine (Halogen): The "Corroder" / High Damage-over-Time (DoT).
+
+Neon (Noble Gas): The "Redirector" / Can swap positions without losing a turn.
+
+3. The "Phase" Mechanic in the 3v3 Triangle
+Since you are using a Vanguard (Front) and two Flanks (Back), we can use the Phases of Matter to determine placement bonuses:
+
+Solids (C, Be, Li): Gain a 15% Defense Bonus when placed in the Vanguard slot.
+
+Gases (H, He, N, O, F, Ne): Gain a 15% Speed Bonus when placed in the Backline slots.
+
+Liquids (Later elements like Mercury/Bromine): Balanced bonuses or the ability to "Flow" (swap positions for free).
+
+4. Technical Pivot: The "Atomic Leveling" Script
+In your MonsterData resource, your stats are now tied to the Atomic Mass.
+
+GDScript
+# Inside MonsterData.gd
+var atomic_number: int
+var atomic_mass: float
+
+func calculate_base_stats():
+    # Heavier elements move slower but hit harder
+    speed = 100 / sqrt(atomic_mass) 
+    base_hp = atomic_mass * 10
+    base_attack = (atomic_number * 5) + 10
+5. Breeding = Nuclear Fusion
+Since you said breeding is the only way to get new monsters, the logic is now Arithmetic:
+
+Hydrogen (1) + Hydrogen (1) = Helium (2)
+
+Helium (2) + Lithium (3) = Boron (5)
+
+Carbon (6) + Helium (2) = Oxygen (8)
+
+This turns the "Synthesis Chamber" into a math puzzle. To get Neon (10), the player has to figure out which combination of their current roster adds up to 10. It makes the "Grind" feel like an experiment.
+
+6. The "Whale" legendary?
+If you want that $50 "Legendary," you look at the bottom of the table. Uranium (92).
+
+The Hook: It’s incredibly heavy (Slow) but its attacks are "Radioactive"—they ignore defense and deal damage to the entire enemy team every turn.
+
+The Cost: It "Decays." Every turn it takes, it loses 5% of its own HP.
+
+Should we look at the "Fusion UI"? Specifically, how to show the player that adding 1+1 will result in a 2, so they don't accidentally "waste" their monsters trying to figure out the math?
+
+You said
+Real quick, i still don't want players to lose their monsters when they breed or fuse them. Thematically we can say that these monsters give a part of themselves and enter it into the fusion chamber and there's some kind of cooldown before they're able to do it again.
+
+
+
+Second, does it make more sense to keep the science accurate in regards to acquiring a new element or is that too difficult? I'm not a chemist, i don't know how iron is created for example, does it make more sense to make it a math puzzle where element 5 and element 3 makes element 8?
+
+Gemini said
+Keeping the parents is a great call. It reinforces the "Unique Collection" rule we established—you are the keeper of the Universal Manifest, not a factory owner.
+
+Let's refine the "Atomic Addition" logic and the cooldown system.
+
+1. The Math Puzzle: Z 
+1
+​
+ +Z 
+2
+​
+ =Z 
+new
+​
+ 
+Keep the math simple. Use the Atomic Number (Z) as the primary "recipe" key.
+
+Real-world nucleosynthesis (how elements are actually made) is incredibly complex and requires temperatures of millions of degrees. For a game, Simple Addition is your "Magic System." It’s intuitive, it's satisfying, and it makes the player feel like a genius when they "solve" an element.
+
+The Rule: To synthesize a new element, the sum of the parents' Atomic Numbers must equal the target.
+
+The Variety: This creates multiple "paths" to the same goal:
+
+To get Carbon (6):
+
+Boron (5) + Hydrogen (1) = Carbon
+
+Beryllium (4) + Helium (2) = Carbon
+
+Lithium (3) + Lithium (3) = Carbon
+
+2. The "Quantum Trace" (Non-Destructive Fusion)
+Thematically, the monsters aren't "mating." They are entering the Synthesis Chamber to have their Atomic Traces (or "Quantum Blueprints") extracted.
+
+The Cost: The parents don't die, but the extraction is exhausting.
+
+The Mechanic: Molecular Fatigue. * When a monster is used for fusion, it gains a Fatigue Timer.
+
+While fatigued, the monster cannot be used for anything: no battles, no training, and no further fusions.
+
+Scaling Fatigue: Heavier elements (higher atomic numbers) should take longer to recover. Fusing Hydrogen might take 30 minutes; fusing Oxygen might take 6 hours.
+
+3. Preventing "Speed-Running" the Table
+If 1+1=2 and 2+2=4, a player could theoretically unlock the first 10 elements in an hour. To slow them down and make the game a real journey, you add Catalysts (Essence).
+
+To perform a fusion, you need the parents PLUS a certain amount of Element Essence:
+
+To make Helium (2): Hydrogen + Hydrogen + 10 Light Essence.
+
+To make Carbon (6): Beryllium + Helium + 50 Earth Essence.
+
+This forces the player to go back to the Crucible (Battlegrounds) to "farm" the energy required to bind the atoms together.
+
+4. Technical Implementation: The Fusion Function
+In your SynthesisManager.gd, the logic is now a simple lookup.
+
+GDScript
+func try_fuse(parent_a_id: String, parent_b_id: String):
+    var z_a = MonsterDB.get_z_number(parent_a_id)
+    var z_b = MonsterDB.get_z_number(parent_b_id)
+    var target_z = z_a + z_b
+    
+    var result_id = MonsterDB.get_id_from_z(target_z)
+    
+    if result_id != "":
+        start_fusion_timer(result_id, parent_a_id, parent_b_id)
+        apply_fatigue(parent_a_id)
+        apply_fatigue(parent_b_id)
+    else:
+        # If they add up to 119+, it's a "Unstable Isotope" (Failure/Essence reward)
+        trigger_fusion_failure()
+5. Why this is "Game Designer Gold"
+By using the Atomic Number as the recipe, you’ve created a Self-Documenting Game.
+
+The player looks at the Periodic Table.
+
+They see Nitrogen (7) is empty.
+
+They look at their collection and see Lithium (3) and Beryllium (4).
+
+They instantly know what they have to do.
+
+You don't need a tutorial for breeding anymore—the Periodic Table is the tutorial.
+
+6. The "Ugly" MVP UI for Fusion
+Two Large Slots: "Parent A" and "Parent B".
+
+The "Plus" Sign: Large and centered.
+
+The "Result" Preview: * If the player has discovered the result before: Show the monster.
+
+If it's new: Show a Big Question Mark with the number (e.g., "? - #7").
+
+Would you like to design the "Fusion Failure" state? (What happens if the math doesn't result in a stable element, or if they try to fuse something that doesn't exist yet?)
+
+You said
+I think it might be worth adding some kind of speed bump, maybe fusion isn't always successful, we generate a success percent chance based on the levels of the "parents" so you can't just get every element with an army of level 1s
+
+Gemini said
+This is a classic "Gating" mechanic, and it fits the nuclear physics theme perfectly. In science, you need massive amounts of Binding Energy to hold a nucleus together. If your monsters (the parents) are low-level, they lack the "energy" to stabilize the new, heavier element.
+
+This turns The Attunement Chamber (Training) into a mandatory stop before The Synthesis Chamber (Fusion).
+
+1. The Stability Formula
+To make this balanced, the "Difficulty" should scale with the Target Atomic Number (Z). Fusing two Hydrogens to get Helium should be easy; fusing heavy metals should be a gamble unless your team is elite.
+
+The Stability Equation:
+
+P 
+success
+​
+ =Base+( 
+Z 
+target
+​
+ ×K
+L 
+1
+​
+ +L 
+2
+​
+ 
+​
+ )
+Base: A starting chance (e.g., 40%).
+
+L 
+1
+​
+ +L 
+2
+​
+ : Combined levels of parents.
+
+Z 
+target
+​
+ : The Atomic Number you are trying to reach.
+
+K: A constant you can tune to make the game harder or easier.
+
+Example: Trying to make Carbon (Z=6) with two Level 10 parents.
+If K=2, your success chance might be 40%+( 
+12
+20
+​
+ )≈56%.
+If those parents were Level 1, the chance would stay near 40%.
+
+2. The "Consolation Prize": Neutron Dust
+Never let a "Fail" feel like a total waste of time, or players will quit.
+When a fusion fails, the "reaction" is unstable. The parents go on cooldown, and instead of a new monster, the player receives Neutron Dust (or Rad-Scrap).
+
+The Loop: 10 pieces of Neutron Dust = 1 Stability Booster (an item that adds +20% to the next fusion).
+
+The Result: Even a failure gets the player closer to a guaranteed success later.
+
+3. Visualizing "Stability" in the UI
+Before the player hits the "Fuse" button, they should see a Stability Meter.
+
+Green Zone: 80%−100% (Safe)
+
+Yellow Zone: 50%−79% (Risky)
+
+Red Zone: <50% (Dangerously Unstable)
+
+Peer Advice: Showing the percentage creates a "gambler's tension." Players will start asking themselves, "Do I risk this 60% chance now, or do I grind 2 more levels in the Crucible to hit 75%?" That is the exact psychological loop that makes these games addictive.
+
+4. Implementation in Godot
+You can use Godot’s built-in random number generator for this.
+
+GDScript
+func attempt_fusion(p1, p2, target_z):
+	var chance = calculate_stability(p1.level, p2.level, target_z)
+	var roll = randf() # Generates a number between 0.0 and 1.0
+	
+	if roll <= (chance / 100.0):
+		hatch_new_element(target_z)
+	else:
+		trigger_failure_state()
+
+func calculate_stability(l1, l2, z):
+	var base = 40.0
+	var bonus = (l1 + l2) / (z * 0.5) # Tuning constant
+	return clamp(base + bonus, 0, 100) # Keep it between 0-100%
+5. The "Critical Failure" (Optional)
+If you want to be mean (or add more depth), a "Critical Failure" (rolling a 1 on a 100) could result in a Radiation Leak.
+
+Effect: All 3 monsters in your active party are fatigued/locked for 1 hour.
+
+Why? It adds weight to the decisions. You shouldn't play with nuclear forces lightly!
+
+How this solves your "Army of Level 1s" problem:
+To get to the higher-tier elements (like Neon or Sodium), the Z number gets so high that the "Base" 40% chance isn't enough to feel safe. The player will feel the need to level up their "Foundational" monsters (Hydrogen, Helium) just to act as stable parents for the heavier ones.
+
+Would you like to design the "Stability Booster" system? (e.g., Should it be an item you find in the 60-floor Spire, or something you craft using the "Neutron Dust" from failed fusions?)
+
+Are there any elements that are created as simply as combing 2 others?
+
+Gemini said
+In real-world science, the answer is a fascinating "Mostly yes, but with some very famous exceptions."
+
+In the universe, nature actually uses a "Math Puzzle" logic called Nucleosynthesis. For your game, this is perfect because you can tell your players that they are performing the same processes that happen inside stars.
+
+Here is how the "Simple Addition" works in reality versus how it works in your game:
+
+1. The "Alpha Process" (The +2 Rule)
+Inside massive stars, nature loves the number 2. Because Helium (Atomic Number 2) is so stable, stars create a huge chain of elements just by adding a Helium atom to whatever is already there. This is almost exactly like your fusion mechanic!
+
+Carbon (6) + Helium (2) = Oxygen (8) * Oxygen (8) + Helium (2) = Neon (10)
+
+Neon (10) + Helium (2) = Magnesium (12)
+
+Magnesium (12) + Helium (2) = Silicon (14)
+
+2. The "Heavy Fusion" (The Big Math Rule)
+When stars get even hotter, they stop just adding 2s and start smashing big elements together. This matches your idea of fusing any two monsters perfectly:
+
+Carbon (6) + Carbon (6) = Magnesium (12)
+
+Carbon (6) + Oxygen (8) = Silicon (14)
+
+Oxygen (8) + Oxygen (8) = Sulfur (16)
+
+3. The "Black Sheep" (Li, Be, B)
+This is where science gets "annoying" for a game dev. In the real universe, Lithium (3), Beryllium (4), and Boron (5) are actually very hard to make.
+
+The Problem: If you smash Hydrogen (1) and Helium (2) together, they usually just fly apart instantly. They don't like to stay stuck.
+
+The Game Solution: Ignore this! In your game world, you can simply say that your Synthesis Chamber provides the "Binding Energy" that nature lacks. It makes your game's Lithium and Beryllium feel more special because the player "forced" them into existence.
+
+Summary for your Game Logic
+To keep it "Sci-Fi Accurate" but fun, you can categorize your fusions like this:
+
+Fusion Type	Science Name	Game Feel
+Element + Hydrogen	Proton Capture	"Incrementing" (Easy, high success rate)
+Element + Helium	The Alpha Process	"Stepping Up" (Standard way to climb the table)
+Element + Element	Heavy Ion Fusion	"The Big Leap" (Harder, requires higher levels/stability)
+Why this is a great "Next Step":
+When you build your Synthesis UI, you can actually name the buttons after these processes. Instead of just "Fuse," the button could say "INITIATE ALPHA PROCESS" when the player adds Helium to something. It makes the game feel incredibly premium and researched.
+
+Would you like me to generate the next batch of placeholders (Carbon, Nitrogen, Oxygen, Neon) so you have the full "First 10" set?
+
+You said
+Yes please!
+
+Gemini said
+Image of 
+
+You said
+I think now I'm just missing fluorine right?
+
+Gemini said
+Good catch! You’re exactly right. We jumped from Oxygen (8) straight to Neon (10) in that last batch. Fluorine (9) is the missing link to complete your first two periods (the "First 10").
+
+Fluorine is the most "reactive" element on the table—in your game, it’s the ultimate Damage-over-Time (DoT) monster because it wants to steal electrons from everyone else.
+
+9. Fluorine (F)
+Protons: 9
+
+Neutrons: 10
+
+Electrons: 9 (2 on the inner shell, 7 on the outer shell)
+
+You now have the full "First 10" roster:
+H (Hydrogen)
+
+He (Helium)
+
+Li (Lithium)
+
+Be (Beryllium)
+
+B (Boron)
+
+C (Carbon)
+
+N (Nitrogen)
+
+O (Oxygen)
+
+F (Fluorine)
+
+Ne (Neon)
+
+With these placeholders, you can build out your entire early-game "Tech Tree." Players will start with H, He, or C (the starters we discussed), and then use the Synthesis Chamber to bridge the gaps.
+
+Would you like me to generate a simple "Fusion Cheat Sheet" table showing which combinations are the most stable for reaching these first 10?
+
+You said
+Yeah let's do that
+
+Gemini said
+First, here is the missing link to complete your "First 10" set.
+
+9. Fluorine (F)
+Protons: 9
+
+Neutrons: 10
+
+Electrons: 9 (2 on the inner shell, 7 on the outer shell)
+
+The "First 10" Fusion Cheat Sheet
+This table serves as your design document for the early-game progression. In your code, you can use these formulas to check if a player has the right "ingredients" in their active roster to attempt a synthesis.
+
+Target Element (Z)	Primary Path (Alpha)	Alternative Path	Stability Difficulty
+Helium (2)	H(1)+H(1)	—	Trivial (Base 90%)
+Lithium (3)	He(2)+H(1)	—	Easy (Base 80%)
+Beryllium (4)	He(2)+He(2)	Li(3)+H(1)	Easy (Base 75%)
+Boron (5)	Be(4)+H(1)	Li(3)+He(2)	Moderate (Base 65%)
+Carbon (6)	Be(4)+He(2)	Li(3)+Li(3)	Moderate (Base 60%)
+Nitrogen (7)	C(6)+H(1)	Be(4)+Li(3)	Challenging (Base 50%)
+Oxygen (8)	C(6)+He(2)	N(7)+H(1)	Challenging (Base 45%)
+Fluorine (9)	O(8)+H(1)	C(6)+Li(3)	Hard (Base 35%)
+Neon (10)	O(8)+He(2)	F(9)+H(1)	Hard (Base 30%)
+Why the "Alternative Path" Matters
+From a game design perspective, the alternative paths are your "Strategic Puzzles." If a player has a high-level Lithium (3) but their Hydrogen (1) is weak, they might choose the Li+Li path to get Carbon (6). This makes the player feel like they are optimizing their resources rather than just following a linear line.
+
+Implementation Tip: The "Stability Floor"
+As you code this into Godot, I recommend setting a "Stability Floor." Even if the math says 30%, if the parents are max level, it should never drop below a certain threshold (maybe 15%). This prevents the game from feeling like an "impossible" grind while still requiring effort.
+
+Would you like me to help you draft the calculate_stability() function in GDScript now so you have the math ready to drop into your project?
+
+You said
+Yes again, i need help with all the math
+
+Gemini said
+Math can be the "final boss" of game development, but since we’re basing this on the laws of the universe, the numbers actually want to work with you.
+
+To make this feel fair, we need a formula where high-level parents can overcome the innate instability of heavy elements.
+
+1. The Stability Formula
+Here is the math we’ll be putting into your script. We want the success probability P to look like this:
+
+P=BaseStability(Z)+( 
+Z
+LevelSum×LevelWeight
+​
+ )
+BaseStability(Z): This is the starting percentage from our cheat sheet (e.g., 90% for Helium, 30% for Neon).
+
+LevelSum: L 
+1
+​
+ +L 
+2
+​
+  (The combined experience of the parents).
+
+LevelWeight: A "tuning knob" (constant K) you use to decide how much leveling actually matters.
+
+Z: The Atomic Number. As the target gets heavier, you need exponentially more levels to move the needle.
+
+2. The GDScript Implementation
+You can drop this directly into your SynthesisManager.gd or wherever you handle fusion.
+
+GDScript
+# The "Tuning Knob". 
+# Higher = Levels matter more. Lower = It's mostly luck.
+const LEVEL_WEIGHT = 5.0 
+const MIN_CHANCE = 15.0 # The "Stability Floor"
+const MAX_CHANCE = 100.0
+
+func calculate_stability(parent_a_level: int, parent_b_level: int, target_z: int) -> float:
+	# 1. Get the base stability for this element (you can store this in a Dictionary)
+	var base_chance = get_base_stability_for_z(target_z)
+	
+	# 2. Calculate the bonus from levels
+	var level_sum = parent_a_level + parent_b_level
+	
+	# We divide by target_z so that heavier elements REQUIRE higher levels
+	var level_bonus = (level_sum * LEVEL_WEIGHT) / target_z
+	
+	# 3. Final total
+	var total_chance = base_chance + level_bonus
+	
+	# 4. Clamp the result so it stays within logical bounds
+	return clamp(total_chance, MIN_CHANCE, MAX_CHANCE)
+
+func get_base_stability_for_z(z: int) -> float:
+	# This mimics our "Cheat Sheet" logic
+	var bases = {
+		2: 90.0, 3: 80.0, 4: 75.0, 5: 65.0, 
+		6: 60.0, 7: 50.0, 8: 45.0, 9: 35.0, 10: 30.0
+	}
+	return bases.get(z, 20.0) # Default to 20% if not found
+3. Why this math works for your game:
+Early Game is Breezy: To get Helium (Z=2), even two Level 1 parents give you 90+(2×5/2)=95%. It’s almost guaranteed.
+
+Mid Game requires "Lab Work": To get Neon (Z=10), two Level 1 parents only give you 30+(2×5/10)=31%. That's a huge gamble.
+
+The "Pro" Strategy: If the player grinds those same parents to Level 40 each: 30+(80×5/10)=70%.
+
+Now the player has a meaningful choice: Gamble at 31% or train to 70%?
+
+4. The "RNG" Moment
+To actually decide if the player succeeds, you use the randf() (random float) function in Godot:
+
+GDScript
+func attempt_fusion(p1, p2, target_z):
+	var chance = calculate_stability(p1.level, p2.level, target_z)
+	var roll = randf_range(0.0, 100.0)
+	
+	if roll <= chance:
+		print("Success! Atom Stabilized.")
+		create_new_monster(target_z)
+	else:
+		print("Failure. Radiation leak detected.")
+		give_neutron_dust()
+		apply_fatigue(p1, p2)
+Would you like me to help you design the "Neutron Dust" shop? (Since failures are inevitable, we need a way for the player to spend that "pity currency" to buy items like Lead Vests or Coolant Gel to help their next run.)
+
+You said
+Yeah let's work that out, i think keeping the function of getting something even in a failed fusion is necessary
+
+Gemini said
+I totally agree. Nothing kills player retention faster than "I spent three days leveling these up, hit a 70% chance, failed, and got absolutely nothing."
+
+In your game, Neutron Dust isn't just a consolation prize; it’s the currency of the "Nuclear Scrapyard."
+
+1. The "Pity" Math: How much Dust?
+We should scale the reward based on the risk. Failing a Neon (10) fusion should give more dust than failing a Helium (2) fusion.
+
+The Dust Formula:
+
+Dust=(Z 
+target
+​
+ ×10)×(1−P 
+success
+​
+ )
+Scenario A: You fail a Helium (Z=2) fusion with a 90% success rate.
+
+(2×10)×0.10=2 Neutron Dust
+
+Scenario B: You fail a Neon (Z=10) fusion with a 30% success rate.
+
+(10×10)×0.70=70 Neutron Dust
+
+This ensures that the "pain" of a big failure is directly compensated with a big bag of currency.
+
+2. The Scrapyard Catalog (The Shop)
+The shop should sell items that directly mitigate the mechanics we’ve built: Fatigue, RNG, and Grind.
+
+Item	Cost (Dust)	Effect	Why buy it?
+Magnetic Stabilizer	50	+10% Success chance on next fusion.	To push that 70% to an 80%.
+Lead Vest	30	Reduces Fatigue timer of parents by 50% on failure.	To get back into the lab faster after a "leak."
+Coolant Gel	20	Instantly clears Fatigue for one monster.	For when you need your tank back now.
+Isotope Scanner	100	Reveals the result of a "?" fusion before you click.	Prevents wasting resources on an element you already have.
+Heavy Water	200	Permanently increases the "Level Weight" of the Synthesis Chamber by 0.5.	Long-term progression; makes leveling more effective forever.
+3. The "Synthesis Blueprint" (The Ultimate Goal)
+If you want to give the player a reason to keep "failing," you add Blueprints.
+Maybe for 500 Neutron Dust, you can buy the "Gold Formula." * This doesn't give them Gold (Z=79), but it unlocks the recipe and shows it on their Periodic Table.
+
+It turns the "Math Mystery" into a clear goal.
+
+4. Technical Implementation: The Scrapyard Script
+In Godot, you can handle this with a simple Global Singleton (GameManager.gd) to track the dust.
+
+GDScript
+# Inside SynthesisManager.gd
+func on_fusion_failed(target_z, success_chance):
+	var dust_amount = (target_z * 10) * (1.0 - (success_chance / 100.0))
+	GameManager.neutron_dust += int(dust_amount)
+	
+	# Trigger UI notification
+	UI.show_toast("Fusion Unstable! Recovered " + str(int(dust_amount)) + " Neutron Dust.")
+5. The "Critical Success" (The Flip Side)
+To keep things spicy, if they roll a natural 100 on a fusion, you could give them a "Stable Isotope." * This version of the monster has a different color (Shiny) and maybe starts at Level 5 instead of Level 1.
+
+It rewards the "Gamblers" and makes the fusion screen the most exciting part of the game.
+
+Where does this leave us?
+You now have a complete Core Loop:
+
+Battle in the Spire to get levels (and maybe "Essence").
+
+Calculate your stability in the Lab.
+
+Synthesize to climb the Periodic Table.
+
+Recover using Neutron Dust if things blow up.
+
+Would you like to design the "Battle HUD" for these atomic monsters? (e.g., How do we show their "Reactions" or "Charge" during a fight?)
+
+You said
+I absolutely 100% am on board to add a shiny chance, yes please. I'm not quite ready to attack the battle HUD just yet, I want to really nail the periodic table and fusion and such first
+
+Gemini said
+Nailing the core loop before moving to combat is the mark of a great designer. If the Synthesis and Collection aren't addictive, the battles won't matter.
+
+Let's integrate the "Stable Isotope" (Shiny) system and refine the Periodic Table UI so it feels like the definitive "Hub" of your game.
+
+1. The "Stable Isotope" Logic (Shiny System)
+In science, isotopes are versions of an element with different numbers of neutrons. In your game, a Stable Isotope is a "Perfect Success."
+
+The Trigger: When a fusion is successful, the game rolls a second check for "Isotopic Stability."
+
+The Odds:
+
+P 
+isotope
+​
+ =0.5%+( 
+400
+L 
+1
+​
+ +L 
+2
+​
+ 
+​
+ )
+
+(At Level 1, it's roughly 0.5%. If both parents are Level 100, the chance triples to 1.5%.)
+
+The Payoff:
+
+Visual: A distinct "Atomic Glow" or a "Crystalline" texture.
+
+Mechanical: They have a "Bonding Bonus." They gain +10% more experience from battles and have a slightly higher stability rating when they become parents.
+
+2. The Periodic Table: More Than a Menu
+The Table shouldn't just be a list; it’s your Map. It needs to show the player where they are and where they could go.
+
+Visual States for Element Boxes:
+Undiscovered (Locked): A dark, static-filled box with just the Atomic Number (e.g., #14).
+
+Quantum Shadow (Teased): If a player has the "blueprint" or a parent that could lead there, show a blurred silhouette of the monster.
+
+Synthesized (Unlocked): Full color icon, name, and a "Stable Isotope" badge if they’ve found the shiny version.
+
+3. The "Synthesis Reveal" UX
+Since you’re sticking to the Lab for now, the Reveal needs to be high-tension. Don't just show a "Success" screen.
+
+The Smash: The two parent icons move toward the center.
+
+The Reaction: A bright flash of light (color-coded to the element group—red for Alkali, blue for Noble Gases).
+
+The Stabilization: A circular "Containment Bar" fills up.
+
+The Result:
+
+If Success: The new monster’s "Atomic Placeholder" (the clipart you made) appears and slowly morphs into the actual Monster Art.
+
+If Failure: The containment field cracks, and Neutron Dust spills out onto the screen.
+
+4. Technical Implementation: The "Stable Isotope" Script
+You can add this to your create_new_monster() function:
+
+GDScript
+func create_new_monster(z_number, p1_level, p2_level):
+	var new_monster = MonsterData.new()
+	new_monster.z = z_number
+	
+	# Roll for Stable Isotope (Shiny)
+	var shiny_chance = 0.5 + ((p1_level + p2_level) / 400.0)
+	if randf_range(0, 100) <= shiny_chance:
+		new_monster.is_stable_isotope = true
+		trigger_shiny_effects()
+	else:
+		new_monster.is_stable_isotope = false
+		
+	# Add to player inventory
+	PlayerStats.inventory.append(new_monster)
+	update_periodic_table_ui(z_number)
+5. Managing the "118" Scope
+Since we're focusing on the Table, keep the "Period Locking" mechanic in mind.
+
+Tier 1: Only Elements 1–10 are accessible.
+
+The Gate: To unlock Period 3 (Sodium through Argon), the player must "Stabilize" at least 8 of the first 10 elements.
+
+The Benefit: This prevents the player from being overwhelmed by the massive table while giving them clear "Chapter" goals.
+
+6. The "Quantum Shadow" (The Hint System)
+If the player clicks on an empty slot in the Periodic Table, show them a "Potential Reactions" hint:
+
+"Requires a high-energy collision between a #4 and a #2."
+
+This turns the UI into a guide. They aren't just guessing math; they are following "Research Notes."
+
+Would you like to design the "Research Notes" UI? This would be the screen where the player sees exactly what "Neutron Dust" items they've used and what their current "Stability Record" is for a specific element.
+How difficult would it be to make an svg version of say the hydrogen atom so that I could program the electron to actually animate around the center, or is there a good way to try to do that within godot or another program
+
+Gemini said
+This is a fantastic "Level 2" developer move. Moving from static images to procedural animation will make your game feel alive and high-quality.
+
+The good news? Godot is actually better at this than SVG. While you can use SVGs, animating them often requires complex path-following code. In Godot, you can build a "Functional Atom" using simple nodes and a tiny bit of script.
+
+1. The "Godot Way" (Recommended)
+Instead of one image, you build a Scene for your Atom. This gives you total control over the speed (linked to your speed stat!) and the electron's position.
+
+The Scene Tree Structure:
+
+Node2D (The Atom)
+
+Sprite2D (The Nucleus - your static clipart)
+
+Node2D (ElectronPivot) — This is the secret sauce.
+
+Sprite2D (The Electron - a small glowing dot offset from the center)
+
+The Code (Atom.gd):
+
+GDScript
+extends Node2D
+
+@export var rotation_speed = 2.0 # Link this to the element's Speed stat later!
+
+func _process(delta):
+	# Rotate the PIVOT, not the electron itself. 
+	# This makes the electron orbit the center perfectly.
+	$ElectronPivot.rotation += rotation_speed * delta
+2. The "SVG Way" (The Alternative)
+If you really want to use SVGs, Godot treats them as textures. To animate the electron inside an SVG:
+
+You would need to import the Nucleus and Electron as separate SVG files.
+
+You would still use the "Pivot" method described above.
+
+The Downside: If you have 118 elements, you’ll end up with hundreds of tiny SVG files.
+
+3. Why the "Godot Way" wins for your project:
+Since you’re doing the Periodic Table, you can make one "Master Atom" scene and just change the visuals based on the Atomic Number:
+
+Hydrogen (Z=1): Show 1 ElectronPivot.
+
+Helium (Z=2): Show 2 ElectronPivots at 180-degree offsets.
+
+Lithium (Z=3): Add a second, larger "Outer Shell" circle and put the 3rd electron there.
+
+The "Visual Polish" Tip: Add a Trail2D (or a Line2D that updates its points) to the Electron. As it orbits, it will leave a faint, glowing blue streak behind it. It looks incredibly "Sci-Fi" and professional.
+
+4. How to handle the "118" Scaling
+Don't draw 118 orbits! Use Godot's _draw() function to draw the orbital paths (the dashed lines) dynamically:
+
+GDScript
+func _draw():
+	# Draws a faint dashed circle for the orbit
+	draw_arc(Vector2.ZERO, 100, 0, TAU, 64, Color(1, 1, 1, 0.2), 1.0, true)
+Summary of the Workflow:
+Nucleus: Use your "fancy clipart" as the center sprite.
+
+Electrons: Use a simple glowing circle sprite.
+
+Animation: Use the rotation script to spin them.
+
+Would you like me to write a script that automatically spawns the correct number of electrons and orbits based on the Atomic Number (Z)? This would save you from having to manually build 118 different scenes!
+
+You said
+That would be the biggest time save ever, yes please, and then can you also walk me through step by step how to create the scene in godot
+
+Gemini said
+Image of 
+
+You said
+can you write a script that automatically spawns the correct number of electrons and orbits based on the Atomic Number (Z)?
+
+Gemini said
+This is a "Set It and Forget It" script. Once you build this, you never have to manually place an electron again. Whether it’s Hydrogen (1) or Oganesson (118), the code will do the math.
+
+We will use the Bohr Model logic: shells fill up in a specific order (2,8,18,32…).
+
+Here is your complete guide.
+
+Phase 1: The "No-Asset" Trick (Creating the Electron)
+You don't need to draw an electron png. We will make a procedural "glowing dot" directly in Godot.
+
+In your FileSystem (bottom left), right-click → Create New Resource.
+
+Search for GradientTexture2D. Name it ElectronGlow.tres.
+
+In the Inspector (right side):
+
+Width/Height: Set to 32 x 32 (small).
+
+Fill: Change from Linear to Radial.
+
+Gradient: Click the black/white bar. Set the left color to Cyan (or Electric Blue) and the right color to Transparent (Alpha 0).
+
+Result: You now have a glowing ball of energy.
+
+Phase 2: The Scene Setup
+New Scene: Click + and choose 2D Scene. Rename the root node DynamicAtom.
+
+The Nucleus:
+
+Add a Sprite2D node as a child.
+
+Texture: Drag in your "Hydrogen Clipart" (or any element placeholder).
+
+Name it NucleusSprite.
+
+The Script:
+
+Click the Script Icon (scroll with a +) on the DynamicAtom root node.
+
+Name it DynamicAtom.gd.
+
+Delete everything and paste the code below.
+
+Phase 3: The "Master Script"
+This script handles the math, the spawning, and the animation all in one place.
+
+GDScript
+extends Node2D
+
+# -- CONFIGURATION --
+@export var atomic_number: int = 1:
+	set(value):
+		atomic_number = value
+		if is_inside_tree(): # Update in real-time if we change it in editor
+			generate_atom()
+
+@export var electron_texture: Texture2D # Drag your 'ElectronGlow.tres' here!
+@export var rotation_speed: float = 30.0 # Degrees per second
+@export var shell_spacing: float = 60.0 # Distance between rings
+
+# Standard Bohr Model capacities (K, L, M, N...)
+const SHELL_CAPACITIES = [2, 8, 18, 32, 50, 72]
+
+# Internal tracking
+var shell_pivots = [] 
+
+func _ready():
+	generate_atom()
+
+func generate_atom():
+	# 1. CLEANUP: Remove old electrons/orbits if we are regenerating
+	for pivot in shell_pivots:
+		pivot.queue_free()
+	shell_pivots.clear()
+	
+	# 2. CALCULATION: Figure out where electrons go
+	var remaining_electrons = atomic_number
+	var current_shell_index = 0
+	
+	while remaining_electrons > 0:
+		# How many fit in this shell?
+		var capacity = SHELL_CAPACITIES[current_shell_index]
+		var count = min(remaining_electrons, capacity)
+		
+		# Build the shell
+		create_shell(current_shell_index, count)
+		
+		remaining_electrons -= count
+		current_shell_index += 1
+	
+	# 3. VISUALS: Trigger the _draw() function to draw the rings
+	queue_redraw()
+
+func create_shell(index: int, electron_count: int):
+	var radius = (index + 1) * shell_spacing
+	
+	# Create a "Pivot" node. This invisible node will sit at (0,0) and SPIN.
+	# The electrons will be children of this pivot.
+	var pivot = Node2D.new()
+	pivot.name = "Shell_" + str(index)
+	add_child(pivot)
+	shell_pivots.append(pivot)
+	
+	# Place Electrons evenly around the circle
+	var angle_step = TAU / electron_count # TAU is 2*PI (360 degrees)
+	
+	for i in range(electron_count):
+		var electron = Sprite2D.new()
+		electron.texture = electron_texture
+		
+		# Math: Polar to Cartesian coordinates
+		var angle = i * angle_step
+		var x = cos(angle) * radius
+		var y = sin(angle) * radius
+		
+		electron.position = Vector2(x, y)
+		electron.scale = Vector2(0.5, 0.5) # Adjust size if needed
+		
+		# Add electron to the SPINNING pivot, not the static root
+		pivot.add_child(electron)
+
+func _process(delta):
+	# Animate the shells
+	for i in range(shell_pivots.size()):
+		var pivot = shell_pivots[i]
+		
+		# Visual Polish:
+		# 1. Alternate direction (Even shells spin Right, Odd spin Left)
+		var direction = 1 if i % 2 == 0 else -1
+		
+		# 2. Parallax: Outer shells spin slightly slower
+		var speed_mod = 1.0 - (i * 0.15)
+		
+		pivot.rotation_degrees += (rotation_speed * direction * speed_mod) * delta
+
+func _draw():
+	# Draw the static faint lines for the orbits
+	# We use the shell_pivots count to know how many rings to draw
+	for i in range(shell_pivots.size()):
+		var radius = (i + 1) * shell_spacing
+		# Draw a circle: Position, Radius, Color, Width
+		draw_arc(Vector2.ZERO, radius, 0, TAU, 64, Color(1, 1, 1, 0.2), 2.0, true)
+Phase 4: Connecting the Dots
+Click on the DynamicAtom root node.
+
+Look at the Inspector under Script Variables.
+
+Atomic Number: Set to 1 (Hydrogen).
+
+Electron Texture: Drag your ElectronGlow.tres from the FileSystem into this slot.
+
+Run the Scene (Press F6).
+
+Result: You should see a nucleus, one ring, and one electron spinning.
+
+How to Test different elements:
+While the game is running (or in the editor), change the Atomic Number to 10.
+
+The script instantly calculates: "Okay, Shell 1 gets 2. Shell 2 gets 8."
+
+It spawns two rings.
+
+The inner ring spins one way with 2 dots.
+
+The outer ring spins the other way with 8 dots.
+
+You now have a procedural atom generator! You can just instance this scene, set atom.atomic_number = 6, and change the Nucleus Sprite texture, and you're done.

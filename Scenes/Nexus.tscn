@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://b0a6aydt5lyyk"]
+
+[ext_resource type="Script" uid="uid://53vf2w623bi3" path="res://Scripts/Nexus.gd" id="1_88gcs"]
+[ext_resource type="PackedScene" uid="uid://deeit4dexuhou" path="res://Scenes/monster_card.tscn" id="2_i3m1b"]
+
+[node name="Nexus" type="Control" unique_id=1082065202]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_88gcs")
+monster_card_scene = ExtResource("2_i3m1b")
+
+[node name="BackButton" type="Button" parent="." unique_id=1920367692]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 47.0
+grow_horizontal = 2
+text = "BACK"
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1801925989]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -476.0
+offset_top = -320.0
+offset_right = 476.0
+offset_bottom = 896.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="SelectionPanel" unique_id=2063275514]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GridContainer" type="GridContainer" parent="SelectionPanel/ScrollContainer" unique_id=1099717871]
+layout_mode = 2
+
+[node name="VboxContainer" type="VBoxContainer" parent="." unique_id=479629868]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 53.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="VboxContainer" unique_id=394862114]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VboxContainer" unique_id=1544332229]
+layout_mode = 2
+alignment = 1
+
+[node name="Parent1Button" type="Button" parent="VboxContainer/HBoxContainer" unique_id=823115648]
+custom_minimum_size = Vector2(300, 400)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VboxContainer/HBoxContainer" unique_id=1956871001]
+layout_mode = 2
+theme_override_font_sizes/font_size = 50
+text = "+"
+
+[node name="Parent2Button" type="Button" parent="VboxContainer/HBoxContainer" unique_id=798526465]
+custom_minimum_size = Vector2(300, 400)
+layout_mode = 2
+
+[node name="BreedButton" type="Button" parent="VboxContainer" unique_id=820564058]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Initiate Fusion"
+
+[node name="StatusLabel" type="Label" parent="VboxContainer" unique_id=1683976128]
+layout_mode = 2
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://858qgy3euybd"]
 
-[ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://MainMenu.gd" id="1_0fbet"]
+[ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://Scripts/MainMenu.gd" id="1_0fbet"]
 
 [node name="MainMenu" type="Control" unique_id=167432749]
 layout_mode = 3
@@ -38,8 +38,9 @@ alignment = 2
 layout_mode = 2
 alignment = 1
 
-[node name="Battle" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1929649840]
+[node name="BattleButton" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1929649840]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Battle"
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1091476035]
@@ -47,8 +48,9 @@ layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="Collection" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1306101744]
+[node name="CollectionButton" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1306101744]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Collection"
 
 [node name="Label2" type="Label" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1961298202]
@@ -56,7 +58,19 @@ layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="Nexus" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=203896288]
+[node name="NexusButton" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=203896288]
 layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Nexus
+"
+
+[node name="Label3" type="Label" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=795038729]
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="NurseryButton" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1177928285]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Nursery
 "

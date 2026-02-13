@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Hydrogen"
+atomic_number = 1
+symbol = "H"
+atomic_mass = 1.008
+group = 0
+base_health = 10.0
+base_attack = 15.0
+base_defense = 2.0
+base_speed = 100.0

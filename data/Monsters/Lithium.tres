@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Lithium"
+atomic_number = 3
+symbol = "Li"
+atomic_mass = 6.94
+group = 2
+base_health = 70.0
+base_attack = 25.0
+base_defense = 5.0
+base_speed = 38.0

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Boron"
+atomic_number = 5
+symbol = "B"
+atomic_mass = 10.81
+group = 4
+base_health = 110.0
+base_attack = 35.0
+base_defense = 10.0
+base_speed = 30.0
