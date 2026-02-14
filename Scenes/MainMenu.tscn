@@ -19,21 +19,6 @@ grow_vertical = 2
 theme = SubResource("Theme_8saeu")
 script = ExtResource("1_0fbet")
 
-[node name="Header" type="HBoxContainer" parent="." unique_id=2015357751]
-layout_mode = 0
-offset_right = 1080.0
-offset_bottom = 1920.0
-
-[node name="Label" type="Label" parent="Header" unique_id=1807889127]
-layout_mode = 2
-text = "EXP"
-
-[node name="Label2" type="Label" parent="Header" unique_id=610952333]
-layout_mode = 2
-
-[node name="Label3" type="Label" parent="Header" unique_id=1896124299]
-layout_mode = 2
-
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1654497667]
 texture_filter = 1
 layout_mode = 1
@@ -59,29 +44,59 @@ text = "COLLECTION"
 
 [node name="BattleButton" type="Button" parent="TextureRect" unique_id=1929649840]
 layout_mode = 0
-offset_left = 956.0
-offset_top = 840.0
-offset_right = 1080.0
-offset_bottom = 890.0
+offset_left = 449.0
+offset_top = 1664.0
+offset_right = 641.0
+offset_bottom = 1792.0
 theme_override_font_sizes/font_size = 30
 text = "Battle"
 
 [node name="NexusButton" type="Button" parent="TextureRect" unique_id=203896288]
 layout_mode = 0
-offset_left = 956.0
-offset_top = 921.0
-offset_right = 1080.0
-offset_bottom = 971.0
+offset_left = 129.0
+offset_top = 1664.0
+offset_right = 325.0
+offset_bottom = 1794.0
 theme_override_font_sizes/font_size = 30
 text = "Nexus
 "
 
-[node name="NurseryButton" type="Button" parent="TextureRect" unique_id=1177928285]
+[node name="SynthesisButton" type="Button" parent="TextureRect" unique_id=1177928285]
 layout_mode = 0
-offset_left = 956.0
-offset_top = 975.0
-offset_right = 1080.0
-offset_bottom = 1025.0
+offset_left = 769.0
+offset_top = 1664.0
+offset_right = 961.0
+offset_bottom = 1794.0
 theme_override_font_sizes/font_size = 30
 text = "Nursery
 "
+
+[node name="Header" type="HBoxContainer" parent="." unique_id=2015357751]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -268.5
+offset_right = 268.5
+offset_bottom = 42.0
+grow_horizontal = 2
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="XPLabel" type="Label" parent="Header" unique_id=1807889127]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+text = "EXP:"
+
+[node name="DustLabel" type="Label" parent="Header" unique_id=610952333]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+text = "Neutron Dust:"
+
+[node name="GemLabel" type="Label" parent="Header" unique_id=1896124299]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+text = "Time Gems:"

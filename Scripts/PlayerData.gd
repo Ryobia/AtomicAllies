@@ -1,5 +1,7 @@
 extends Node
 
+signal resource_updated(resource_type, amount)
+
 # Inventory
 var owned_monsters: Array[MonsterData] = []
 var pending_egg: MonsterData = null
@@ -7,7 +9,9 @@ var selected_monster: MonsterData = null
 
 # Resources
 var resources = {
-	"neutron_dust": 0
+	"neutron_dust": 0,
+	"experience": 0,
+	"gems": 0
 }
 
 # List of all discoverable monsters (for the Collection Grid)
@@ -42,4 +46,5 @@ func add_resource(type: String, amount: int):
 	if not resources.has(type):
 		resources[type] = 0
 	resources[type] += amount
+	resource_updated.emit(type, resources[type])
 	print("Added %d %s. Total: %d" % [amount, type, resources[type]])

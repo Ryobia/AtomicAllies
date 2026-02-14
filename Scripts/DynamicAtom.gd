@@ -81,6 +81,9 @@ func generate_atom():
 	
 	# 3. VISUALS: Trigger the _draw() function to draw the rings
 	queue_redraw()
+	
+	# 4. Recalculate scale since the atom size changed
+	_on_parent_resized()
 
 func create_trail(target: Node2D):
 	var trail = Line2D.new()
@@ -154,6 +157,11 @@ func _process(delta):
 			line.add_point(to_local(target.global_position))
 			if line.get_point_count() > 15:
 				line.remove_point(0)
+	
+	# Force centering every frame (Fixes layout issues where resized signal is missed)
+	var parent = get_parent()
+	if parent is Control:
+		position = parent.size / 2.0
 
 func _draw():
 	# Draw the static faint lines for the orbits
@@ -171,3 +179,15 @@ func _on_parent_resized():
 	var parent = get_parent()
 	if parent is Control:
 		position = parent.size / 2.0
+		
+		# Auto-scale to fit the container
+		var shells = shell_pivots.size()
+		if shells > 0:
+			# Calculate the visual radius of the atom
+			var atom_radius = (shells * shell_spacing) + 30.0 # +30 padding for electron sprites
+			var diameter = atom_radius * 2.0
+			var available_space = min(parent.size.x, parent.size.y)
+			
+			# Scale to fill 90% of the available space
+			var target_scale = (available_space * 0.9) / diameter
+			scale = Vector2(target_scale, target_scale)

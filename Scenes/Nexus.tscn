@@ -7,17 +7,6 @@
 [ext_resource type="Script" uid="uid://g4o21gt6qrb5" path="res://Scripts/FusionFailurePopup.gd" id="4_h8wke"]
 [ext_resource type="Texture2D" uid="uid://dtmntevxwbd33" path="res://data/ElectronGlow.tres" id="5_ut1jl"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_lkuis"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n15nf"]
-bg_color = Color(0, 0, 0, 0.39215687)
-corner_radius_top_left = 40
-corner_radius_top_right = 40
-corner_radius_bottom_right = 40
-corner_radius_bottom_left = 40
-
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ut1jl"]
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_170cc"]
 content_margin_left = 10.0
 content_margin_top = 10.0
@@ -58,6 +47,17 @@ corner_radius_top_right = 15
 corner_radius_bottom_right = 15
 corner_radius_bottom_left = 15
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_lkuis"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n15nf"]
+bg_color = Color(0, 0, 0, 0.39215687)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ut1jl"]
+
 [node name="Nexus" type="Control" unique_id=1082065202]
 layout_mode = 3
 anchors_preset = 15
@@ -67,26 +67,6 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_88gcs")
 monster_card_scene = ExtResource("2_i3m1b")
-
-[node name="TextureRect" type="TextureRect" parent="." unique_id=106351309]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("3_ut1jl")
-
-[node name="BreedButton" type="Button" parent="TextureRect" unique_id=820564058]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 0
-offset_left = 412.0
-offset_top = 1336.0
-offset_right = 654.0
-offset_bottom = 1450.0
-theme_override_styles/normal = SubResource("StyleBoxEmpty_lkuis")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_n15nf")
-theme_override_styles/hover = SubResource("StyleBoxEmpty_ut1jl")
 
 [node name="BackButton" type="Button" parent="." unique_id=1920367692]
 layout_mode = 1
@@ -135,8 +115,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 53.0
-offset_bottom = -4.0
+offset_top = 360.0
+offset_bottom = -992.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -145,11 +125,14 @@ layout_mode = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VboxContainer" unique_id=1544332229]
 layout_mode = 2
+size_flags_vertical = 3
 alignment = 1
 
 [node name="Parent1Button" type="Button" parent="VboxContainer/HBoxContainer" unique_id=823115648]
-custom_minimum_size = Vector2(300, 400)
 layout_mode = 2
+size_flags_horizontal = 3
+icon_alignment = 1
+expand_icon = true
 
 [node name="Parent1Slot" type="Container" parent="VboxContainer/HBoxContainer/Parent1Button" unique_id=1735521439]
 layout_mode = 1
@@ -160,8 +143,12 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="IconTexture" type="TextureRect" parent="VboxContainer/HBoxContainer/Parent1Button/Parent1Slot" unique_id=1018375149]
-custom_minimum_size = Vector2(300, 300)
+custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Label" type="Label" parent="VboxContainer/HBoxContainer" unique_id=1956871001]
 layout_mode = 2
@@ -169,8 +156,8 @@ theme_override_font_sizes/font_size = 50
 text = "+"
 
 [node name="Parent2Button" type="Button" parent="VboxContainer/HBoxContainer" unique_id=798526465]
-custom_minimum_size = Vector2(300, 400)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="Parent2Slot" type="Container" parent="VboxContainer/HBoxContainer/Parent2Button" unique_id=1087064757]
 layout_mode = 1
@@ -181,11 +168,14 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="IconTexture" type="TextureRect" parent="VboxContainer/HBoxContainer/Parent2Button/Parent2Slot" unique_id=1825551555]
-custom_minimum_size = Vector2(300, 300)
+custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="StatusLabel" type="Label" parent="VboxContainer" unique_id=1683976128]
 layout_mode = 2
+horizontal_alignment = 1
 
 [node name="CheatSheetButton" type="Button" parent="VboxContainer" unique_id=1072632395]
 layout_mode = 2
@@ -285,5 +275,29 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_hoak4")
 text = "Collect Dust
 "
 
-[connection signal="pressed" from="TextureRect/BreedButton" to="." method="_on_breed_button_pressed"]
+[node name="TextureRect" type="TextureRect" parent="." unique_id=106351309]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_ut1jl")
+
+[node name="BreedButton" type="Button" parent="TextureRect" unique_id=820564058]
+top_level = true
+z_index = 10
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 0
+offset_left = 412.0
+offset_top = 1336.0
+offset_right = 654.0
+offset_bottom = 1450.0
+theme_override_styles/normal = SubResource("StyleBoxEmpty_lkuis")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_n15nf")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_ut1jl")
+
 [connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="TextureRect/BreedButton" to="." method="_on_breed_button_pressed"]

@@ -49,7 +49,17 @@ func _ready():
 	# Connect UI signals
 	if parent_1_btn: parent_1_btn.pressed.connect(func(): _open_selection(1))
 	if parent_2_btn: parent_2_btn.pressed.connect(func(): _open_selection(2))
-	if breed_btn: breed_btn.pressed.connect(_on_breed_pressed)
+	if breed_btn: 
+		# Disconnect any existing signals to ensure we use the right function
+		if breed_btn.pressed.is_connected(_on_breed_pressed):
+			breed_btn.pressed.disconnect(_on_breed_pressed)
+		breed_btn.pressed.connect(_on_breed_pressed)
+		
+		# Fix interaction: Ensure button renders on top of background panels
+		breed_btn.z_index = 100 
+		breed_btn.move_to_front()
+		breed_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+		print("Nexus: BreedButton setup complete. Path: ", breed_btn.get_path())
 	
 	# Connect Back Button
 	var back_btn = find_child("BackButton", true, false)
@@ -96,10 +106,12 @@ func _process(_delta):
 	if TimeManager.get_time_left("breeding") > 0:
 		var time_left = TimeManager.get_time_left("breeding")
 		status_label.text = "Breeding... %ds remaining" % time_left
-		breed_btn.disabled = true
+		if breed_btn and not breed_btn.disabled:
+			breed_btn.disabled = true
+			print("Nexus: BreedButton disabled by active timer.")
 	elif status_label.text.begins_with("Breeding..."):
 		status_label.text = "Breeding Complete! Check Nursery."
-		breed_btn.disabled = false
+		if breed_btn: breed_btn.disabled = false
 
 func check_breeding_status():
 	if TimeManager.get_time_left("breeding") > 0:
@@ -209,6 +221,7 @@ func _on_monster_selected(monster: MonsterData):
 
 # --- Breeding Logic ---
 func _on_breed_pressed():
+	print("Nexus: Breed Button Clicked!")
 	if not parent_1 or not parent_2:
 		status_label.text = "Please select two parents!"
 		return
@@ -266,6 +279,11 @@ func _update_slot_visuals(slot_idx: int, monster: MonsterData):
 	var icon_rect = null
 	
 	if slot_node:
+		# Force the slot container itself to expand so it fills the screen area
+		if slot_node is Control:
+			slot_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			slot_node.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			
 		icon_rect = slot_node.find_child("IconTexture", true, false)
 	else:
 		# 2. Fallback: Look for ParentXIcon directly
@@ -274,6 +292,15 @@ func _update_slot_visuals(slot_idx: int, monster: MonsterData):
 	if not icon_rect:
 		print("Nexus Warning: Could not find IconTexture for ", prefix)
 		return
+		
+	# Force the container to expand to fill its parent
+	icon_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	
+	# Ensure TextureRect allows resizing even without a texture
+	if icon_rect is TextureRect:
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 
 	# Cleanup previous atom
 	if slot_idx == 1 and is_instance_valid(atom_p1): atom_p1.queue_free()
@@ -313,6 +340,3 @@ func _debug_add_starters():
 		PlayerData.owned_monsters.append(he)
 	
 	print("DEBUG: Starters added. You can now test breeding.")
-
-func _on_breed_button_pressed() -> void:
-	pass # Replace with function body.
