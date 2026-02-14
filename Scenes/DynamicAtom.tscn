@@ -1,6 +1,10 @@
 [gd_scene format=3 uid="uid://cfj5wp1yutoau"]
 
 [ext_resource type="Script" uid="uid://dbru8yx3uww2x" path="res://Scripts/DynamicAtom.gd" id="1_i7p17"]
+[ext_resource type="Texture2D" path="res://data/ElectronGlow.tres" id="2_xyojk"]
 
 [node name="DynamicAtom" type="Node2D" unique_id=2100820952]
 script = ExtResource("1_i7p17")
+electron_texture = ExtResource("2_xyojk")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1886278749]

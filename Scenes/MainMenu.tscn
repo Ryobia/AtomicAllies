@@ -1,6 +1,11 @@
 [gd_scene format=3 uid="uid://858qgy3euybd"]
 
 [ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://Scripts/MainMenu.gd" id="1_0fbet"]
+[ext_resource type="Texture2D" uid="uid://cbljv54boso2n" path="res://Images/Home.png" id="2_853f1"]
+
+[sub_resource type="Theme" id="Theme_8saeu"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_853f1"]
 
 [node name="MainMenu" type="Control" unique_id=167432749]
 layout_mode = 3
@@ -11,7 +16,23 @@ offset_left = -1.0
 offset_right = -1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = SubResource("Theme_8saeu")
 script = ExtResource("1_0fbet")
+
+[node name="Header" type="HBoxContainer" parent="." unique_id=2015357751]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 1920.0
+
+[node name="Label" type="Label" parent="Header" unique_id=1807889127]
+layout_mode = 2
+text = "EXP"
+
+[node name="Label2" type="Label" parent="Header" unique_id=610952333]
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="Header" unique_id=1896124299]
+layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1654497667]
 texture_filter = 1
@@ -21,56 +42,46 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+texture = ExtResource("2_853f1")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1341224499]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="CollectionButton" type="Button" parent="TextureRect" unique_id=1306101744]
+layout_mode = 0
+offset_left = 270.0
+offset_top = 951.0
+offset_right = 770.0
+offset_bottom = 1197.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 60
+theme_override_styles/normal = SubResource("StyleBoxEmpty_853f1")
+text = "COLLECTION"
 
-[node name="VBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=574365345]
-layout_mode = 2
-alignment = 2
-
-[node name="VFlowContainer" type="VFlowContainer" parent="MarginContainer/VBoxContainer" unique_id=955593260]
-layout_mode = 2
-alignment = 1
-
-[node name="BattleButton" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1929649840]
-layout_mode = 2
+[node name="BattleButton" type="Button" parent="TextureRect" unique_id=1929649840]
+layout_mode = 0
+offset_left = 956.0
+offset_top = 840.0
+offset_right = 1080.0
+offset_bottom = 890.0
 theme_override_font_sizes/font_size = 30
 text = "Battle"
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1091476035]
-layout_mode = 2
-horizontal_alignment = 1
-vertical_alignment = 2
-
-[node name="CollectionButton" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1306101744]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "Collection"
-
-[node name="Label2" type="Label" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1961298202]
-layout_mode = 2
-horizontal_alignment = 1
-vertical_alignment = 2
-
-[node name="NexusButton" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=203896288]
-layout_mode = 2
+[node name="NexusButton" type="Button" parent="TextureRect" unique_id=203896288]
+layout_mode = 0
+offset_left = 956.0
+offset_top = 921.0
+offset_right = 1080.0
+offset_bottom = 971.0
 theme_override_font_sizes/font_size = 30
 text = "Nexus
 "
 
-[node name="Label3" type="Label" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=795038729]
-layout_mode = 2
-horizontal_alignment = 1
-vertical_alignment = 2
-
-[node name="NurseryButton" type="Button" parent="MarginContainer/VBoxContainer/VFlowContainer" unique_id=1177928285]
-layout_mode = 2
+[node name="NurseryButton" type="Button" parent="TextureRect" unique_id=1177928285]
+layout_mode = 0
+offset_left = 956.0
+offset_top = 975.0
+offset_right = 1080.0
+offset_bottom = 1025.0
 theme_override_font_sizes/font_size = 30
 text = "Nursery
 "

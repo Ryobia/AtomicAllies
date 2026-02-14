@@ -1,35 +1,31 @@
 extends Resource
 class_name MonsterData
 
-# --- Core Info ---
-@export var monster_name: String = "Unknown"
-@export var atomic_number: int = 1 # The "Z" number (Replaces Tier)
-@export var symbol: String = "H" # e.g. H, He, Li
+@export var monster_name: String = "Hydrogen"
+@export var symbol: String = "H"
+@export var atomic_number: int = 1
 @export var atomic_mass: float = 1.008
-@export var level: int = 1 # Added for stability mechanic
+@export var texture: Texture2D # The Nucleus sprite
+@export var is_stable_isotope: bool = false # Shiny status
 
-# --- Chemical Classification ---
-enum ChemicalGroup {
-	NON_METAL,
-	NOBLE_GAS,
-	ALKALI_METAL,
-	ALKALINE_EARTH,
-	METALLOID,
-	HALOGEN,
-	TRANSITION_METAL,
-	POST_TRANSITION,
-	LANTHANIDE,
-	ACTINIDE,
-	UNKNOWN
-}
-@export var group: ChemicalGroup = ChemicalGroup.NON_METAL
+# --- Dynamic Stats (Unique Collection) ---
+@export var level: int = 1
+@export var current_xp: int = 0
 
-# --- Visuals ---
-@export var texture: Texture2D
+# --- Derived Stats (The Physics Formula) ---
 
-# --- Base Stats (from our balance discussion) ---
-# Calculated roughly as: Speed = 100/sqrt(mass), HP = mass * 10
-@export var base_health: float = 100.0
-@export var base_attack: float = 10.0
-@export var base_defense: float = 5.0
-@export var base_speed: float = 10.0
+# Heavier atoms have more HP
+var base_health: float:
+	get: return (atomic_mass * 10.0) + (level * 5.0)
+
+# Higher atomic number = more protons = more raw power
+var base_attack: float:
+	get: return ((atomic_number * 5.0) + 10.0) + (level * 2.0)
+
+# Electron shielding provides defense
+var base_defense: float:
+	get: return (atomic_number * 2.0) + (level * 1.0)
+
+# Heavier atoms are slower (Inertia)
+var base_speed: float:
+	get: return 100.0 / sqrt(atomic_mass)

@@ -16,11 +16,15 @@ script = ExtResource("1_k4rt3")
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=775737383]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBoxContainer" unique_id=696556731]
-layout_mode = 2
-horizontal_alignment = 1
-
-[node name="TextureRect" type="TextureRect" parent="VBoxContainer" unique_id=218133595]
+[node name="IconTexture" type="TextureRect" parent="VBoxContainer" unique_id=218133595]
 layout_mode = 2
 texture = ExtResource("2_68eex")
 stretch_mode = 4
+
+[node name="NameLabel" type="Label" parent="VBoxContainer" unique_id=696556731]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="NumberLabel" type="Label" parent="VBoxContainer" unique_id=1574562517]
+layout_mode = 2
+horizontal_alignment = 1

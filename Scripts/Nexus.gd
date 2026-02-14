@@ -17,12 +17,21 @@ var parent_1: MonsterData
 var parent_2: MonsterData
 var selecting_slot: int = 0 # Tracks if we are picking Parent 1 or Parent 2
 
+# Visual References
+var atom_p1: Node2D
+var atom_p2: Node2D
+var fusion_failure_popup
+
 func _ready():
 	# Locate nodes dynamically to avoid path errors
 	parent_1_btn = find_child("Parent1Button", true, false)
 	parent_2_btn = find_child("Parent2Button", true, false)
 	breed_btn = find_child("BreedButton", true, false)
 	status_label = find_child("StatusLabel", true, false)
+	
+	fusion_failure_popup = find_child("FusionFailurePopup", true, false)
+	if fusion_failure_popup:
+		fusion_failure_popup.visible = false
 	
 	selection_panel = find_child("SelectionPanel", true, false)
 	if selection_panel:
@@ -53,13 +62,34 @@ func _ready():
 	else:
 		print("Nexus Error: Could not find node named 'BackButton'")
 	
+	# Connect Cheat Sheet
+	var cheat_sheet = find_child("FusionCheatSheet", true, false)
+	var cheat_btn = find_child("CheatSheetButton", true, false)
+	
+	if cheat_sheet:
+		cheat_sheet.visible = false # Hide by default
+		
+	if cheat_btn and cheat_sheet:
+		cheat_btn.z_index = 10 # Ensure button is always clickable
+		cheat_btn.pressed.connect(func(): 
+			cheat_sheet.visible = true
+			cheat_sheet.move_to_front()
+		)
+	
 	# Hide selection panel initially
 	if selection_panel:
 		selection_panel.visible = false
 	else:
 		print("Nexus Warning: Could not find 'SelectionPanel'. If it is visible in the editor, it might be blocking clicks.")
 	
+	if not SynthesisManager.fusion_completed.is_connected(_on_fusion_completed):
+		SynthesisManager.fusion_completed.connect(_on_fusion_completed)
+	
 	check_breeding_status()
+	
+	# DEBUG: If we have no monsters, give us the starters so we can test!
+	if PlayerData.owned_monsters.is_empty():
+		_debug_add_starters()
 
 func _process(_delta):
 	# Update the timer label in real-time
@@ -169,9 +199,11 @@ func _on_monster_selected(monster: MonsterData):
 	if selecting_slot == 1:
 		parent_1 = monster
 		parent_1_btn.text = monster.monster_name
+		_update_slot_visuals(1, monster)
 	elif selecting_slot == 2:
 		parent_2 = monster
 		parent_2_btn.text = monster.monster_name
+		_update_slot_visuals(2, monster)
 	
 	selection_panel.visible = false
 
@@ -184,38 +216,27 @@ func _on_breed_pressed():
 	if parent_1 == parent_2:
 		status_label.text = "Cannot breed a monster with itself!"
 		return
-	
-	# Nuclear Fusion Logic: Z1 + Z2 = Z_new
-	var z1 = parent_1.atomic_number
-	var z2 = parent_2.atomic_number
-	var target_z = z1 + z2
-	
-	# Stability Check
-	var stability = _calculate_stability(parent_1.level, parent_2.level, target_z)
-	var roll = randf() * 100.0
-	
-	if roll > stability:
-		status_label.text = "Fusion Failed! Instability detected. (Chance: %d%%)" % int(stability)
-		PlayerData.add_resource("neutron_dust", 1)
-		print("Fusion Failed. Gained Neutron Dust.")
-		return
-	
-	var result_monster = _get_monster_by_atomic_number(target_z)
-	
-	if result_monster:
-		# Success! Start the process
-		PlayerData.pending_egg = result_monster
 		
-		# Start the timer (10 seconds for testing)
-		TimeManager.start_timer("breeding", 10)
-		
-		status_label.text = "Fusion started! Creating Element #%d..." % target_z
-		breed_btn.disabled = true
-		
-		print("Fusion Result: ", result_monster.monster_name, " (Z=", target_z, ")")
+	# Delegate logic to SynthesisManager
+	SynthesisManager.attempt_fusion(parent_1, parent_2)
+
+func _on_fusion_completed(target_z: int, success: bool, reward: int):
+	if success:
+		var result_monster = _get_monster_by_atomic_number(target_z)
+		if result_monster:
+			# Success! Start the process
+			PlayerData.pending_egg = result_monster
+			
+			# Start the timer (10 seconds for testing)
+			TimeManager.start_timer("breeding", 10)
+			
+			status_label.text = "Fusion started! Creating Element #%d..." % target_z
+			breed_btn.disabled = true
 	else:
-		status_label.text = "Fusion Failed: Element #%d is unstable or undiscovered." % target_z
-		print("Fusion Failed: No monster found for Z=", target_z)
+		if fusion_failure_popup:
+			fusion_failure_popup.setup(reward)
+		else:
+			status_label.text = "Fusion Failed! Instability detected.\nRecovered %d Neutron Dust." % reward
 
 func _get_monster_by_atomic_number(z: int) -> MonsterData:
 	# Simple lookup for the first 10 elements
@@ -226,19 +247,72 @@ func _get_monster_by_atomic_number(z: int) -> MonsterData:
 	
 	if z > 0 and z <= element_names.size():
 		var file_name = element_names[z - 1]
-		var path = "res://Data/Monsters/" + file_name + ".tres"
+		var path = "res://data/Monsters/" + file_name + ".tres"
 		if ResourceLoader.exists(path):
 			return load(path)
 	
 	return null
 
-func _calculate_stability(l1: int, l2: int, z: int) -> float:
-	var base_chance = 40.0
-	if z == 0: return 100.0
-	# Formula: Base + (Combined Levels * Scaling / Target Z)
-	# Higher levels increase stability. Higher Target Z makes it harder.
-	var bonus = float(l1 + l2) * 5.0 / float(z)
-	return clamp(base_chance + bonus, 0.0, 100.0)
-
 func _on_back_button_pressed():
 	GlobalManager.switch_scene("main_menu")
+
+func _update_slot_visuals(slot_idx: int, monster: MonsterData):
+	# Try to find the slot container or icon directly
+	# We look for "Parent1Slot" or "Parent1Icon" to be flexible
+	var prefix = "Parent1" if slot_idx == 1 else "Parent2"
+	
+	# 1. Try to find a container named ParentXSlot
+	var slot_node = find_child(prefix + "Slot", true, false)
+	var icon_rect = null
+	
+	if slot_node:
+		icon_rect = slot_node.find_child("IconTexture", true, false)
+	else:
+		# 2. Fallback: Look for ParentXIcon directly
+		icon_rect = find_child(prefix + "Icon", true, false)
+	
+	if not icon_rect:
+		print("Nexus Warning: Could not find IconTexture for ", prefix)
+		return
+
+	# Cleanup previous atom
+	if slot_idx == 1 and is_instance_valid(atom_p1): atom_p1.queue_free()
+	if slot_idx == 2 and is_instance_valid(atom_p2): atom_p2.queue_free()
+
+	if monster:
+		var atom = _create_atom(monster)
+		if atom:
+			icon_rect.add_child(atom)
+			atom.position = icon_rect.size / 2.0
+			if slot_idx == 1: atom_p1 = atom
+			else: atom_p2 = atom
+
+func _create_atom(monster: MonsterData) -> Node2D:
+	var atom_script = load("res://Scripts/DynamicAtom.gd")
+	var electron_tex = load("res://data/ElectronGlow.tres")
+	
+	if not atom_script or not electron_tex:
+		return null
+		
+	var atom = Node2D.new()
+	atom.set_script(atom_script)
+	atom.atomic_number = monster.atomic_number
+	atom.electron_texture = electron_tex
+	atom.rotation_speed = 20.0
+	return atom
+
+func _debug_add_starters():
+	print("DEBUG: Inventory empty. Adding starter atoms (H, H, He)...")
+	var h = _get_monster_by_atomic_number(1) # Hydrogen
+	var he = _get_monster_by_atomic_number(2) # Helium
+	
+	if h: 
+		PlayerData.owned_monsters.append(h)
+		PlayerData.owned_monsters.append(h) # Need 2 to make Helium
+	if he:
+		PlayerData.owned_monsters.append(he)
+	
+	print("DEBUG: Starters added. You can now test breeding.")
+
+func _on_breed_button_pressed() -> void:
+	pass # Replace with function body.

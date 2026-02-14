@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://2c6fujsuf5nu"]
 
 [ext_resource type="Script" uid="uid://cld3h0d5cobg5" path="res://Scripts/DetailView.gd" id="1_mhro5"]
-[ext_resource type="Texture2D" uid="uid://56c1oo0rip31" path="res://Images/HydrogenAtom.png" id="2_51vr3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mhro5"]
 bg_color = Color(0.002583448, 0.032369856, 0.074585386, 1)
@@ -47,8 +46,8 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="IconTexture" type="TextureRect" parent="MarginContainer/VBoxContainer" unique_id=1310145462]
+custom_minimum_size = Vector2(250, 250)
 layout_mode = 2
-texture = ExtResource("2_51vr3")
 
 [node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1785362234]
 layout_mode = 2

@@ -6,6 +6,7 @@ var egg_texture
 var dissolve_popup
 var dissolve_label
 var dissolve_ok_btn
+var fusion_result_popup
 
 func _ready():
 	# Find nodes dynamically
@@ -13,6 +14,7 @@ func _ready():
 	hatch_btn = find_child("HatchButton", true, false)
 	egg_texture = find_child("EggTexture", true, false)
 	dissolve_popup = find_child("DissolvePopup", true, false)
+	fusion_result_popup = find_child("FusionResultPopup", true, false)
 	
 	if dissolve_popup:
 		dissolve_label = dissolve_popup.find_child("Label", true, false)
@@ -20,6 +22,9 @@ func _ready():
 		dissolve_popup.visible = false
 		if dissolve_ok_btn:
 			dissolve_ok_btn.pressed.connect(_on_dissolve_ok_pressed)
+
+	if fusion_result_popup:
+		fusion_result_popup.visible = false
 
 	if hatch_btn:
 		hatch_btn.pressed.connect(_on_hatch_pressed)
@@ -77,6 +82,9 @@ func _on_hatch_pressed():
 		# --- NEW MONSTER LOGIC ---
 		PlayerData.owned_monsters.append(egg)
 		if status_label: status_label.text = "Hatched a new %s!" % egg.monster_name
+		
+		if fusion_result_popup:
+			fusion_result_popup.setup(egg)
 	
 	# Clear the egg
 	PlayerData.pending_egg = null
