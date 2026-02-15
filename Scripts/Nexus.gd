@@ -55,9 +55,7 @@ func _ready():
 			breed_btn.pressed.disconnect(_on_breed_pressed)
 		breed_btn.pressed.connect(_on_breed_pressed)
 		
-		# Fix interaction: Ensure button renders on top of background panels
-		breed_btn.z_index = 100 
-		breed_btn.move_to_front()
+		breed_btn.z_index = 5 # Ensure it's above background but below popups (z=20+)
 		breed_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 		print("Nexus: BreedButton setup complete. Path: ", breed_btn.get_path())
 	

@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://cv5jsdpjtuwms"]
+
+[ext_resource type="Texture2D" uid="uid://cf83c4m7c1077" path="res://Assets/backbtn.png" id="1_fk8vy"]
+[ext_resource type="Script" uid="uid://cp44373xota4t" path="res://Scripts/BackButton.gd" id="2_2jaey"]
+
+[node name="BackButton" type="TextureButton" unique_id=684150519]
+offset_left = 30.0
+offset_top = 30.0
+offset_right = 273.0
+offset_bottom = 145.0
+texture_normal = ExtResource("1_fk8vy")
+texture_pressed = ExtResource("1_fk8vy")
+script = ExtResource("2_2jaey")

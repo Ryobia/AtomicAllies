@@ -12,7 +12,7 @@ func _ready():
 	if not collection_btn:
 		collection_btn = find_child("CollectionButton", true, false)
 		
-	var quit_btn = find_child("QuitButton", true, false)
+	# var quit_btn = find_child("QuitButton", true, false)
 	
 	if battle_btn:
 		if not battle_btn.pressed.is_connected(_on_battle_pressed):
@@ -52,7 +52,7 @@ func _on_breeding_pressed():
 	GlobalManager.switch_scene("nexus")
 
 func _on_collection_pressed():
-	GlobalManager.switch_scene("collection")
+	GlobalManager.switch_scene("periodic_table")
 
 func _on_synthesis_pressed():
 	GlobalManager.switch_scene("nursery")

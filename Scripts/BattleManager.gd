@@ -16,8 +16,6 @@ extends Node2D
 # In-battle stats
 var player_current_health: float
 var enemy_current_health: float
-var player_has_surge: bool = false
-var enemy_has_surge: bool = false
 var turn_timer: Timer
 
 
@@ -73,16 +71,12 @@ func _on_attack_button_pressed():
 	attack_button.disabled = true # Disable button during the turn sequence
 	
 	# 1. Call the global CombatManager to get the damage result
-	var result = CombatManager.calculate_damage(player_monster_data, enemy_monster_data, player_has_surge)
+	var result = CombatManager.calculate_damage(player_monster_data, enemy_monster_data)
 	
 	# 2. Apply the result
 	enemy_current_health -= result.damage
 	enemy_health_bar.value = enemy_current_health
 	turn_result_label.text = "You dealt %d damage!" % round(result.damage)
-	
-	# 3. Handle Surge
-	enemy_has_surge = result.gives_surge
-	player_has_surge = false # Attacking consumes your surge
 	
 	if enemy_current_health <= 0:
 		turn_result_label.text = "You Win!"
@@ -96,13 +90,10 @@ func enemy_turn():
 	# --- Enemy's Turn ---
 	turn_result_label.text = "Enemy is attacking..."
 	
-	var result = CombatManager.calculate_damage(enemy_monster_data, player_monster_data, enemy_has_surge)
+	var result = CombatManager.calculate_damage(enemy_monster_data, player_monster_data)
 	player_current_health -= result.damage
 	player_health_bar.value = player_current_health
 	turn_result_label.text = "Enemy dealt %d damage!" % round(result.damage)
-	
-	player_has_surge = result.gives_surge
-	enemy_has_surge = false
 	
 	if player_current_health <= 0:
 		turn_result_label.text = "You Lose!"

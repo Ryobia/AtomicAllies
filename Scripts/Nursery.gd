@@ -43,7 +43,7 @@ func _process(_delta):
 	if PlayerData.pending_egg:
 		if TimeManager.get_time_left("breeding") > 0:
 			if status_label:
-				status_label.text = "Incubating... %ds" % TimeManager.get_time_left("breeding")
+				status_label.text = "Synthesizing... %ds" % TimeManager.get_time_left("breeding")
 			if hatch_btn:
 				hatch_btn.disabled = true
 		elif hatch_btn and hatch_btn.disabled:
@@ -55,13 +55,13 @@ func update_ui():
 		if egg_texture: egg_texture.visible = true
 		
 		if TimeManager.get_time_left("breeding") > 0:
-			if status_label: status_label.text = "Incubating..."
+			if status_label: status_label.text = "Synthesizing..."
 			if hatch_btn: hatch_btn.disabled = true
 		else:
-			if status_label: status_label.text = "Ready to Hatch!"
+			if status_label: status_label.text = "Synthesis Complete!"
 			if hatch_btn: hatch_btn.disabled = false
 	else:
-		if status_label: status_label.text = "No egg in nursery."
+		if status_label: status_label.text = "No Element in Chamber"
 		if hatch_btn: hatch_btn.disabled = true
 		if egg_texture: egg_texture.visible = false
 
@@ -101,6 +101,3 @@ func _on_back_pressed():
 func _get_dust_amount(atomic_number: int) -> int:
 	# Heavier elements give more dust. Formula: 5 dust per atomic number.
 	return atomic_number * 5
-
-func _on_back_button_pressed():
-	GlobalManager.switch_scene("main_menu")

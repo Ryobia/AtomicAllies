@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://c0xtiv7eij2mk"]
+
+[ext_resource type="Script" uid="uid://boco7djaefshy" path="res://Scripts/PeriodicTable.gd" id="1_mste3"]
+[ext_resource type="PackedScene" uid="uid://deeit4dexuhou" path="res://Scenes/monster_card.tscn" id="2_6e2n0"]
+[ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="3_yqx8d"]
+
+[node name="PeriodicTable" type="Control" unique_id=1304090810]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mste3")
+monster_card_scene = ExtResource("2_6e2n0")
+
+[node name="TextureRect" type="ColorRect" parent="." unique_id=237328911]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0071451543, 0.0552174, 0.111244775, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=113249070]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 192.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GridContainer" type="GridContainer" parent="ScrollContainer" unique_id=941014855]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 18
+
+[node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("3_yqx8d")]
+layout_mode = 1

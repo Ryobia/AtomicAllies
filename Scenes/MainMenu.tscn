@@ -2,10 +2,16 @@
 
 [ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://Scripts/MainMenu.gd" id="1_0fbet"]
 [ext_resource type="Texture2D" uid="uid://cbljv54boso2n" path="res://Images/Home.png" id="2_853f1"]
+[ext_resource type="Texture2D" uid="uid://12fdjpkfd2pe" path="res://Assets/synthesisbtn.png" id="3_xim88"]
+[ext_resource type="Texture2D" uid="uid://q725j5sxht02" path="res://Assets/fusionbtn.png" id="4_koqhg"]
+[ext_resource type="Texture2D" uid="uid://ba1npe4sxa873" path="res://Assets/collectionbtn.png" id="5_cmrfp"]
+[ext_resource type="Texture2D" uid="uid://cotx186a0sk3n" path="res://Assets/battlebtn.png" id="6_loo7a"]
+[ext_resource type="Texture2D" uid="uid://bq8btjy2vlraa" path="res://Assets/shopbtn.png" id="7_if7li"]
 
 [sub_resource type="Theme" id="Theme_8saeu"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_853f1"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xim88"]
+bg_color = Color(0.050980393, 0.0627451, 0.07450981, 1)
 
 [node name="MainMenu" type="Control" unique_id=167432749]
 layout_mode = 3
@@ -31,45 +37,77 @@ texture = ExtResource("2_853f1")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="CollectionButton" type="Button" parent="TextureRect" unique_id=1306101744]
-layout_mode = 0
-offset_left = 270.0
-offset_top = 951.0
-offset_right = 770.0
-offset_bottom = 1197.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 60
-theme_override_styles/normal = SubResource("StyleBoxEmpty_853f1")
-text = "COLLECTION"
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1435694746]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -280.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 10
+alignment = 1
 
-[node name="BattleButton" type="Button" parent="TextureRect" unique_id=1929649840]
-layout_mode = 0
-offset_left = 449.0
-offset_top = 1664.0
-offset_right = 641.0
-offset_bottom = 1792.0
-theme_override_font_sizes/font_size = 30
-text = "Battle"
+[node name="Panel" type="Panel" parent="HBoxContainer" unique_id=186983070]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_xim88")
 
-[node name="NexusButton" type="Button" parent="TextureRect" unique_id=203896288]
+[node name="SynthesisButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=335595599]
 layout_mode = 0
-offset_left = 129.0
-offset_top = 1664.0
-offset_right = 325.0
-offset_bottom = 1794.0
-theme_override_font_sizes/font_size = 30
-text = "Nexus
-"
+offset_left = 10.0
+offset_top = 51.0
+offset_right = 188.0
+offset_bottom = 229.0
+size_flags_horizontal = 3
+size_flags_vertical = 4
+texture_normal = ExtResource("3_xim88")
+texture_pressed = ExtResource("3_xim88")
 
-[node name="SynthesisButton" type="Button" parent="TextureRect" unique_id=1177928285]
+[node name="NexusButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=592446354]
 layout_mode = 0
-offset_left = 769.0
-offset_top = 1664.0
-offset_right = 961.0
-offset_bottom = 1794.0
-theme_override_font_sizes/font_size = 30
-text = "Nursery
-"
+offset_left = 198.0
+offset_top = 84.0
+offset_right = 430.0
+offset_bottom = 195.0
+size_flags_horizontal = 3
+size_flags_vertical = 4
+texture_normal = ExtResource("4_koqhg")
+texture_pressed = ExtResource("4_koqhg")
+
+[node name="CollectionButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=1065544654]
+layout_mode = 0
+offset_left = 440.0
+offset_top = 49.0
+offset_right = 619.0
+offset_bottom = 231.0
+size_flags_horizontal = 3
+size_flags_vertical = 4
+texture_normal = ExtResource("5_cmrfp")
+texture_pressed = ExtResource("5_cmrfp")
+
+[node name="BattleButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=1649916916]
+layout_mode = 0
+offset_left = 629.0
+offset_top = 82.0
+offset_right = 833.0
+offset_bottom = 198.0
+size_flags_horizontal = 3
+size_flags_vertical = 4
+texture_normal = ExtResource("6_loo7a")
+texture_pressed = ExtResource("6_loo7a")
+
+[node name="ShopButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=319412837]
+layout_mode = 0
+offset_left = 843.0
+offset_top = 68.0
+offset_right = 1080.0
+offset_bottom = 212.0
+size_flags_horizontal = 3
+size_flags_vertical = 4
+texture_normal = ExtResource("7_if7li")
+texture_pressed = ExtResource("7_if7li")
 
 [node name="Header" type="HBoxContainer" parent="." unique_id=2015357751]
 layout_mode = 1
@@ -87,16 +125,13 @@ alignment = 1
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 30
-text = "EXP:"
 
 [node name="DustLabel" type="Label" parent="Header" unique_id=610952333]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 30
-text = "Neutron Dust:"
 
 [node name="GemLabel" type="Label" parent="Header" unique_id=1896124299]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 30
-text = "Time Gems:"

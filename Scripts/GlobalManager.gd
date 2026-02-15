@@ -9,7 +9,8 @@ var scenes = {
 	"collection": "res://Scenes/Collection.tscn",
 	"battle": "res://Scenes/Battle.tscn",
 	"nursery": "res://Scenes/Nursery.tscn",
-	"detail_view": "res://Scenes/DetailView.tscn"
+	"detail_view": "res://Scenes/DetailView.tscn",
+	"periodic_table": "res://Scenes/PeriodicTable.tscn"
 }
 
 func switch_scene(scene_key: String):
