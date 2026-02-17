@@ -4,10 +4,10 @@
 
 [resource]
 script = ExtResource("1_script")
-monster_name = "Beryllium"
-atomic_number = 4
-symbol = "Be"
-atomic_mass = 9.01
+monster_name = "Magnesium"
+symbol = "Mg"
+atomic_number = 12
+atomic_mass = 24.305
 group = 3
 level = 1
 current_xp = 0

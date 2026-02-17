@@ -54,7 +54,7 @@ func update_ui():
 	if PlayerData.pending_egg:
 		if egg_texture: egg_texture.visible = true
 		
-		if TimeManager.get_time_left("breeding") > 0:
+		if TimeManager.get_time_left("Fusing...") > 0:
 			if status_label: status_label.text = "Synthesizing..."
 			if hatch_btn: hatch_btn.disabled = true
 		else:
@@ -71,17 +71,17 @@ func _on_hatch_pressed():
 	
 	if PlayerData.is_monster_owned(egg.monster_name):
 		# --- DISSOLVE LOGIC ---
-		var dust_amount = _get_dust_amount(egg.atomic_number)
-		PlayerData.add_resource("neutron_dust", dust_amount)
+		var essence_amount = _get_essence_amount(egg.atomic_number)
+		PlayerData.add_essence(egg.group, essence_amount)
 		
 		if dissolve_label:
-			dissolve_label.text = "Duplicate %s found!\nDissolved into %d Neutron Dust." % [egg.monster_name, dust_amount]
+			dissolve_label.text = "Duplicate %s found!\nDissolved into %d Group %d Essence." % [egg.monster_name, essence_amount, egg.group]
 		
 		if dissolve_popup: dissolve_popup.visible = true
 	else:
 		# --- NEW MONSTER LOGIC ---
 		PlayerData.owned_monsters.append(egg)
-		if status_label: status_label.text = "Hatched a new %s!" % egg.monster_name
+		if status_label: status_label.text = "Fused into a new %s!" % egg.monster_name
 		
 		if fusion_result_popup:
 			fusion_result_popup.setup(egg)
@@ -98,6 +98,6 @@ func _on_dissolve_ok_pressed():
 func _on_back_pressed():
 	GlobalManager.switch_scene("main_menu")
 
-func _get_dust_amount(atomic_number: int) -> int:
-	# Heavier elements give more dust. Formula: 5 dust per atomic number.
-	return atomic_number * 5
+func _get_essence_amount(atomic_number: int) -> int:
+	# Heavier elements give more essence.
+	return max(1, int(atomic_number * 2))

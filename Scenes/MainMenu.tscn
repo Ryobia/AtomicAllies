@@ -2,16 +2,180 @@
 
 [ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://Scripts/MainMenu.gd" id="1_0fbet"]
 [ext_resource type="Texture2D" uid="uid://cbljv54boso2n" path="res://Images/Home.png" id="2_853f1"]
+[ext_resource type="Shader" uid="uid://ryl0qht6242f" path="res://Scenes/BlackHole.gdshader" id="3_loo7a"]
 [ext_resource type="Texture2D" uid="uid://12fdjpkfd2pe" path="res://Assets/synthesisbtn.png" id="3_xim88"]
 [ext_resource type="Texture2D" uid="uid://q725j5sxht02" path="res://Assets/fusionbtn.png" id="4_koqhg"]
 [ext_resource type="Texture2D" uid="uid://ba1npe4sxa873" path="res://Assets/collectionbtn.png" id="5_cmrfp"]
 [ext_resource type="Texture2D" uid="uid://cotx186a0sk3n" path="res://Assets/battlebtn.png" id="6_loo7a"]
 [ext_resource type="Texture2D" uid="uid://bq8btjy2vlraa" path="res://Assets/shopbtn.png" id="7_if7li"]
+[ext_resource type="Texture2D" uid="uid://dw1d73a004nvf" path="res://Assets/swirlmain.png" id="9_if7li"]
+[ext_resource type="Texture2D" uid="uid://d12oglxndoyp2" path="res://Assets/swirlsecondary.png" id="10_rrcx7"]
+[ext_resource type="Shader" uid="uid://cau2cawesljrh" path="res://Scenes/core.gdshader" id="11_if7li"]
 
 [sub_resource type="Theme" id="Theme_8saeu"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xim88"]
-bg_color = Color(0.050980393, 0.0627451, 0.07450981, 1)
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_if7li"]
+blend_mode = 1
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_rrcx7"]
+blend_mode = 1
+
+[sub_resource type="Gradient" id="Gradient_if7li"]
+offsets = PackedFloat32Array(0, 0.032786883, 1)
+colors = PackedColorArray(0, 0, 0, 1, 1, 1, 1, 1, 0.90594953, 0.552091, 0.014414197, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_rrcx7"]
+gradient = SubResource("Gradient_if7li")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_fh7cp"]
+particle_flag_disable_z = true
+emission_shape = 6
+emission_ring_axis = Vector3(0, 0, 1)
+emission_ring_height = 1.0
+emission_ring_radius = 300.0
+emission_ring_inner_radius = 300.0
+emission_ring_cone_angle = 90.0
+orbit_velocity_min = -0.019999906
+orbit_velocity_max = -0.019999906
+radial_accel_min = -300.0
+radial_accel_max = -300.0
+scale_min = 0.19999999
+scale_max = 0.29999998
+color_ramp = SubResource("GradientTexture1D_rrcx7")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_koqhg"]
+shader = ExtResource("3_loo7a")
+shader_parameter/resolution = Vector2(64, 64)
+shader_parameter/colorResolution = 100.0
+shader_parameter/distortionIntensity = 1.0
+shader_parameter/spiralDistortionIntensity = 1.0
+shader_parameter/holeSize = 0.2
+shader_parameter/rotations = 1.0
+shader_parameter/depth = 0.5
+shader_parameter/spiralIntensity = 1.0
+shader_parameter/shrinkSpeed = 0.2
+shader_parameter/roationSpeed = 0.1
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rrcx7"]
+shader = ExtResource("11_if7li")
+shader_parameter/radius = 0.4
+shader_parameter/softness = 0.1
+
+[sub_resource type="Animation" id="Animation_fh7cp"]
+resource_name = "Blackhole"
+length = 60.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Swirl_Back:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 60),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 6.283185307179586]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Swirl_Front:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 60),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 12.566370614359172]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Swirl_Back2:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 60),
+"transitions": PackedFloat32Array(1, 1.0000001),
+"update": 0,
+"values": [-3.141592653589793, 3.141592653589793]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath(".:scale")
+tracks/3/interp = 2
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 15.133333, 60),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1.05, 0.95), Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_8e205"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Swirl_Back:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Swirl_Front:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Swirl_Back2:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [3.862006]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath(".:scale")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_7467j"]
+resource_name = "blackholering"
+length = 0.1
+loop_mode = 1
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_7467j"]
+_data = {
+&"Blackhole": SubResource("Animation_fh7cp"),
+&"RESET": SubResource("Animation_8e205"),
+&"blackholering": SubResource("Animation_7467j")
+}
 
 [node name="MainMenu" type="Control" unique_id=167432749]
 layout_mode = 3
@@ -39,71 +203,46 @@ stretch_mode = 6
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1435694746]
 layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
+anchors_preset = -1
+anchor_top = 0.934
 anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_bottom = 0.934
 offset_top = -280.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Panel" type="Panel" parent="HBoxContainer" unique_id=186983070]
+[node name="SynthesisButton" type="TextureButton" parent="HBoxContainer" unique_id=335595599]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_xim88")
-
-[node name="SynthesisButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=335595599]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 51.0
-offset_right = 188.0
-offset_bottom = 229.0
 size_flags_horizontal = 3
 size_flags_vertical = 4
 texture_normal = ExtResource("3_xim88")
 texture_pressed = ExtResource("3_xim88")
 
-[node name="NexusButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=592446354]
-layout_mode = 0
-offset_left = 198.0
-offset_top = 84.0
-offset_right = 430.0
-offset_bottom = 195.0
+[node name="NexusButton" type="TextureButton" parent="HBoxContainer" unique_id=592446354]
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 texture_normal = ExtResource("4_koqhg")
 texture_pressed = ExtResource("4_koqhg")
 
-[node name="CollectionButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=1065544654]
-layout_mode = 0
-offset_left = 440.0
-offset_top = 49.0
-offset_right = 619.0
-offset_bottom = 231.0
-size_flags_horizontal = 3
+[node name="CollectionButton" type="TextureButton" parent="HBoxContainer" unique_id=1065544654]
+layout_mode = 2
+size_flags_horizontal = 6
 size_flags_vertical = 4
 texture_normal = ExtResource("5_cmrfp")
 texture_pressed = ExtResource("5_cmrfp")
 
-[node name="BattleButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=1649916916]
-layout_mode = 0
-offset_left = 629.0
-offset_top = 82.0
-offset_right = 833.0
-offset_bottom = 198.0
+[node name="BattleButton" type="TextureButton" parent="HBoxContainer" unique_id=1649916916]
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 texture_normal = ExtResource("6_loo7a")
 texture_pressed = ExtResource("6_loo7a")
 
-[node name="ShopButton" type="TextureButton" parent="HBoxContainer/Panel" unique_id=319412837]
-layout_mode = 0
-offset_left = 843.0
-offset_top = 68.0
-offset_right = 1080.0
-offset_bottom = 212.0
+[node name="ShopButton" type="TextureButton" parent="HBoxContainer" unique_id=319412837]
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 texture_normal = ExtResource("7_if7li")
@@ -135,3 +274,64 @@ theme_override_font_sizes/font_size = 30
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 30
+
+[node name="BlackHoleControl" type="Control" parent="." unique_id=985722064]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.448
+anchor_right = 0.5
+anchor_bottom = 0.448
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(1.3, 1.3)
+
+[node name="Marker2D" type="Marker2D" parent="BlackHoleControl" unique_id=1741185769]
+
+[node name="Swirl_Back" type="Sprite2D" parent="BlackHoleControl/Marker2D" unique_id=1887676170]
+self_modulate = Color(1, 1, 1, 0.34901962)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("9_if7li")
+
+[node name="Swirl_Back2" type="Sprite2D" parent="BlackHoleControl/Marker2D" unique_id=1574418549]
+self_modulate = Color(1, 1, 1, 0.34901962)
+material = SubResource("CanvasItemMaterial_if7li")
+rotation = 3.862006
+texture = ExtResource("9_if7li")
+
+[node name="Swirl_Front" type="Sprite2D" parent="BlackHoleControl/Marker2D" unique_id=613888972]
+self_modulate = Color(1, 1, 1, 0.8980392)
+material = SubResource("CanvasItemMaterial_rrcx7")
+scale = Vector2(1.2, 1.2)
+texture = ExtResource("10_rrcx7")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="BlackHoleControl/Marker2D" unique_id=364654864]
+amount = 10
+trail_enabled = true
+trail_lifetime = 0.1
+trail_sections = 5
+trail_section_subdivisions = 5
+process_material = SubResource("ParticleProcessMaterial_fh7cp")
+
+[node name="ColorRect" type="ColorRect" parent="BlackHoleControl/Marker2D" unique_id=344891141]
+material = SubResource("ShaderMaterial_koqhg")
+offset_left = -92.30771
+offset_top = -90.892334
+offset_right = -52.30771
+offset_bottom = -50.892334
+scale = Vector2(5, 5)
+color = Color(0, 0, 0, 1)
+
+[node name="Core" type="ColorRect" parent="BlackHoleControl/Marker2D" unique_id=1057985049]
+self_modulate = Color(1, 1, 1, 0.94509804)
+material = SubResource("ShaderMaterial_rrcx7")
+custom_minimum_size = Vector2(80, 80)
+offset_left = -109.9379
+offset_top = -107.87638
+offset_right = -29.937897
+offset_bottom = -27.87638
+scale = Vector2(2.9, 2.9)
+color = Color(0, 0, 0, 1)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="BlackHoleControl/Marker2D" unique_id=359601536]
+libraries/ = SubResource("AnimationLibrary_7467j")
+autoplay = &"Blackhole"

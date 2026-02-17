@@ -71,6 +71,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
+visible = false
 z_index = 10
 layout_mode = 1
 anchors_preset = 8
@@ -102,17 +103,17 @@ layout_mode = 2
 [node name="BreedButton" type="TextureButton" parent="." unique_id=885097726]
 z_index = 5
 layout_mode = 1
-anchors_preset = 7
+anchors_preset = -1
 anchor_left = 0.5
-anchor_top = 1.0
+anchor_top = 0.789
 anchor_right = 0.5
-anchor_bottom = 1.0
+anchor_bottom = 0.789
 offset_left = -241.0
-offset_top = -664.0
+offset_top = -88.0
 offset_right = 241.0
-offset_bottom = -488.0
+offset_bottom = 88.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
 texture_normal = ExtResource("7_26528")
 texture_pressed = ExtResource("7_26528")
 
@@ -190,6 +191,7 @@ theme_override_font_sizes/font_size = 30
 text = "Fusion Guide"
 
 [node name="FusionCheatSheet" type="PanelContainer" parent="." unique_id=1212309574]
+visible = false
 z_index = 1
 custom_minimum_size = Vector2(500, 400)
 layout_mode = 1
@@ -230,6 +232,7 @@ theme_override_font_sizes/font_size = 30
 text = "Close"
 
 [node name="FusionFailurePopup" type="PanelContainer" parent="." unique_id=308219615]
+visible = false
 custom_minimum_size = Vector2(400, 300)
 layout_mode = 1
 anchors_preset = 8

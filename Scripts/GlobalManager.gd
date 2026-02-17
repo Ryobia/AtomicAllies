@@ -10,7 +10,8 @@ var scenes = {
 	"battle": "res://Scenes/Battle.tscn",
 	"nursery": "res://Scenes/Nursery.tscn",
 	"detail_view": "res://Scenes/DetailView.tscn",
-	"periodic_table": "res://Scenes/PeriodicTable.tscn"
+	"periodic_table": "res://Scenes/PeriodicTable.tscn",
+	"attunement": "res://Scenes/AttunementChamber.tscn"
 }
 
 func switch_scene(scene_key: String):

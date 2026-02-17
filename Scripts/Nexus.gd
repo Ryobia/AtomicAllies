@@ -103,20 +103,20 @@ func _process(_delta):
 	# Update the timer label in real-time
 	if TimeManager.get_time_left("breeding") > 0:
 		var time_left = TimeManager.get_time_left("breeding")
-		status_label.text = "Breeding... %ds remaining" % time_left
+		status_label.text = "Fusion in progress...%ds remaining" % time_left
 		if breed_btn and not breed_btn.disabled:
 			breed_btn.disabled = true
 			print("Nexus: BreedButton disabled by active timer.")
-	elif status_label.text.begins_with("Breeding..."):
-		status_label.text = "Breeding Complete! Check Nursery."
+	elif status_label.text.begins_with("Fusion in progress..."):
+		status_label.text = "Fusion Complete! Check Synthesis Chamber!"
 		if breed_btn: breed_btn.disabled = false
 
 func check_breeding_status():
 	if TimeManager.get_time_left("breeding") > 0:
-		status_label.text = "Breeding in progress..."
+		status_label.text = "Fusion in progress..."
 		breed_btn.disabled = true
 	else:
-		status_label.text = "Select two monsters to breed."
+		status_label.text = "Select two Elements to Fuse."
 		breed_btn.disabled = false
 
 # --- Selection Logic ---

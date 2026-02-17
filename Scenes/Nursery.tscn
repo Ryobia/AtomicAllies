@@ -3,8 +3,46 @@
 [ext_resource type="Script" uid="uid://dir1y46pq877y" path="res://Scripts/Nursery.gd" id="1_xqppg"]
 [ext_resource type="Texture2D" uid="uid://ist0tl0il484" path="res://Images/Synthesis.png" id="2_8qu53"]
 [ext_resource type="Script" uid="uid://i8qoui2cnkcf" path="res://Scripts/FusionResultPopup.gd" id="3_5odor"]
-[ext_resource type="Texture2D" uid="uid://56c1oo0rip31" path="res://Images/HydrogenAtom.png" id="3_8qu53"]
+[ext_resource type="Texture2D" uid="uid://dtmntevxwbd33" path="res://data/ElectronGlow.tres" id="3_36rvm"]
 [ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="5_36rvm"]
+
+[sub_resource type="Animation" id="Animation_36rvm"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(10, 10)]
+}
+
+[sub_resource type="Animation" id="Animation_5jn0c"]
+resource_name = "pulse_energetic"
+length = 0.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:scale")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.8),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(8, 8), Vector2(11, 11), Vector2(8, 8)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_f5c0i"]
+_data = {
+&"RESET": SubResource("Animation_36rvm"),
+&"pulse_energetic": SubResource("Animation_5jn0c")
+}
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8qu53"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -16,6 +54,17 @@ expand_margin_left = 10.0
 expand_margin_top = 10.0
 expand_margin_right = 10.0
 expand_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_36rvm"]
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+expand_margin_left = 5.0
+expand_margin_top = 5.0
+expand_margin_right = 5.0
+expand_margin_bottom = 5.0
 
 [node name="Nursery" type="Control" unique_id=745890857]
 layout_mode = 3
@@ -34,6 +83,31 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2_8qu53")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="SynthesisPoint" type="Control" parent="TextureRect" unique_id=1292495252]
+layout_mode = 1
+anchor_left = 0.521
+anchor_top = 0.416
+anchor_right = 0.521
+anchor_bottom = 0.416
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EggTexture" type="Marker2D" parent="TextureRect/SynthesisPoint" unique_id=1222347878]
+
+[node name="Sprite2D" type="Sprite2D" parent="TextureRect/SynthesisPoint/EggTexture" unique_id=130860947]
+scale = Vector2(10, 10)
+texture = ExtResource("3_36rvm")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="TextureRect/SynthesisPoint/EggTexture" unique_id=1221530642]
+libraries/ = SubResource("AnimationLibrary_f5c0i")
+autoplay = &"pulse_energetic"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=55755709]
 layout_mode = 1
@@ -55,20 +129,12 @@ theme_override_font_sizes/font_size = 36
 text = "Synthesizing"
 horizontal_alignment = 1
 
-[node name="EggTexture" type="TextureRect" parent="VBoxContainer" unique_id=1991534798]
-custom_minimum_size = Vector2(350, 350)
-layout_mode = 2
-texture = ExtResource("3_8qu53")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="HatchButton" type="Button" parent="VBoxContainer" unique_id=709537496]
 layout_mode = 2
 theme_override_font_sizes/font_size = 46
 text = "Synthesize"
 
 [node name="DissolvePopup" type="Panel" parent="." unique_id=1411993256]
-visible = false
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
@@ -87,18 +153,12 @@ layout_mode = 2
 text = "Collect Essence"
 
 [node name="FusionResultPopup" type="PanelContainer" parent="." unique_id=580002729]
-visible = false
-custom_minimum_size = Vector2(400, 500)
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.556
 anchor_right = 0.5
 anchor_bottom = 0.556
-offset_left = -200.0
-offset_top = -250.0
-offset_right = 200.0
-offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_8qu53")
@@ -109,8 +169,9 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=261919470]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_font_sizes/font_size = 30
-text = "Fusion Successful!"
+text = "FUSION SUCCESSFUL"
 horizontal_alignment = 1
 
 [node name="IconTexture" type="TextureRect" parent="FusionResultPopup/VBoxContainer" unique_id=855505590]
@@ -118,18 +179,28 @@ layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=743603166]
 layout_mode = 2
+theme_override_font_sizes/font_size = 24
+autowrap_mode = 3
 
 [node name="NumberLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=1777044249]
 layout_mode = 2
+theme_override_font_sizes/font_size = 24
+autowrap_mode = 3
 
 [node name="StatsLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=1347629648]
 layout_mode = 2
+theme_override_font_sizes/font_size = 24
+autowrap_mode = 3
 
 [node name="ClaimButton" type="Button" parent="FusionResultPopup/VBoxContainer" unique_id=179383258]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_hover_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_font_sizes/font_size = 30
-text = "Claim Ally
+theme_override_styles/normal = SubResource("StyleBoxFlat_36rvm")
+theme_override_styles/hover = SubResource("StyleBoxFlat_36rvm")
+text = "CLAIM ALLY
 "
 
 [node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("5_36rvm")]

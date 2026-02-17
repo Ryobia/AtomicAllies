@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://deeit4dexuhou"]
 
 [ext_resource type="Script" uid="uid://bsheb8x7eudql" path="res://Scripts/MonsterCard.gd" id="1_k4rt3"]
-[ext_resource type="Texture2D" uid="uid://cv3kkuvrp4hqw" path="res://Images/icon.svg" id="2_68eex"]
 
 [node name="MonsterCard" type="PanelContainer" unique_id=1232387721]
 anchors_preset = 5
@@ -18,7 +17,6 @@ layout_mode = 2
 
 [node name="IconTexture" type="TextureRect" parent="VBoxContainer" unique_id=218133595]
 layout_mode = 2
-texture = ExtResource("2_68eex")
 stretch_mode = 4
 
 [node name="NameLabel" type="Label" parent="VBoxContainer" unique_id=696556731]

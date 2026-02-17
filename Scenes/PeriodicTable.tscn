@@ -2,7 +2,43 @@
 
 [ext_resource type="Script" uid="uid://boco7djaefshy" path="res://Scripts/PeriodicTable.gd" id="1_mste3"]
 [ext_resource type="PackedScene" uid="uid://deeit4dexuhou" path="res://Scenes/monster_card.tscn" id="2_6e2n0"]
+[ext_resource type="Texture2D" uid="uid://csxsj3kexqdji" path="res://Images/table.png" id="3_7flee"]
 [ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="3_yqx8d"]
+[ext_resource type="Script" uid="uid://c07a0wdfnrh3m" path="res://Scripts/ResearchNotesPopup.gd" id="4_6e2n0"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yqx8d"]
+content_margin_left = 50.0
+content_margin_right = 50.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yqx8d"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+expand_margin_left = 10.0
+expand_margin_right = 10.0
+expand_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_7flee"]
+color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+thickness = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hcuv7"]
+content_margin_left = 10.0
+content_margin_top = 5.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="PeriodicTable" type="Control" unique_id=1304090810]
 layout_mode = 3
@@ -14,15 +50,6 @@ grow_vertical = 2
 script = ExtResource("1_mste3")
 monster_card_scene = ExtResource("2_6e2n0")
 
-[node name="TextureRect" type="ColorRect" parent="." unique_id=237328911]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.0071451543, 0.0552174, 0.111244775, 1)
-
 [node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=113249070]
 layout_mode = 1
 anchors_preset = 15
@@ -31,6 +58,7 @@ anchor_bottom = 1.0
 offset_top = 192.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_yqx8d")
 
 [node name="GridContainer" type="GridContainer" parent="ScrollContainer" unique_id=941014855]
 layout_mode = 2
@@ -40,3 +68,63 @@ columns = 18
 
 [node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("3_yqx8d")]
 layout_mode = 1
+
+[node name="ResearchNotesPopup" type="PanelContainer" parent="." unique_id=885063713]
+custom_minimum_size = Vector2(550, 350)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_yqx8d")
+script = ExtResource("4_6e2n0")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ResearchNotesPopup" unique_id=477460701]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="ResearchNotesPopup/VBoxContainer" unique_id=1511424445]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 35
+text = "	RESEARCH NOTES"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="ResearchNotesPopup/VBoxContainer" unique_id=898964704]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_7flee")
+
+[node name="HintLabel" type="Label" parent="ResearchNotesPopup/VBoxContainer" unique_id=1150597033]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 24
+autowrap_mode = 2
+
+[node name="CloseButton" type="Button" parent="ResearchNotesPopup/VBoxContainer" unique_id=525793343]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_hcuv7")
+text = "CLOSE
+"
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1648357713]
+layer = -1
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer" unique_id=925998784]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_7flee")
+expand_mode = 1
+stretch_mode = 6

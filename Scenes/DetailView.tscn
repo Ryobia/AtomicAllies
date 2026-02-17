@@ -4,7 +4,26 @@
 [ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="2_51vr3"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mhro5"]
-bg_color = Color(0.002583448, 0.032369856, 0.074585386, 1)
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_51vr3"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+expand_margin_left = 30.0
+expand_margin_top = 10.0
+expand_margin_right = 30.0
+expand_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oxi4x"]
+bg_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+expand_margin_top = 20.0
 
 [node name="DetailView" type="Control" unique_id=414824210]
 layout_mode = 3
@@ -42,32 +61,160 @@ theme_override_constants/separation = 15
 
 [node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1804778207]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 80
+horizontal_alignment = 1
 
 [node name="NumberLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=736871060]
 layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_51vr3")
+horizontal_alignment = 1
 
 [node name="IconTexture" type="TextureRect" parent="MarginContainer/VBoxContainer" unique_id=1310145462]
 custom_minimum_size = Vector2(250, 250)
 layout_mode = 2
+size_flags_vertical = 3
 
-[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1785362234]
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer" unique_id=2147380666]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_oxi4x")
 
-[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=1875957834]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Panel" unique_id=650672318]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 50
+
+[node name="HBoxLevel" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1026522923]
 layout_mode = 2
+size_flags_vertical = 0
+
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/HBoxLevel" unique_id=1785362234]
+z_index = 2
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+
+[node name="XPBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/HBoxLevel" unique_id=1808067182]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="GridStats" type="GridContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1856869019]
+layout_mode = 2
+size_flags_vertical = 3
 columns = 2
 
-[node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=204995007]
+[node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=204995007]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="AttackLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=1711693444]
+[node name="HPUpgradeBtn" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=95478288]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+text = "UPGRADE
+"
 
-[node name="DefenseLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=1889266181]
+[node name="AttackLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=1711693444]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=937785622]
+[node name="AtkUpgradeBtn" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=15704285]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+text = "UPGRADE
+"
 
-[node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("2_51vr3")]
+[node name="DefenseLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=1889266181]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DefUpgradeBtn" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=825218771]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+text = "UPGRADE
+"
+
+[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=937785622]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SpdUpgradeBtn" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=1590328872]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 30
+text = "UPGRADE
+"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=679582294]
 layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 30.0
+offset_bottom = 145.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="BackButton" parent="HBoxContainer" unique_id=684150519 instance=ExtResource("2_51vr3")]
+layout_mode = 2
+
+[node name="XPPoolLabel" type="Label" parent="HBoxContainer" unique_id=878156160]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "PLACEHOLDER"
+horizontal_alignment = 1
+
+[node name="NeutronDustLabel" type="Label" parent="HBoxContainer" unique_id=274957955]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "PLACEHOLDER"
+horizontal_alignment = 1

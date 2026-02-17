@@ -5,6 +5,8 @@ extends Control
 var research_popup
 
 func _ready():
+	# $Background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
 	var grid = find_child("GridContainer", true, false)
 	if grid:
 		grid.columns = 18 # Standard Periodic Table width
@@ -82,6 +84,19 @@ func _add_card(grid: Container, z: int):
 	# Force a fixed size for the table cells so they align perfectly
 	card.custom_minimum_size = Vector2(100, 120) 
 	
+	# --- Custom Styling ---
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.bg_color.a = 0.5 # Much less opaque
+	style.set_corner_radius_all(8)
+	card.add_theme_stylebox_override("panel", style)
+	
+	var labels = [card.find_child("NameLabel", true, false), card.find_child("NumberLabel", true, false)]
+	for lbl in labels:
+		if lbl:
+			lbl.add_theme_color_override("font_color", Color("#60fafc"))
+			lbl.add_theme_font_size_override("font_size", lbl.get_theme_font_size("font_size") + 4)
+	
 	var monster = _find_monster_by_z(z)
 	
 	if monster:
@@ -96,7 +111,9 @@ func _add_card(grid: Container, z: int):
 			)
 		else:
 			# Not owned: Dark Silhouette
-			card.modulate = Color(0.2, 0.2, 0.2, 1.0)
+			var icon = card.find_child("IconTexture", true, false)
+			if icon: icon.modulate = Color(0, 0, 0, 0.7)
+			
 			# Allow clicking to see research notes
 			card.mouse_filter = Control.MOUSE_FILTER_STOP
 			card.gui_input.connect(func(event):
@@ -105,13 +122,7 @@ func _add_card(grid: Container, z: int):
 			)
 	else:
 		# Placeholder for elements not yet implemented
-		card.modulate = Color(0.1, 0.1, 0.1, 0.5)
-		var num_lbl = card.find_child("NumberLabel", true, false)
-		if num_lbl: num_lbl.text = str(z)
-		var name_lbl = card.find_child("NameLabel", true, false)
-		if name_lbl: name_lbl.text = ""
-		var icon = card.find_child("IconTexture", true, false)
-		if icon: icon.texture = null
+		card.set_placeholder(z)
 		
 		# Allow clicking to see research notes for placeholders
 		card.mouse_filter = Control.MOUSE_FILTER_STOP
