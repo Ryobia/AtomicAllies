@@ -7,7 +7,6 @@
 [ext_resource type="Script" uid="uid://g4o21gt6qrb5" path="res://Scripts/FusionFailurePopup.gd" id="4_h8wke"]
 [ext_resource type="Texture2D" uid="uid://dtmntevxwbd33" path="res://data/ElectronGlow.tres" id="5_ut1jl"]
 [ext_resource type="Texture2D" uid="uid://b4cloiewemyyx" path="res://Assets/initiatefusionbtn.png" id="7_26528"]
-[ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="7_lkuis"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n15nf"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -105,9 +104,9 @@ z_index = 5
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
-anchor_top = 0.789
+anchor_top = 0.7
 anchor_right = 0.5
-anchor_bottom = 0.789
+anchor_bottom = 0.7
 offset_left = -241.0
 offset_top = -88.0
 offset_right = 241.0
@@ -296,8 +295,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("3_ut1jl")
-
-[node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("7_lkuis")]
-layout_mode = 1
+expand_mode = 1
+stretch_mode = 6
 
 [connection signal="pressed" from="BreedButton" to="." method="_on_breed_button_pressed"]

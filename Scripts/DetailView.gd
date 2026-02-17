@@ -77,12 +77,11 @@ func _connect_upgrade_btn(btn_name: String, stat_type: String):
 			btn.pressed.connect(func(): _on_upgrade_pressed(stat_type))
 
 func _on_upgrade_pressed(stat_type: String):
-	var group_id = PlayerData.STAT_ESSENCE_MAP[stat_type]
 	var cost = 5 # Fixed cost for MVP, can scale later
-	var current_essence = PlayerData.resources["essences"].get(str(group_id), 0)
+	var current_dust = PlayerData.resources.get("neutron_dust", 0)
 	
-	if current_essence >= cost:
-		PlayerData.add_essence(group_id, -cost)
+	if current_dust >= cost:
+		PlayerData.add_resource("neutron_dust", -cost)
 		
 		match stat_type:
 			"hp": monster.infused_health += 10
@@ -93,7 +92,7 @@ func _on_upgrade_pressed(stat_type: String):
 		update_display()
 		PlayerData.save_game()
 	else:
-		print("Not enough essence! Need Group %d Essence." % group_id)
+		print("Not enough Neutron Dust!")
 
 func update_display():
 	# Find nodes dynamically
@@ -101,7 +100,6 @@ func update_display():
 	var icon_rect = find_child("IconTexture", true, false)
 	var number_lbl = find_child("NumberLabel", true, false)
 	var level_lbl = find_child("LevelLabel", true, false)
-	var xp_pool_lbl = find_child("XPPoolLabel", true, false)
 	var xp_bar = find_child("XPBar", true, false)
 	
 	if name_lbl: name_lbl.text = monster.monster_name
@@ -111,8 +109,6 @@ func update_display():
 		
 	if number_lbl: number_lbl.text = "Atomic #: %d (%s)" % [monster.atomic_number, monster.symbol]
 	if level_lbl: level_lbl.text = "Level: %d" % monster.level
-	
-	if xp_pool_lbl: xp_pool_lbl.text = "XP Pool: %d" % PlayerData.resources.get("experience", 0)
 	
 	if xp_bar:
 		if xp_bar is ProgressBar:
@@ -179,9 +175,8 @@ func _on_back_pressed():
 func _update_btn_state(btn_name: String, stat_type: String):
 	var btn = find_child(btn_name, true, false)
 	if btn:
-		var group_id = PlayerData.STAT_ESSENCE_MAP[stat_type]
 		var cost = 5
-		var current_essence = PlayerData.resources["essences"].get(str(group_id), 0)
+		var current_dust = PlayerData.resources.get("neutron_dust", 0)
 		
-		btn.disabled = current_essence < cost
-		btn.text = "+ (Cost: %d G%d)" % [cost, group_id]
+		btn.disabled = current_dust < cost
+		btn.text = "+ (Cost: %d Dust)" % cost

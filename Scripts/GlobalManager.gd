@@ -1,6 +1,8 @@
 # c:\Users\ryobi\Projects\nexus\Scripts\GlobalManager.gd
 extends Node
 
+signal scene_changed(scene_key)
+
 # Dictionary to hold the paths to your scenes.
 # IMPORTANT: Make sure these paths match where you actually save your .tscn files!
 var scenes = {
@@ -21,6 +23,7 @@ func switch_scene(scene_key: String):
 		# Check if the file actually exists before trying to load it
 		if ResourceLoader.exists(path):
 			get_tree().call_deferred("change_scene_to_file", path)
+			scene_changed.emit(scene_key)
 		else:
 			print("CRITICAL ERROR: Could not find scene file at: " + path)
 			print("Please check that the file exists and the path in GlobalManager.gd is correct.")

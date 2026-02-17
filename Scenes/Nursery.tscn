@@ -4,7 +4,6 @@
 [ext_resource type="Texture2D" uid="uid://ist0tl0il484" path="res://Images/Synthesis.png" id="2_8qu53"]
 [ext_resource type="Script" uid="uid://i8qoui2cnkcf" path="res://Scripts/FusionResultPopup.gd" id="3_5odor"]
 [ext_resource type="Texture2D" uid="uid://dtmntevxwbd33" path="res://data/ElectronGlow.tres" id="3_36rvm"]
-[ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="5_36rvm"]
 
 [sub_resource type="Animation" id="Animation_36rvm"]
 length = 0.001
@@ -202,8 +201,3 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_36rvm")
 theme_override_styles/hover = SubResource("StyleBoxFlat_36rvm")
 text = "CLAIM ALLY
 "
-
-[node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("5_36rvm")]
-layout_mode = 1
-offset_right = 161.0
-offset_bottom = 167.0

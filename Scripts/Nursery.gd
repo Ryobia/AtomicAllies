@@ -75,7 +75,7 @@ func _on_hatch_pressed():
 		PlayerData.add_essence(egg.group, essence_amount)
 		
 		if dissolve_label:
-			dissolve_label.text = "Duplicate %s found!\nDissolved into %d Group %d Essence." % [egg.monster_name, essence_amount, egg.group]
+			dissolve_label.text = "Duplicate %s found!\nDissolved into %d Neutron Dust." % [egg.monster_name, essence_amount]
 		
 		if dissolve_popup: dissolve_popup.visible = true
 	else:

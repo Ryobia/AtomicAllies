@@ -37,13 +37,6 @@ func _ready():
 			synthesis_btn.pressed.connect(_on_synthesis_pressed)
 	else:
 		print("MainMenu: SynthesisButton not found")
-		
-	# --- Resource Header Logic ---
-	update_resource_display()
-	
-	# Connect to global signal to update UI automatically
-	if not PlayerData.resource_updated.is_connected(_on_resource_updated):
-		PlayerData.resource_updated.connect(_on_resource_updated)
 
 func _on_battle_pressed():
 	GlobalManager.switch_scene("battle")
@@ -56,16 +49,3 @@ func _on_collection_pressed():
 
 func _on_synthesis_pressed():
 	GlobalManager.switch_scene("nursery")
-
-func update_resource_display():
-	# We look for labels that might be inside a Header container
-	var xp_lbl = find_child("XPLabel", true, false)
-	var dust_lbl = find_child("DustLabel", true, false)
-	var gem_lbl = find_child("GemLabel", true, false)
-	
-	if xp_lbl: xp_lbl.text = str(PlayerData.resources.get("experience", 0))
-	if dust_lbl: dust_lbl.text = str(PlayerData.resources.get("neutron_dust", 0))
-	if gem_lbl: gem_lbl.text = str(PlayerData.resources.get("gems", 0))
-
-func _on_resource_updated(_type, _amount):
-	update_resource_display()

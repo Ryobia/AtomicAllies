@@ -4,7 +4,6 @@ var monster: MonsterData
 var current_atom: Node2D
 
 # UI References
-var xp_pool_label
 var level_label
 var xp_bar
 var stats_label
@@ -24,7 +23,6 @@ func _ready():
 		return
 	
 	# Find nodes
-	xp_pool_label = find_child("XPPoolLabel", true, false)
 	level_label = find_child("LevelLabel", true, false)
 	xp_bar = find_child("XPBar", true, false)
 	stats_label = find_child("StatsLabel", true, false)
@@ -80,7 +78,6 @@ func _on_train_up():
 	PlayerData.save_game() # Save only when user releases button
 
 func update_ui():
-	if xp_pool_label: xp_pool_label.text = "XP Pool: %d" % PlayerData.resources.get("experience", 0)
 	if level_label: level_label.text = "Level %d" % monster.level
 	
 	if xp_bar:

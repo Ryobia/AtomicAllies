@@ -3,11 +3,6 @@
 [ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://Scripts/MainMenu.gd" id="1_0fbet"]
 [ext_resource type="Texture2D" uid="uid://cbljv54boso2n" path="res://Images/Home.png" id="2_853f1"]
 [ext_resource type="Shader" uid="uid://ryl0qht6242f" path="res://Scenes/BlackHole.gdshader" id="3_loo7a"]
-[ext_resource type="Texture2D" uid="uid://12fdjpkfd2pe" path="res://Assets/synthesisbtn.png" id="3_xim88"]
-[ext_resource type="Texture2D" uid="uid://q725j5sxht02" path="res://Assets/fusionbtn.png" id="4_koqhg"]
-[ext_resource type="Texture2D" uid="uid://ba1npe4sxa873" path="res://Assets/collectionbtn.png" id="5_cmrfp"]
-[ext_resource type="Texture2D" uid="uid://cotx186a0sk3n" path="res://Assets/battlebtn.png" id="6_loo7a"]
-[ext_resource type="Texture2D" uid="uid://bq8btjy2vlraa" path="res://Assets/shopbtn.png" id="7_if7li"]
 [ext_resource type="Texture2D" uid="uid://dw1d73a004nvf" path="res://Assets/swirlmain.png" id="9_if7li"]
 [ext_resource type="Texture2D" uid="uid://d12oglxndoyp2" path="res://Assets/swirlsecondary.png" id="10_rrcx7"]
 [ext_resource type="Shader" uid="uid://cau2cawesljrh" path="res://Scenes/core.gdshader" id="11_if7li"]
@@ -200,80 +195,6 @@ grow_vertical = 2
 texture = ExtResource("2_853f1")
 expand_mode = 1
 stretch_mode = 6
-
-[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1435694746]
-layout_mode = 1
-anchors_preset = -1
-anchor_top = 0.934
-anchor_right = 1.0
-anchor_bottom = 0.934
-offset_top = -280.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/separation = 10
-alignment = 1
-
-[node name="SynthesisButton" type="TextureButton" parent="HBoxContainer" unique_id=335595599]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-texture_normal = ExtResource("3_xim88")
-texture_pressed = ExtResource("3_xim88")
-
-[node name="NexusButton" type="TextureButton" parent="HBoxContainer" unique_id=592446354]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-texture_normal = ExtResource("4_koqhg")
-texture_pressed = ExtResource("4_koqhg")
-
-[node name="CollectionButton" type="TextureButton" parent="HBoxContainer" unique_id=1065544654]
-layout_mode = 2
-size_flags_horizontal = 6
-size_flags_vertical = 4
-texture_normal = ExtResource("5_cmrfp")
-texture_pressed = ExtResource("5_cmrfp")
-
-[node name="BattleButton" type="TextureButton" parent="HBoxContainer" unique_id=1649916916]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-texture_normal = ExtResource("6_loo7a")
-texture_pressed = ExtResource("6_loo7a")
-
-[node name="ShopButton" type="TextureButton" parent="HBoxContainer" unique_id=319412837]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-texture_normal = ExtResource("7_if7li")
-texture_pressed = ExtResource("7_if7li")
-
-[node name="Header" type="HBoxContainer" parent="." unique_id=2015357751]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -268.5
-offset_right = 268.5
-offset_bottom = 42.0
-grow_horizontal = 2
-theme_override_constants/separation = 50
-alignment = 1
-
-[node name="XPLabel" type="Label" parent="Header" unique_id=1807889127]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 30
-
-[node name="DustLabel" type="Label" parent="Header" unique_id=610952333]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 30
-
-[node name="GemLabel" type="Label" parent="Header" unique_id=1896124299]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 30
 
 [node name="BlackHoleControl" type="Control" parent="." unique_id=985722064]
 layout_mode = 1

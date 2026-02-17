@@ -23,6 +23,8 @@ CombatManager="*uid://cabdcso0eq5to"
 PlayerData="*uid://casdb1lyk128y"
 TimeManager="*uid://bj600r82swun6"
 SynthesisManager="*uid://dhljhfpbqj4kk"
+NavBar="*uid://cftdsp5wnnexb"
+ResourceHeader="*uid://d04kd13gs4hae"
 
 [display]
 

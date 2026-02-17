@@ -1,0 +1,158 @@
+[gd_scene format=3 uid="uid://d04kd13gs4hae"]
+
+[ext_resource type="Script" uid="uid://ce0bpaesu4ke6" path="res://Scripts/ResourceHeader.gd" id="1_kou55"]
+[ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="1_n8qmt"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_kou55"]
+content_margin_right = 30.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_351gi"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+shadow_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+shadow_size = 13
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gjpaa"]
+atlas = ExtResource("1_n8qmt")
+region = Rect2(104.76807, 92.682274, 330.99164, 351.44623)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l1lcg"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+shadow_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+shadow_size = 13
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_quwd7"]
+atlas = ExtResource("1_n8qmt")
+region = Rect2(567.7845, 51.773186, 353.3058, 410.95035)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fmpd0"]
+atlas = ExtResource("1_n8qmt")
+region = Rect2(167.99121, 538.96326, 211.98346, 345.86774)
+
+[node name="ResourceHeader" type="CanvasLayer" unique_id=828433445]
+script = ExtResource("1_kou55")
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=1295828350]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 30.0
+offset_bottom = 144.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_kou55")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer" unique_id=391658744]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 50
+
+[node name="XPDisplay" type="PanelContainer" parent="PanelContainer/HBoxContainer" unique_id=1077197348]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_351gi")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/HBoxContainer/XPDisplay" unique_id=822235768]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/HBoxContainer/XPDisplay/MarginContainer" unique_id=722369337]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="TextureRect" type="TextureRect" parent="PanelContainer/HBoxContainer/XPDisplay/MarginContainer/HBoxContainer" unique_id=1581232108]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_horizontal = 2
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_gjpaa")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="XPLabel" type="Label" parent="PanelContainer/HBoxContainer/XPDisplay/MarginContainer/HBoxContainer" unique_id=1805157883]
+layout_mode = 2
+size_flags_horizontal = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 70
+
+[node name="XPDisplay2" type="PanelContainer" parent="PanelContainer/HBoxContainer" unique_id=1917658389]
+layout_mode = 2
+size_flags_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_l1lcg")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/HBoxContainer/XPDisplay2" unique_id=375270472]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="PanelContainer/HBoxContainer/XPDisplay2/MarginContainer" unique_id=1315869214]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="TextureRect2" type="TextureRect" parent="PanelContainer/HBoxContainer/XPDisplay2/MarginContainer/HBoxContainer2" unique_id=1085094970]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_horizontal = 0
+texture = SubResource("AtlasTexture_quwd7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DustLabel" type="Label" parent="PanelContainer/HBoxContainer/XPDisplay2/MarginContainer/HBoxContainer2" unique_id=1528328134]
+layout_mode = 2
+size_flags_horizontal = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 70
+horizontal_alignment = 1
+
+[node name="XPDisplay3" type="PanelContainer" parent="PanelContainer/HBoxContainer" unique_id=1610651678]
+layout_mode = 2
+size_flags_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_351gi")
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer/HBoxContainer/XPDisplay3" unique_id=49509602]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer/HBoxContainer/XPDisplay3/MarginContainer" unique_id=944060179]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="TextureRect" type="TextureRect" parent="PanelContainer/HBoxContainer/XPDisplay3/MarginContainer/HBoxContainer" unique_id=1845199452]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_fmpd0")
+expand_mode = 1
+
+[node name="GemLabel" type="Label" parent="PanelContainer/HBoxContainer/XPDisplay3/MarginContainer/HBoxContainer" unique_id=773307934]
+layout_mode = 2
+size_flags_horizontal = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 70

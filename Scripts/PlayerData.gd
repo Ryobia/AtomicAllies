@@ -24,8 +24,7 @@ var selected_monster: MonsterData = null
 var resources = {
 	"neutron_dust": 0,
 	"experience": 0,
-	"gems": 0,
-	"essences": {} # Key: Group ID (int), Value: Amount (int)
+	"gems": 0
 }
 
 # List of all discoverable monsters (for the Collection Grid)
@@ -78,14 +77,13 @@ func add_resource(type: String, amount: int):
 	if not resources.has(type):
 		resources[type] = 0
 	resources[type] += amount
+	print("PlayerData: Emitting resource_updated for '", type, "'")
 	resource_updated.emit(type, resources[type])
 	print("Added %d %s. Total: %d" % [amount, type, resources[type]])
 
 func add_essence(group: int, amount: int):
-	if not resources["essences"].has(str(group)):
-		resources["essences"][str(group)] = 0
-	resources["essences"][str(group)] += amount
-	resource_updated.emit("essence", group) # Generic signal for UI updates
+	# Simplified: All essence is now Neutron Dust
+	add_resource("neutron_dust", amount)
 
 # --- Save & Load System ---
 
@@ -100,7 +98,11 @@ func save_game():
 		save_data["monsters"].append({
 			"name": m.monster_name,
 			"level": m.level,
-			"xp": m.current_xp
+			"xp": m.current_xp,
+			"infused_health": m.infused_health,
+			"infused_attack": m.infused_attack,
+			"infused_defense": m.infused_defense,
+			"infused_speed": m.infused_speed
 		})
 		
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -128,6 +130,7 @@ func load_game():
 	if save_data:
 		if "resources" in save_data:
 			resources = save_data["resources"]
+			
 			# Notify UI of loaded values
 			for key in resources:
 				resource_updated.emit(key, resources[key])
@@ -143,6 +146,10 @@ func load_game():
 						var new_m = res.duplicate()
 						new_m.level = int(m_data["level"])
 						new_m.current_xp = int(m_data["xp"])
+						new_m.infused_health = int(m_data.get("infused_health", 0))
+						new_m.infused_attack = int(m_data.get("infused_attack", 0))
+						new_m.infused_defense = int(m_data.get("infused_defense", 0))
+						new_m.infused_speed = int(m_data.get("infused_speed", 0))
 						owned_monsters.append(new_m)
 						break
 

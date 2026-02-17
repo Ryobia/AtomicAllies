@@ -138,6 +138,12 @@ func _add_spacers(grid: Container, count: int):
 		grid.add_child(spacer)
 
 func _find_monster_by_z(z: int) -> MonsterData:
+	# 1. Check if player owns it (return the specific instance with stats)
+	for m in PlayerData.owned_monsters:
+		if m.atomic_number == z:
+			return m
+			
+	# 2. Fallback to base resource
 	for path in PlayerData.starter_monster_paths:
 		if ResourceLoader.exists(path):
 			var m = load(path)
