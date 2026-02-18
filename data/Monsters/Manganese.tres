@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Manganese"
+symbol = "Mn"
+atomic_number = 25
+atomic_mass = 54.938
+group = 7
+level = 1
+current_xp = 0
+infused_health = 0
+infused_attack = 0
+infused_defense = 0
+infused_speed = 0

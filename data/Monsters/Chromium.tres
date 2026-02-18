@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Chromium"
+symbol = "Cr"
+atomic_number = 24
+atomic_mass = 51.996
+group = 7
+level = 1
+current_xp = 0
+infused_health = 0
+infused_attack = 0
+infused_defense = 0
+infused_speed = 0

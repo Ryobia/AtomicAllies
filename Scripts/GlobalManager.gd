@@ -9,11 +9,11 @@ var scenes = {
 	"main_menu": "res://Scenes/MainMenu.tscn",
 	"nexus": "res://Scenes/Nexus.tscn",
 	"collection": "res://Scenes/Collection.tscn",
-	"battle": "res://Scenes/Battle.tscn",
+	"battle": "res://Scenes/BattleManager.tscn",
 	"nursery": "res://Scenes/Nursery.tscn",
 	"detail_view": "res://Scenes/DetailView.tscn",
 	"periodic_table": "res://Scenes/PeriodicTable.tscn",
-	"attunement": "res://Scenes/AttunementChamber.tscn"
+	"attunement": "res://Scenes/AttunementChamber.tscn",
 }
 
 func switch_scene(scene_key: String):

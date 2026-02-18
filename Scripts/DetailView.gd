@@ -22,8 +22,8 @@ func _ready():
 	var back_btn = find_child("BackButton", true, false)
 	if back_btn:
 		back_btn.z_index = 10
-		if not back_btn.pressed.is_connected(_on_back_pressed):
-			back_btn.pressed.connect(_on_back_pressed)
+		if not back_btn.pressed.is_connected(_on_back_button_pressed):
+			back_btn.pressed.connect(_on_back_button_pressed)
 			
 	var train_btn = find_child("TrainButton", true, false)
 	if train_btn:
@@ -169,7 +169,7 @@ func _setup_dynamic_atom(parent_rect: TextureRect):
 		# Initial position
 		update_pos.call()
 
-func _on_back_pressed():
+func _on_back_button_pressed():
 	GlobalManager.switch_scene("periodic_table")
 
 func _update_btn_state(btn_name: String, stat_type: String):

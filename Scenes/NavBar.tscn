@@ -8,8 +8,8 @@
 [ext_resource type="Shader" uid="uid://cau2cawesljrh" path="res://Scenes/core.gdshader" id="5_0y5an"]
 [ext_resource type="Texture2D" uid="uid://cotx186a0sk3n" path="res://Assets/battlebtn.png" id="5_5yuw4"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5cnhp"]
-content_margin_bottom = 30.0
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0y5an"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_a2nl4"]
 shader = ExtResource("5_0y5an")
@@ -17,6 +17,7 @@ shader_parameter/radius = 0.4
 shader_parameter/softness = 0.1
 
 [node name="NavBar" type="CanvasLayer" unique_id=1158154156]
+layer = 3
 script = ExtResource("1_q2moy")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=741266908]
@@ -25,10 +26,10 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -240.0
+offset_top = -216.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_styles/panel = SubResource("StyleBoxEmpty_5cnhp")
+theme_override_styles/panel = SubResource("StyleBoxFlat_0y5an")
 
 [node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=733252572]
 layout_mode = 2
@@ -85,6 +86,7 @@ offset_bottom = 6.6765747
 grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(2.9, 2.9)
+mouse_filter = 2
 color = Color(0, 0, 0, 1)
 
 [node name="BattleButton" type="TextureButton" parent="PanelContainer/MarginContainer/HBoxContainer2" unique_id=113282770]

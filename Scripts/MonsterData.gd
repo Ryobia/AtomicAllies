@@ -19,6 +19,9 @@ class_name MonsterData
 @export var infused_defense: int = 0
 @export var infused_speed: int = 0
 
+# --- Moveset ---
+@export var moves: Array[Resource] = []
+
 # --- Derived Stats (The Physics Formula) ---
 
 # Heavier atoms have more HP

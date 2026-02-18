@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cld3h0d5cobg5" path="res://Scripts/DetailView.gd" id="1_mhro5"]
 [ext_resource type="Texture2D" uid="uid://dcni3wq4llhgv" path="res://Assets/levelupetc.png" id="2_51vr3"]
+[ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="3_oxi4x"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mhro5"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -244,3 +245,9 @@ theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxFlat_drcdi")
 text = "UPGRADE
 "
+
+[node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("3_oxi4x")]
+z_index = 10
+layout_mode = 1
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]

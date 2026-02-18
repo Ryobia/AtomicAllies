@@ -1,6 +1,9 @@
-[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MonsterData" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+[ext_resource type="Resource" path="res://data/Moves/Tackle.tres" id="2_move"]
+[ext_resource type="Resource" path="res://data/Moves/Pulse.tres" id="3_move"]
+[ext_resource type="Resource" path="res://data/Moves/Shield.tres" id="4_move"]
 
 [resource]
 script = ExtResource("1_script")
@@ -15,3 +18,4 @@ infused_health = 0
 infused_attack = 0
 infused_defense = 0
 infused_speed = 0
+moves = [ExtResource("2_move"), ExtResource("3_move"), ExtResource("4_move")]

@@ -34,6 +34,10 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
 
+[gui]
+
+theme/custom="uid://b1qn162t6m1kd"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

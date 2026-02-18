@@ -26,8 +26,12 @@ func _on_pressed():
 	if target_scene_path != "":
 		get_tree().change_scene_to_file(target_scene_path)
 	else:
-		# If no target is set, default to your Main Menu (Update this path!)
-		get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
+		# Use GlobalManager if available to ensure consistent navigation
+		if GlobalManager:
+			GlobalManager.switch_scene("main_menu")
+		else:
+			# Fallback: Ensure the path matches your project structure (Capital 'S' in Scenes)
+			get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
 # -- HOVER EFFECTS (Optional "Juice") --
 func _on_hover():

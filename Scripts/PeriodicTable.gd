@@ -4,6 +4,17 @@ extends Control
 
 var research_popup
 
+# Zoom variables
+var _zoom_wrapper: Control
+var _scroll_container: ScrollContainer
+var _touch_points = {}
+var _start_zoom_dist = 0.0
+var _start_scale = Vector2.ONE
+var _start_pinch_center = Vector2.ZERO
+var _start_scroll_offset = Vector2.ZERO
+var _is_dragging = false
+var _drag_start_pos = Vector2.ZERO
+
 func _ready():
 	# $Background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -13,6 +24,23 @@ func _ready():
 		grid.add_theme_constant_override("h_separation", 8)
 		grid.add_theme_constant_override("v_separation", 8)
 		_populate_table(grid)
+		
+		# Inject Zoom Wrapper for Pinch-to-Zoom
+		var parent = grid.get_parent()
+		if parent is ScrollContainer:
+			_scroll_container = parent
+			_zoom_wrapper = Control.new()
+			_zoom_wrapper.name = "ZoomWrapper"
+			_zoom_wrapper.mouse_filter = Control.MOUSE_FILTER_PASS
+			_zoom_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			_zoom_wrapper.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			
+			parent.remove_child(grid)
+			parent.add_child(_zoom_wrapper)
+			_zoom_wrapper.add_child(grid)
+			
+			grid.resized.connect(_update_zoom_wrapper)
+			_update_zoom_wrapper()
 	
 	var back_btn = find_child("BackButton", true, false)
 	if back_btn:
@@ -106,8 +134,9 @@ func _add_card(grid: Container, z: int):
 			card.modulate = Color(1, 1, 1, 1) # Full Color
 			card.mouse_filter = Control.MOUSE_FILTER_STOP
 			card.gui_input.connect(func(event):
-				if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-					_on_monster_clicked(monster)
+				if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+					if not _is_dragging:
+						_on_monster_clicked(monster)
 			)
 		else:
 			# Not owned: Dark Silhouette
@@ -117,8 +146,9 @@ func _add_card(grid: Container, z: int):
 			# Allow clicking to see research notes
 			card.mouse_filter = Control.MOUSE_FILTER_STOP
 			card.gui_input.connect(func(event):
-				if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-					_on_research_clicked(z, monster)
+				if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+					if not _is_dragging:
+						_on_research_clicked(z, monster)
 			)
 	else:
 		# Placeholder for elements not yet implemented
@@ -127,8 +157,9 @@ func _add_card(grid: Container, z: int):
 		# Allow clicking to see research notes for placeholders
 		card.mouse_filter = Control.MOUSE_FILTER_STOP
 		card.gui_input.connect(func(event):
-			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-				_on_research_clicked(z, null)
+			if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+				if not _is_dragging:
+					_on_research_clicked(z, null)
 		)
 
 func _add_spacers(grid: Container, count: int):
@@ -161,3 +192,62 @@ func _on_research_clicked(z: int, monster: MonsterData):
 
 func _on_back_pressed():
 	GlobalManager.switch_scene("main_menu")
+
+func _update_zoom_wrapper():
+	var grid = find_child("GridContainer", true, false)
+	if grid and _zoom_wrapper:
+		_zoom_wrapper.custom_minimum_size = grid.size * grid.scale
+
+func _input(event):
+	var grid = find_child("GridContainer", true, false)
+	if not grid or not _zoom_wrapper: return
+
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_is_dragging = false
+			if event.index == 0:
+				_drag_start_pos = event.position
+			_touch_points[event.index] = event.position
+		else:
+			_touch_points.erase(event.index)
+		
+		if _touch_points.size() == 2:
+			var p1 = _touch_points.values()[0]
+			var p2 = _touch_points.values()[1]
+			_start_zoom_dist = p1.distance_to(p2)
+			_start_scale = grid.scale
+			_start_pinch_center = (p1 + p2) / 2.0
+			if _scroll_container:
+				_start_scroll_offset = Vector2(_scroll_container.scroll_horizontal, _scroll_container.scroll_vertical)
+			
+	elif event is InputEventScreenDrag:
+		if not _is_dragging:
+			if _touch_points.size() > 1:
+				_is_dragging = true
+			elif event.index == 0 and event.position.distance_to(_drag_start_pos) > 20.0:
+				_is_dragging = true
+		
+		if _touch_points.has(event.index):
+			_touch_points[event.index] = event.position
+			
+		if _touch_points.size() == 2:
+			var p1 = _touch_points.values()[0]
+			var p2 = _touch_points.values()[1]
+			var current_dist = p1.distance_to(p2)
+			var current_center = (p1 + p2) / 2.0
+			
+			if _start_zoom_dist > 0:
+				var zoom_factor = current_dist / _start_zoom_dist
+				var new_scale = _start_scale * zoom_factor
+				new_scale = new_scale.clamp(Vector2(0.5, 0.5), Vector2(3.0, 3.0))
+				
+				if _scroll_container:
+					var container_global_pos = _scroll_container.global_position
+					var point_on_grid_unscaled = (_start_pinch_center + _start_scroll_offset - container_global_pos) / _start_scale
+					
+					grid.scale = new_scale
+					_update_zoom_wrapper()
+					
+					var new_scroll_pos = (point_on_grid_unscaled * new_scale) - (current_center - container_global_pos)
+					_scroll_container.scroll_horizontal = int(new_scroll_pos.x)
+					_scroll_container.scroll_vertical = int(new_scroll_pos.y)

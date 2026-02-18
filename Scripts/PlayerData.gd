@@ -48,7 +48,13 @@ var starter_monster_paths = [
 	"res://data/Monsters/Chlorine.tres",
 	"res://data/Monsters/Argon.tres",
 	"res://data/Monsters/Potassium.tres",
-	"res://data/Monsters/Calcium.tres"
+	"res://data/Monsters/Calcium.tres",
+	"res://data/Monsters/Scandium.tres",
+	"res://data/Monsters/Titanium.tres",
+	"res://data/Monsters/Vanadium.tres",
+	"res://data/Monsters/Chromium.tres",
+	"res://data/Monsters/Manganese.tres",
+	"res://data/Monsters/Iron.tres"
 ]
 
 # --- Configuration: Which Group upgrades which Stat? ---

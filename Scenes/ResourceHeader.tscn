@@ -47,6 +47,7 @@ atlas = ExtResource("1_n8qmt")
 region = Rect2(167.99121, 538.96326, 211.98346, 345.86774)
 
 [node name="ResourceHeader" type="CanvasLayer" unique_id=828433445]
+layer = 0
 script = ExtResource("1_kou55")
 
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=1295828350]

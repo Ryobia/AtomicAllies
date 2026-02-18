@@ -1,0 +1,285 @@
+[gd_scene format=3 uid="uid://236nid7k4wf5"]
+
+[ext_resource type="Script" uid="uid://cha11yh01g6rk" path="res://Scripts/BattleManager.gd" id="1_mxkao"]
+[ext_resource type="Script" uid="uid://calnoc1q4lpgs" path="res://Scripts/BattleHUD.gd" id="2_272bk"]
+[ext_resource type="Texture2D" uid="uid://cv3kkuvrp4hqw" path="res://Images/icon.svg" id="3_jqbkq"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mxkao"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_272bk"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.81960785)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jqbkq"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.80784315)
+
+[node name="BattleManager" type="Control" unique_id=806606935]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mxkao")
+
+[node name="Background" type="TextureRect" parent="." unique_id=1073318269]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BattleHUD" type="Control" parent="." unique_id=817479208]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_272bk")
+
+[node name="Theater" type="VBoxContainer" parent="BattleHUD" unique_id=550534713]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -934.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EnemyRow" type="HBoxContainer" parent="BattleHUD/Theater" unique_id=1783936866]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="EnemySlot1" type="TextureRect" parent="BattleHUD/Theater/EnemyRow" unique_id=636770470]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("3_jqbkq")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/EnemySlot1" unique_id=735624617]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 25.0
+grow_horizontal = 2
+
+[node name="EnemySlot2" type="TextureRect" parent="BattleHUD/Theater/EnemyRow" unique_id=965542925]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("3_jqbkq")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/EnemySlot2" unique_id=392888361]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 25.0
+grow_horizontal = 2
+
+[node name="EnemySlot3" type="TextureRect" parent="BattleHUD/Theater/EnemyRow" unique_id=222150608]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("3_jqbkq")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/EnemySlot3" unique_id=1879723035]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 25.0
+grow_horizontal = 2
+
+[node name="ReactionSpace" type="Control" parent="BattleHUD/Theater" unique_id=163394752]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayerRow" type="HBoxContainer" parent="BattleHUD/Theater" unique_id=1831997512]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="PlayerSlot1" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=1940847232]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+expand_mode = 1
+stretch_mode = 5
+flip_v = true
+
+[node name="IconTexture" type="TextureRect" parent="BattleHUD/Theater/PlayerRow/PlayerSlot1" unique_id=107129372]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 5
+
+[node name="PlayerSlot2" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=1169970424]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+expand_mode = 1
+stretch_mode = 5
+flip_v = true
+
+[node name="IconTexture" type="TextureRect" parent="BattleHUD/Theater/PlayerRow/PlayerSlot2" unique_id=357773155]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 5
+
+[node name="PlayerSlot3" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=2038432426]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+expand_mode = 1
+stretch_mode = 5
+flip_v = true
+
+[node name="IconTexture" type="TextureRect" parent="BattleHUD/Theater/PlayerRow/PlayerSlot3" unique_id=2124975374]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 5
+
+[node name="Dashboard" type="HBoxContainer" parent="BattleHUD" unique_id=284010607]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.669
+anchor_right = 1.0
+anchor_bottom = 0.832
+offset_top = -0.48010254
+offset_bottom = -0.44006348
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="StatCard1" type="PanelContainer" parent="BattleHUD/Dashboard" unique_id=1821628063]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard1" unique_id=308187073]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1616180284]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=2019981953]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1140169995]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatCard2" type="PanelContainer" parent="BattleHUD/Dashboard" unique_id=1976389665]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard2" unique_id=17070277]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=1472754783]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=865316148]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=784228649]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatCard3" type="PanelContainer" parent="BattleHUD/Dashboard" unique_id=1186658118]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard3" unique_id=937547351]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=40486499]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=1006324208]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=712019293]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ControlDeck" type="HBoxContainer" parent="BattleHUD" unique_id=1252948411]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.836
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 0.8800049
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="AttackButton" type="Button" parent="BattleHUD/ControlDeck" unique_id=2136096031]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_focus_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+theme_override_colors/font_pressed_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+theme_override_font_sizes/font_size = 90
+theme_override_styles/normal = SubResource("StyleBoxFlat_mxkao")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_272bk")
+theme_override_styles/focus = SubResource("StyleBoxFlat_jqbkq")
+text = "ATTACK"
+
+[node name="SwapButton" type="Button" parent="BattleHUD/ControlDeck" unique_id=252330254]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_focus_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+theme_override_colors/font_pressed_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+theme_override_font_sizes/font_size = 90
+theme_override_styles/normal = SubResource("StyleBoxFlat_mxkao")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_272bk")
+theme_override_styles/focus = SubResource("StyleBoxFlat_jqbkq")
+text = "SWAP"
+
+[node name="Quit" type="Button" parent="BattleHUD/ControlDeck" unique_id=1907146130]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_focus_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+theme_override_colors/font_pressed_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+theme_override_font_sizes/font_size = 90
+theme_override_styles/normal = SubResource("StyleBoxFlat_mxkao")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_272bk")
+theme_override_styles/focus = SubResource("StyleBoxFlat_jqbkq")
+text = "QUIT"
+
+[node name="MoveContainer" type="HBoxContainer" parent="BattleHUD/ControlDeck" unique_id=1033656403]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
