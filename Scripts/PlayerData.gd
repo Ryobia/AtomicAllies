@@ -57,14 +57,6 @@ var starter_monster_paths = [
 	"res://data/Monsters/Iron.tres"
 ]
 
-# --- Configuration: Which Group upgrades which Stat? ---
-const STAT_ESSENCE_MAP = {
-	"hp": 0,      # Non-metals (Hydrogen, etc) upgrade HP
-	"attack": 2,  # Alkali Metals (Lithium, Sodium) upgrade Attack
-	"defense": 1, # Noble Gases (Helium, Neon) upgrade Defense
-	"speed": 5    # Halogens (Fluorine, Chlorine) upgrade Speed
-}
-
 # --- Helper Functions ---
 
 func is_monster_owned(monster_name: String) -> bool:
@@ -87,6 +79,14 @@ func add_resource(type: String, amount: int):
 	resource_updated.emit(type, resources[type])
 	print("Added %d %s. Total: %d" % [amount, type, resources[type]])
 
+func spend_resource(type: String, amount: int) -> bool:
+	if resources.get(type, 0) >= amount:
+		resources[type] -= amount
+		resource_updated.emit(type, resources[type])
+		print("Spent %d %s. Total: %d" % [amount, type, resources[type]])
+		return true
+	return false
+
 func add_essence(group: int, amount: int):
 	# Simplified: All essence is now Neutron Dust
 	add_resource("neutron_dust", amount)
@@ -103,12 +103,7 @@ func save_game():
 	for m in owned_monsters:
 		save_data["monsters"].append({
 			"name": m.monster_name,
-			"level": m.level,
-			"xp": m.current_xp,
-			"infused_health": m.infused_health,
-			"infused_attack": m.infused_attack,
-			"infused_defense": m.infused_defense,
-			"infused_speed": m.infused_speed
+			"level": m.level
 		})
 		
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -151,11 +146,6 @@ func load_game():
 					if res and res.monster_name == m_name:
 						var new_m = res.duplicate()
 						new_m.level = int(m_data["level"])
-						new_m.current_xp = int(m_data["xp"])
-						new_m.infused_health = int(m_data.get("infused_health", 0))
-						new_m.infused_attack = int(m_data.get("infused_attack", 0))
-						new_m.infused_defense = int(m_data.get("infused_defense", 0))
-						new_m.infused_speed = int(m_data.get("infused_speed", 0))
 						owned_monsters.append(new_m)
 						break
 

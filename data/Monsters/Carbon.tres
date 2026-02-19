@@ -6,12 +6,5 @@
 script = ExtResource("1_script")
 monster_name = "Carbon"
 atomic_number = 6
-symbol = "C"
-atomic_mass = 12.01
-group = 0
+group = 5 # AtomicConfig.Group.NONMETAL
 level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0

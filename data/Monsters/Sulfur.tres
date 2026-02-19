@@ -5,13 +5,6 @@
 [resource]
 script = ExtResource("1_script")
 monster_name = "Sulfur"
-symbol = "S"
 atomic_number = 16
-atomic_mass = 32.06
-group = 0
+group = 5 # AtomicConfig.Group.NONMETAL
 level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0

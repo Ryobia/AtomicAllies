@@ -6,12 +6,5 @@
 script = ExtResource("1_script")
 monster_name = "Boron"
 atomic_number = 5
-symbol = "B"
-atomic_mass = 10.81
-group = 4
+group = 4 # AtomicConfig.Group.METALLOID
 level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0

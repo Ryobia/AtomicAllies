@@ -5,13 +5,6 @@
 [resource]
 script = ExtResource("1_script")
 monster_name = "Manganese"
-symbol = "Mn"
 atomic_number = 25
-atomic_mass = 54.938
-group = 7
+group = 2 # AtomicConfig.Group.TRANSITION_METAL
 level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0

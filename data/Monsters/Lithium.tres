@@ -1,21 +1,14 @@
-[gd_resource type="Resource" script_class="MonsterData" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MonsterData" format=3 uid="uid://d23nb3j25ldjr"]
 
-[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://c57ckdlusgsc0" path="res://Scripts/MoveData.gd" id="1_m78nm"]
+[ext_resource type="Script" uid="uid://biuha7ykmyh1e" path="res://Scripts/MonsterData.gd" id="1_script"]
 [ext_resource type="Resource" path="res://data/Moves/Tackle.tres" id="2_move"]
-[ext_resource type="Resource" path="res://data/Moves/Pulse.tres" id="3_move"]
+[ext_resource type="Resource" path="res://data/Moves/SnipeShot.tres" id="4_cmfpe"]
 [ext_resource type="Resource" path="res://data/Moves/Shield.tres" id="4_move"]
 
 [resource]
 script = ExtResource("1_script")
 monster_name = "Lithium"
 atomic_number = 3
-symbol = "Li"
-atomic_mass = 6.94
-group = 2
-level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0
-moves = [ExtResource("2_move"), ExtResource("3_move"), ExtResource("4_move")]
+group = 0
+moves = Array[ExtResource("1_m78nm")]([ExtResource("2_move"), ExtResource("4_move"), ExtResource("4_cmfpe")])

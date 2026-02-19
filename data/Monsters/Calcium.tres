@@ -5,13 +5,6 @@
 [resource]
 script = ExtResource("1_script")
 monster_name = "Calcium"
-symbol = "Ca"
 atomic_number = 20
-atomic_mass = 40.078
-group = 3
+group = 1 # AtomicConfig.Group.ALKALINE_EARTH
 level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0

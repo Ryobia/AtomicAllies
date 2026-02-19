@@ -6,12 +6,5 @@
 script = ExtResource("1_script")
 monster_name = "Neon"
 atomic_number = 10
-symbol = "Ne"
-atomic_mass = 20.18
-group = 1
+group = 7 # AtomicConfig.Group.NOBLE_GAS
 level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0

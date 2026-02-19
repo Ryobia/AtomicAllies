@@ -1,7 +1,8 @@
 extends Resource
 class_name MoveData
 
-@export var name: String = "Move"
-@export var power: int = 0
+@export var name: String = "Attack"
+@export var power: int = 40
 @export var accuracy: int = 100
-@export var description: String = ""
+@export var is_snipe: bool = false
+@export_multiline var description: String = ""

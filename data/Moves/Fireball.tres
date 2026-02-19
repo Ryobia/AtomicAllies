@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_script")
-name = "Tackle"
-power = 40
-accuracy = 100
+name = "Fireball"
+power = 60
+accuracy = 90
 is_snipe = false
-description = "A physical charge against the enemy."
+description = "A ball of fire that burns the target."

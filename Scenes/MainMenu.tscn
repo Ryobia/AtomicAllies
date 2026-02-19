@@ -1,6 +1,5 @@
 [gd_scene format=3 uid="uid://858qgy3euybd"]
 
-[ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://Scripts/MainMenu.gd" id="1_0fbet"]
 [ext_resource type="Texture2D" uid="uid://cbljv54boso2n" path="res://Images/Home.png" id="2_853f1"]
 [ext_resource type="Shader" uid="uid://ryl0qht6242f" path="res://Scenes/BlackHole.gdshader" id="3_loo7a"]
 [ext_resource type="Texture2D" uid="uid://dw1d73a004nvf" path="res://Assets/swirlmain.png" id="9_if7li"]
@@ -182,7 +181,6 @@ offset_right = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_8saeu")
-script = ExtResource("1_0fbet")
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1654497667]
 texture_filter = 1

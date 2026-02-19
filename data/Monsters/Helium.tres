@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="MonsterData" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MonsterData" format=3 uid="uid://cv13m18no6bcn"]
 
-[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://c57ckdlusgsc0" path="res://Scripts/MoveData.gd" id="1_i35r2"]
+[ext_resource type="Script" uid="uid://biuha7ykmyh1e" path="res://Scripts/MonsterData.gd" id="1_script"]
 [ext_resource type="Resource" path="res://data/Moves/Shield.tres" id="2_move"]
 [ext_resource type="Resource" path="res://data/Moves/Tackle.tres" id="3_move"]
 [ext_resource type="Resource" path="res://data/Moves/Pulse.tres" id="4_move"]
@@ -9,13 +10,5 @@
 script = ExtResource("1_script")
 monster_name = "Helium"
 atomic_number = 2
-symbol = "He"
-atomic_mass = 4.002
-group = 1
-level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0
-moves = [ExtResource("2_move"), ExtResource("3_move"), ExtResource("4_move")]
+group = 7
+moves = Array[ExtResource("1_i35r2")]([ExtResource("2_move"), ExtResource("3_move"), ExtResource("4_move")])

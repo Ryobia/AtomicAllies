@@ -1,17 +1,9 @@
-[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MonsterData" format=3 uid="uid://bsfohqj514q5a"]
 
-[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://biuha7ykmyh1e" path="res://Scripts/MonsterData.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")
 monster_name = "Argon"
-symbol = "Ar"
 atomic_number = 18
-atomic_mass = 39.948
-group = 1
-level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0
+group = 7

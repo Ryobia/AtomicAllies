@@ -6,12 +6,5 @@
 script = ExtResource("1_script")
 monster_name = "Fluorine"
 atomic_number = 9
-symbol = "F"
-atomic_mass = 19.0
-group = 5
+group = 6 # AtomicConfig.Group.HALOGEN
 level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0

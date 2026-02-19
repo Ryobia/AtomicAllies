@@ -5,13 +5,6 @@
 [resource]
 script = ExtResource("1_script")
 monster_name = "Silicon"
-symbol = "Si"
 atomic_number = 14
-atomic_mass = 28.085
-group = 4
+group = 4 # AtomicConfig.Group.METALLOID
 level = 1
-current_xp = 0
-infused_health = 0
-infused_attack = 0
-infused_defense = 0
-infused_speed = 0
