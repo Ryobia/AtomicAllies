@@ -204,7 +204,6 @@ func generate_void_enemies(count: int) -> Array[MonsterData]:
 		var enemy = MonsterData.new()
 		enemy.monster_name = "Null Walker"
 		enemy.level = 1
-		enemy.tier = 1
 		# Assuming MonsterData has a 'group' property. 
 		# If not, you might need to add it to MonsterData.gd first.
 		if "group" in enemy:

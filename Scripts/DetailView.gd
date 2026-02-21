@@ -39,6 +39,10 @@ func _ready():
 	
 	if class_help_icon:
 		class_help_icon.theme = GlobalManager.tooltip_theme
+		# Mobile support: Make icon clickable to show tooltip
+		class_help_icon.mouse_filter = Control.MOUSE_FILTER_STOP
+		if not class_help_icon.gui_input.is_connected(_on_help_icon_input):
+			class_help_icon.gui_input.connect(_on_help_icon_input)
 
 	# Fetch the selected monster from global state if not already set
 	if not current_monster:
@@ -102,9 +106,9 @@ func update_ui():
 				var pwr = m.power if "power" in m else 0
 				var desc = m.description if "description" in m else ""
 				
-				var text = "[color=#60fafc][font_size=22]• %s (Pwr: %d)[/font_size][/color]" % [m.name, pwr]
+				var text = "[color=#60fafc][font_size=40]• %s (Pwr: %d)[/font_size][/color]" % [m.name, pwr]
 				if desc != "":
-					text += " [color=#e6e6e6][font_size=18]%s[/font_size][/color]" % desc
+					text += " [color=#e6e6e6][font_size=30]%s[/font_size][/color]" % desc
 				
 				move_rtl.text = text
 				margin.add_child(move_rtl)
@@ -180,3 +184,53 @@ func _get_class_description(group: int) -> String:
 			return "Role: Rare Earth\nHigh Attack and unique properties.\nSimilar to Actinides but more stable."
 		_:
 			return "Unknown Class properties."
+
+func _on_help_icon_input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_show_tooltip_popup(class_help_icon.tooltip_text)
+
+func _show_tooltip_popup(text: String):
+	var popup = find_child("InfoPopup", true, false)
+	if not popup:
+		popup = AcceptDialog.new()
+		popup.name = "InfoPopup"
+		add_child(popup)
+		
+		var theme = Theme.new()
+		
+		# Background
+		var bg = StyleBoxFlat.new()
+		bg.bg_color = Color("#010813")
+		bg.border_width_left = 2
+		bg.border_width_top = 2
+		bg.border_width_right = 2
+		bg.border_width_bottom = 2
+		bg.border_color = Color("#60fafc")
+		bg.content_margin_left = 20
+		bg.content_margin_right = 20
+		bg.content_margin_top = 20
+		bg.content_margin_bottom = 20
+		theme.set_stylebox("panel", "Window", bg)
+		
+		# Text
+		theme.set_color("font_color", "Label", Color("#60fafc"))
+		theme.set_font_size("font_size", "Label", 32)
+		
+		# Button
+		var btn_style = StyleBoxFlat.new()
+		btn_style.bg_color = Color("#60fafc")
+		btn_style.content_margin_left = 30
+		btn_style.content_margin_right = 30
+		btn_style.content_margin_top = 10
+		btn_style.content_margin_bottom = 10
+		
+		theme.set_stylebox("normal", "Button", btn_style)
+		theme.set_stylebox("hover", "Button", btn_style)
+		theme.set_stylebox("pressed", "Button", btn_style)
+		theme.set_color("font_color", "Button", Color("#010813"))
+		theme.set_font_size("font_size", "Button", 28)
+		
+		popup.theme = theme
+	
+	popup.dialog_text = text
+	popup.popup_centered()

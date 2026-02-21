@@ -83,14 +83,14 @@ theme_override_constants/separation = 15
 [node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1804778207]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 80
+theme_override_font_sizes/font_size = 90
 horizontal_alignment = 1
 
 [node name="NumberLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=736871060]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 50
 theme_override_styles/normal = SubResource("StyleBoxFlat_51vr3")
 horizontal_alignment = 1
 
@@ -103,7 +103,7 @@ alignment = 1
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 40
 text = "CLASS ALKALINE METALS"
 horizontal_alignment = 1
 
@@ -116,7 +116,7 @@ expand_mode = 5
 stretch_mode = 4
 
 [node name="IconTexture" type="TextureRect" parent="MarginContainer/VBoxContainer" unique_id=1310145462]
-custom_minimum_size = Vector2(250, 250)
+custom_minimum_size = Vector2(500, 500)
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -171,9 +171,7 @@ text = "LEVEL UP"
 [node name="GridStats" type="GridContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1856869019]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/h_separation = 7
-theme_override_constants/v_separation = 19
-columns = 2
+columns = 4
 
 [node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=204995007]
 layout_mode = 2
@@ -181,7 +179,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -191,7 +189,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -201,7 +199,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -211,7 +209,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
 

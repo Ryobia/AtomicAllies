@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://dl64uh5vcccws"]
+
+[ext_resource type="Texture2D" uid="uid://uamp54phryil" path="res://Assets/Neon.png" id="1_fuino"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fqlvd"]
+atlas = ExtResource("1_fuino")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ieq5e"]
+atlas = ExtResource("1_fuino")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hvjt1"]
+atlas = ExtResource("1_fuino")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_val1x"]
+atlas = ExtResource("1_fuino")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fqlvd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ieq5e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hvjt1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_val1x")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

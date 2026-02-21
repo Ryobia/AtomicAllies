@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://cv13fqhh5pils"]
+
+[ext_resource type="Texture2D" uid="uid://dkg05kmwdm8ef" path="res://Assets/Lithium.png" id="1_x7dqu"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oir3j"]
+atlas = ExtResource("1_x7dqu")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0jrmm"]
+atlas = ExtResource("1_x7dqu")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_liugb"]
+atlas = ExtResource("1_x7dqu")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_blx8o"]
+atlas = ExtResource("1_x7dqu")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oir3j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0jrmm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_liugb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_blx8o")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://yyqt8fi6bad"]
+
+[ext_resource type="Texture2D" uid="uid://cusnwtvrmtpks" path="res://Assets/Beryllium.png" id="1_ftyld"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wu6e7"]
+atlas = ExtResource("1_ftyld")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o2nxb"]
+atlas = ExtResource("1_ftyld")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_025do"]
+atlas = ExtResource("1_ftyld")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o0cny"]
+atlas = ExtResource("1_ftyld")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wu6e7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o2nxb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_025do")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o0cny")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

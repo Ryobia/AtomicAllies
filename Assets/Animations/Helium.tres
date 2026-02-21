@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bql580080mbex"]
+
+[ext_resource type="Texture2D" uid="uid://b7ijvu1xivkvf" path="res://Assets/Helium.png" id="1_8cg1n"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8cg1n"]
+atlas = ExtResource("1_8cg1n")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v57mf"]
+atlas = ExtResource("1_8cg1n")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j5sku"]
+atlas = ExtResource("1_8cg1n")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dskul"]
+atlas = ExtResource("1_8cg1n")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8cg1n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v57mf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j5sku")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dskul")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

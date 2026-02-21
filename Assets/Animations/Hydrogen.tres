@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://ctleff3e5gg3f"]
+
+[ext_resource type="Texture2D" uid="uid://cn7hqrbc0p8j8" path="res://Assets/Hydrogen.png" id="1_jsxe5"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jsxe5"]
+atlas = ExtResource("1_jsxe5")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0t0jf"]
+atlas = ExtResource("1_jsxe5")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8hb47"]
+atlas = ExtResource("1_jsxe5")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x0727"]
+atlas = ExtResource("1_jsxe5")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jsxe5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0t0jf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8hb47")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x0727")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

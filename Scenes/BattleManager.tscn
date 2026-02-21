@@ -309,15 +309,6 @@ texture = ExtResource("5_jqbkq")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="IconTexture" type="TextureRect" parent="BattleHUD/Theater/PlayerRow/PlayerSlot1" unique_id=107129372]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-stretch_mode = 5
-
 [node name="PlayerSpawn1" type="Marker2D" parent="BattleHUD/Theater/PlayerRow/PlayerSlot1" unique_id=43957843]
 position = Vector2(168, 177)
 
@@ -338,15 +329,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("5_jqbkq")
 expand_mode = 1
-stretch_mode = 5
-
-[node name="IconTexture" type="TextureRect" parent="BattleHUD/Theater/PlayerRow/PlayerSlot3" unique_id=2124975374]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 stretch_mode = 5
 
 [node name="PlayerSpawn3" type="Marker2D" parent="BattleHUD/Theater/PlayerRow/PlayerSlot3" unique_id=496008191]

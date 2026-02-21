@@ -70,6 +70,10 @@ func _ready():
 	if help_icon:
 		help_icon.tooltip_text = "Stability depends on Parent Levels.\nLevel up your monsters to increase success rate!"
 		help_icon.theme = GlobalManager.tooltip_theme
+		# Mobile support: Make icon clickable to show tooltip
+		help_icon.mouse_filter = Control.MOUSE_FILTER_STOP
+		if not help_icon.gui_input.is_connected(_on_help_icon_input):
+			help_icon.gui_input.connect(_on_help_icon_input)
 
 	stability_label = find_child("StabilityLabel", true, false)
 	
@@ -84,7 +88,7 @@ func _ready():
 			print("Nexus Error: Could not find 'GridContainer' inside SelectionPanel.")
 		elif selection_container is GridContainer:
 			# Force the grid to have multiple columns so cards sit side-by-side
-			selection_container.columns = 4
+			selection_container.columns = 3
 			selection_container.add_theme_constant_override("h_separation", 10)
 			selection_container.add_theme_constant_override("v_separation", 10)
 			# Ensure the grid itself expands to fill the ScrollContainer width
@@ -169,7 +173,7 @@ func _on_capsule_created(capsule_data):
 	
 	if status_label:
 		var z = capsule_data.get("z", 0)
-		status_label.text = "Fusion Successful! Capsule Z-%d created." % z
+		status_label.text = "Fusion Successful! Capsule created." % z
 	
 	# Clear Visuals
 	if is_instance_valid(atom_p1): atom_p1.queue_free()
@@ -214,27 +218,32 @@ func _populate_selection_list():
 		print("Error: Cannot populate list, selection_container is missing.")
 		return
 
+	print("Nexus: Populating selection list...")
+
 	# Clear previous list
 	for child in selection_container.get_children():
 		child.queue_free()
-	
+		
 	var count = 0
 	# Create a button for each monster in inventory
 	for monster in PlayerData.owned_monsters:
 		# Skip if this monster is already selected in the other slot
 		if (selecting_slot == 1 and monster == parent_2) or (selecting_slot == 2 and monster == parent_1):
 			continue
-		
+			
 		if monster_card_scene:
+			print("Nexus: Using Monster Card Scene")
 			# Create a wrapper to hold the card and an invisible button
 			var wrapper = PanelContainer.new()
 			wrapper.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 			wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			wrapper.custom_minimum_size = Vector2(0, 250)
 			selection_container.add_child(wrapper)
 			
 			var card = monster_card_scene.instantiate()
 			card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			_apply_font_override(card, 40) # Force larger font on all labels inside the card
 			if card.has_method("set_monster"):
 				card.set_monster(monster)
 			wrapper.add_child(card)
@@ -265,10 +274,12 @@ func _populate_selection_list():
 			
 			wrapper.add_child(btn)
 		else:
+			print("Nexus: Using Default Buttons")
 			var btn = Button.new()
 			btn.text = monster.monster_name + " (#" + str(monster.atomic_number) + ")"
-			btn.custom_minimum_size = Vector2(200, 50)
+			btn.custom_minimum_size = Vector2(200, 250)
 			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn.add_theme_font_size_override("font_size", 56)
 			btn.pressed.connect(func(): _on_monster_selected(monster))
 			selection_container.add_child(btn)
 			
@@ -282,6 +293,9 @@ func _populate_selection_list():
 	# Add a Cancel button
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Cancel"
+	cancel_btn.custom_minimum_size = Vector2(200, 250)
+	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_btn.add_theme_font_size_override("font_size", 56)
 	cancel_btn.pressed.connect(func(): selection_panel.visible = false)
 	selection_container.add_child(cancel_btn)
 
@@ -513,3 +527,60 @@ func _debug_add_starters():
 		PlayerData.owned_monsters.append(he)
 	
 	print("DEBUG: Starters added. You can now test breeding.")
+
+func _on_help_icon_input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_show_tooltip_popup(help_icon.tooltip_text)
+
+func _show_tooltip_popup(text: String):
+	var popup = find_child("InfoPopup", true, false)
+	if not popup:
+		popup = AcceptDialog.new()
+		popup.name = "InfoPopup"
+		add_child(popup)
+		
+		var theme = Theme.new()
+		
+		# Background
+		var bg = StyleBoxFlat.new()
+		bg.bg_color = Color("#010813")
+		bg.border_width_left = 2
+		bg.border_width_top = 2
+		bg.border_width_right = 2
+		bg.border_width_bottom = 2
+		bg.border_color = Color("#60fafc")
+		bg.content_margin_left = 20
+		bg.content_margin_right = 20
+		bg.content_margin_top = 20
+		bg.content_margin_bottom = 20
+		theme.set_stylebox("panel", "Window", bg)
+		
+		# Text
+		theme.set_color("font_color", "Label", Color("#60fafc"))
+		theme.set_font_size("font_size", "Label", 32)
+		
+		# Button
+		var btn_style = StyleBoxFlat.new()
+		btn_style.bg_color = Color("#60fafc")
+		btn_style.content_margin_left = 30
+		btn_style.content_margin_right = 30
+		btn_style.content_margin_top = 10
+		btn_style.content_margin_bottom = 10
+		
+		theme.set_stylebox("normal", "Button", btn_style)
+		theme.set_stylebox("hover", "Button", btn_style)
+		theme.set_stylebox("pressed", "Button", btn_style)
+		theme.set_color("font_color", "Button", Color("#010813"))
+		theme.set_font_size("font_size", "Button", 28)
+		
+		popup.theme = theme
+	
+	popup.dialog_text = text
+	popup.popup_centered()
+
+func _apply_font_override(node: Node, size: int):
+	if node is Label or node is Button or node is RichTextLabel:
+		node.add_theme_font_size_override("font_size", size)
+	
+	for child in node.get_children():
+		_apply_font_override(child, size)

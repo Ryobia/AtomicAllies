@@ -16,7 +16,7 @@ var atb_value: float = 0.0
 var is_dead: bool = false
 
 # --- Node References ---
-@onready var sprite: Sprite2D = $Sprite2D
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var center_marker = find_child("Center", true, false)
 @onready var shadow = find_child("Shadow", true, false)
 
@@ -25,10 +25,34 @@ func setup(monster_data: MonsterData, player_team: bool):
 	is_player = player_team
 	
 	# 1. Setup Visuals
-	if data.icon:
-		sprite.texture = data.icon
-		
-		# Auto-scale shadow based on monster width
+	# Try to load specific animation first (e.g. "NullWalker.tres")
+	# Assumes naming convention: MonsterName.tres in Assets/Animations/
+	var anim_path = "res://Assets/Animations/" + data.monster_name.replace(" ", "") + ".tres"
+	var loaded_frames = null
+	
+	if ResourceLoader.exists(anim_path):
+		loaded_frames = load(anim_path)
+	
+	if loaded_frames:
+		sprite.sprite_frames = loaded_frames
+		# Robust animation playing
+		var anim_to_play = "idle"
+		if not loaded_frames.has_animation(anim_to_play):
+			if loaded_frames.has_animation("default"):
+				anim_to_play = "default"
+			else:
+				var anims = loaded_frames.get_animation_names()
+				if anims.size() > 0:
+					anim_to_play = anims[0]
+		sprite.play(anim_to_play)
+	elif data.icon:
+		# Fallback: Create a temporary 1-frame animation from the icon
+		var frames = SpriteFrames.new()
+		frames.add_animation("idle")
+		frames.add_frame("idle", data.icon)
+		sprite.sprite_frames = frames
+		sprite.play("idle")
+
 		if shadow:
 			var w = data.icon.get_width()
 			var s = clamp(w / 150.0, 0.4, 1.5) # Normalize around 150px width

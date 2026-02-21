@@ -135,7 +135,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 	lbl_style.content_margin_bottom = 5
 	label.add_theme_stylebox_override("normal", lbl_style)
 	label.add_theme_color_override("font_color", Color("#60fafc"))
-	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_font_size_override("font_size", 32)
 	container.add_child(label)
 	
 	var btn = Button.new()
@@ -143,7 +143,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 	btn.custom_minimum_size = Vector2(0, 40)
 	container.add_child(btn)
 	_style_button(btn)
-	btn.add_theme_font_size_override("font_size", 24)
+	btn.add_theme_font_size_override("font_size", 32)
 	
 	if not data.is_unlocked:
 		label.text = "Chamber Locked"

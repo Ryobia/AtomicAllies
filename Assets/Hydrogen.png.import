@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://w4ke0mc8infj"
-path="res://.godot/imported/NullWalkerSprite (1).png-21eacdeecb1cbda64b3de356e7fb59b1.ctex"
+uid="uid://cn7hqrbc0p8j8"
+path="res://.godot/imported/Hydrogen.png-c2e017b71e769ed29f8d05198d6f00fc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/NullWalkerSprite (1).png"
-dest_files=["res://.godot/imported/NullWalkerSprite (1).png-21eacdeecb1cbda64b3de356e7fb59b1.ctex"]
+source_file="res://Assets/Hydrogen.png"
+dest_files=["res://.godot/imported/Hydrogen.png-c2e017b71e769ed29f8d05198d6f00fc.ctex"]
 
 [params]
 

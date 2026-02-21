@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://cef1legh1q5jp"]
+
+[ext_resource type="Texture2D" uid="uid://1s7fbdrg07hx" path="res://Assets/Carbon.png" id="1_a7mk5"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hhfrt"]
+atlas = ExtResource("1_a7mk5")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_twucd"]
+atlas = ExtResource("1_a7mk5")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4f3os"]
+atlas = ExtResource("1_a7mk5")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t8hsx"]
+atlas = ExtResource("1_a7mk5")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hhfrt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_twucd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4f3os")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_t8hsx")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

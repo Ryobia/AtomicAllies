@@ -90,7 +90,6 @@ size_flags_horizontal = 2
 size_flags_vertical = 3
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
-visible = false
 z_index = 10
 layout_mode = 1
 anchors_preset = 8

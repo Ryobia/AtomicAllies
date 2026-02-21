@@ -274,8 +274,50 @@ func set_targeting_mode(enabled: bool, valid_indices: Array = []):
 
 func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = false):
 	var icon = slot.find_child("IconTexture", true, false)
-	if icon and monster.icon:
-		icon.texture = monster.icon
+	
+	# 1. Cleanup existing animation if we are refreshing the slot
+	if icon:
+		for child in icon.get_children():
+			if child.name.begins_with("UIAnimSprite"):
+				icon.remove_child(child)
+				child.queue_free()
+	
+	# 2. Reset static texture
+	if icon: icon.texture = null
+
+	if icon and monster:
+		# 3. Try to load the animation resource
+		var anim_path = "res://Assets/Animations/" + monster.monster_name.replace(" ", "") + ".tres"
+		var anim_frames = null
+		
+		if ResourceLoader.exists(anim_path):
+			anim_frames = load(anim_path)
+		else:
+			print("BattleHUD: Animation NOT found at: ", anim_path)
+			
+		if anim_frames:
+			# Create an AnimatedSprite2D for the UI
+			var sprite = AnimatedSprite2D.new()
+			sprite.name = "UIAnimSprite"
+			sprite.sprite_frames = anim_frames
+			
+			# Robust animation playing: Check for 'idle', then 'default', then first available
+			var anim_to_play = "idle"
+			if not anim_frames.has_animation(anim_to_play):
+				if anim_frames.has_animation("default"):
+					anim_to_play = "default"
+				else:
+					var anims = anim_frames.get_animation_names()
+					if anims.size() > 0:
+						anim_to_play = anims[0]
+			
+			sprite.play(anim_to_play)
+			sprite.position = icon.size / 2 # Center it
+			_scale_sprite_to_fit(sprite, icon.size.y)
+			icon.add_child(sprite)
+		elif monster.icon:
+			# Fallback to static icon
+			icon.texture = monster.icon
 	
 	var shield = slot.find_child("VanguardShield", true, false)
 	if shield:
@@ -294,6 +336,19 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 	var speed_bar = slot.find_child("SpeedBar", true, false)
 	if speed_bar:
 		speed_bar.value = 0
+
+func _scale_sprite_to_fit(sprite: AnimatedSprite2D, target_height: float):
+	# Helper to ensure the sprite fits in the UI slot
+	if target_height <= 0: target_height = 150.0 # Default fallback
+	
+	var anim = sprite.animation
+	if not sprite.sprite_frames.has_animation(anim):
+		return
+
+	var tex = sprite.sprite_frames.get_frame_texture(anim, 0)
+	if tex:
+		var s = target_height / float(tex.get_height())
+		sprite.scale = Vector2(s, s)
 
 func _set_stat_card(card: Control, monster: MonsterData):
 	var name_lbl = card.find_child("NameLabel", true, false)
