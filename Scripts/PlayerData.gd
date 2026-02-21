@@ -5,10 +5,18 @@ const SAVE_PATH = "user://savegame.json"
 func _ready():
 	load_game()
 	
+	# Initialize chambers if they don't exist (fresh save or migration)
+	if synthesis_chambers.is_empty():
+		for i in range(4):
+			synthesis_chambers.append({
+				"is_unlocked": (i == 0), # First one is unlocked by default
+				"capsule": null
+			})
+	
 	# On a fresh start, if the collection is empty, give the player the starting elements.
 	if owned_monsters.is_empty():
-		var h = load("res://data/Monsters/Hydrogen.tres")
 		var he = load("res://data/Monsters/Helium.tres")
+		var h = load("res://data/Monsters/Hydrogen.tres")
 		if h: owned_monsters.append(h.duplicate())
 		if he: owned_monsters.append(he.duplicate())
 		save_game()
@@ -17,6 +25,8 @@ signal resource_updated(resource_type, amount)
 
 # Inventory
 var owned_monsters: Array[MonsterData] = []
+var capsules: Array = [] # Array of Dictionaries { "id": String, "z": int }
+var synthesis_chambers: Array = [] # Array of { "is_unlocked": bool, "capsule": Dictionary/null }
 var pending_egg: MonsterData = null
 var selected_monster: MonsterData = null
 
@@ -91,20 +101,51 @@ func add_essence(group: int, amount: int):
 	# Simplified: All essence is now Neutron Dust
 	add_resource("neutron_dust", amount)
 
+func get_monster_path_by_z(z: int) -> String:
+	# Atomic Number 1 (Hydrogen) is at index 0
+	if z > 0 and z <= starter_monster_paths.size():
+		return starter_monster_paths[z - 1]
+	return ""
+
+func add_capsule(z: int, p1_z: int = 0, p2_z: int = 0) -> Dictionary:
+	var capsule = {
+		"id": str(Time.get_unix_time_from_system()) + "_" + str(randi()),
+		"z": z,
+		"parents": [p1_z, p2_z]
+	}
+	capsules.append(capsule)
+	save_game()
+	return capsule
+
+func remove_capsule(capsule_id: String):
+	for i in range(capsules.size()):
+		if capsules[i]["id"] == capsule_id:
+			capsules.remove_at(i)
+			save_game()
+			return
+
 # --- Save & Load System ---
 
 func save_game():
 	var save_data = {
 		"resources": resources,
-		"monsters": []
+		"monsters": [],
+		"capsules": capsules,
+		"synthesis_chambers": synthesis_chambers
 	}
 	
 	# Serialize Monsters
 	for m in owned_monsters:
-		save_data["monsters"].append({
+		var m_data = {
 			"name": m.monster_name,
 			"level": m.level
-		})
+		}
+		# Save infusion stats if they exist on the monster object
+		if "infusion_hp" in m: m_data["infusion_hp"] = m.infusion_hp
+		if "infusion_attack" in m: m_data["infusion_attack"] = m.infusion_attack
+		if "infusion_defense" in m: m_data["infusion_defense"] = m.infusion_defense
+		if "infusion_speed" in m: m_data["infusion_speed"] = m.infusion_speed
+		save_data["monsters"].append(m_data)
 		
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	var json_str = JSON.stringify(save_data)
@@ -136,6 +177,12 @@ func load_game():
 			for key in resources:
 				resource_updated.emit(key, resources[key])
 				
+		if "capsules" in save_data:
+			capsules = save_data["capsules"]
+			
+		if "synthesis_chambers" in save_data:
+			synthesis_chambers = save_data["synthesis_chambers"]
+
 		if "monsters" in save_data:
 			owned_monsters.clear()
 			for m_data in save_data["monsters"]:
@@ -146,6 +193,13 @@ func load_game():
 					if res and res.monster_name == m_name:
 						var new_m = res.duplicate()
 						new_m.level = int(m_data["level"])
+						
+						# Load infusion stats
+						if "infusion_hp" in m_data: new_m.infusion_hp = int(m_data["infusion_hp"])
+						if "infusion_attack" in m_data: new_m.infusion_attack = int(m_data["infusion_attack"])
+						if "infusion_defense" in m_data: new_m.infusion_defense = int(m_data["infusion_defense"])
+						if "infusion_speed" in m_data: new_m.infusion_speed = int(m_data["infusion_speed"])
+						
 						owned_monsters.append(new_m)
 						break
 

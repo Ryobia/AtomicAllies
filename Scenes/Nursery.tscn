@@ -3,45 +3,20 @@
 [ext_resource type="Script" uid="uid://dir1y46pq877y" path="res://Scripts/Nursery.gd" id="1_xqppg"]
 [ext_resource type="Texture2D" uid="uid://ist0tl0il484" path="res://Images/Synthesis.png" id="2_8qu53"]
 [ext_resource type="Script" uid="uid://i8qoui2cnkcf" path="res://Scripts/FusionResultPopup.gd" id="3_5odor"]
-[ext_resource type="Texture2D" uid="uid://dtmntevxwbd33" path="res://data/ElectronGlow.tres" id="3_36rvm"]
 
-[sub_resource type="Animation" id="Animation_36rvm"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite2D:scale")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector2(10, 10)]
-}
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f5c0i"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
-[sub_resource type="Animation" id="Animation_5jn0c"]
-resource_name = "pulse_energetic"
-length = 0.8
-loop_mode = 1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite2D:scale")
-tracks/0/interp = 2
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.1, 0.8),
-"transitions": PackedFloat32Array(1, 1, 1),
-"update": 0,
-"values": [Vector2(8, 8), Vector2(11, 11), Vector2(8, 8)]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_f5c0i"]
-_data = {
-&"RESET": SubResource("Animation_36rvm"),
-&"pulse_energetic": SubResource("Animation_5jn0c")
-}
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qwcqv"]
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8qu53"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -65,6 +40,37 @@ expand_margin_top = 5.0
 expand_margin_right = 5.0
 expand_margin_bottom = 5.0
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5jn0c"]
+bg_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+expand_margin_left = 5.0
+expand_margin_top = 5.0
+expand_margin_right = 5.0
+expand_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5km5i"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5odor"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+border_blend = true
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [node name="Nursery" type="Control" unique_id=745890857]
 layout_mode = 3
 anchors_preset = 15
@@ -75,6 +81,7 @@ grow_vertical = 2
 script = ExtResource("1_xqppg")
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1314204874]
+self_modulate = Color(1, 1, 1, 0.85490197)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -85,71 +92,70 @@ texture = ExtResource("2_8qu53")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="SynthesisPoint" type="Control" parent="TextureRect" unique_id=1292495252]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=55755709]
 layout_mode = 1
-anchor_left = 0.521
-anchor_top = 0.416
-anchor_right = 0.521
-anchor_bottom = 0.416
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
+anchors_preset = -1
+anchor_left = 0.411
+anchor_top = 0.189
+anchor_right = 0.589
+anchor_bottom = 0.933
+offset_left = -149.0
+offset_right = 149.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="EggTexture" type="Marker2D" parent="TextureRect/SynthesisPoint" unique_id=1222347878]
+[node name="ChambersGrid" type="GridContainer" parent="VBoxContainer" unique_id=1965748597]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 4
 
-[node name="Sprite2D" type="Sprite2D" parent="TextureRect/SynthesisPoint/EggTexture" unique_id=130860947]
-scale = Vector2(10, 10)
-texture = ExtResource("3_36rvm")
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="TextureRect/SynthesisPoint/EggTexture" unique_id=1221530642]
-libraries/ = SubResource("AnimationLibrary_f5c0i")
-autoplay = &"pulse_energetic"
-
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=55755709]
+[node name="DissolvePopup" type="Panel" parent="." unique_id=1411993256]
+custom_minimum_size = Vector2(300, 200)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -175.0
-offset_top = -240.0
-offset_right = 175.0
-offset_bottom = 240.0
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_f5c0i")
 
-[node name="StatusLabel" type="Label" parent="VBoxContainer" unique_id=1147488399]
+[node name="MarginContainer" type="MarginContainer" parent="DissolvePopup" unique_id=1282498600]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DissolvePopup/MarginContainer" unique_id=1805680193]
 layout_mode = 2
-theme_override_font_sizes/font_size = 36
-text = "Synthesizing"
-horizontal_alignment = 1
+alignment = 1
 
-[node name="HatchButton" type="Button" parent="VBoxContainer" unique_id=709537496]
+[node name="Label" type="Label" parent="DissolvePopup/MarginContainer/VBoxContainer" unique_id=669005128]
 layout_mode = 2
-theme_override_font_sizes/font_size = 46
-text = "Synthesize"
-
-[node name="DissolvePopup" type="Panel" parent="." unique_id=1411993256]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="DissolvePopup" unique_id=1805680193]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="Label" type="Label" parent="DissolvePopup/VBoxContainer" unique_id=669005128]
-layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 24
 text = "Duplicate Found!"
+horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="OkButton" type="Button" parent="DissolvePopup/VBoxContainer" unique_id=1818981316]
+[node name="OkButton" type="Button" parent="DissolvePopup/MarginContainer/VBoxContainer" unique_id=1818981316]
 layout_mode = 2
-text = "Collect Essence"
+size_flags_vertical = 10
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_font_sizes/font_size = 32
+theme_override_styles/normal = SubResource("StyleBoxFlat_qwcqv")
+text = "Collect Neutron Dust"
 
 [node name="FusionResultPopup" type="PanelContainer" parent="." unique_id=580002729]
 layout_mode = 1
@@ -165,12 +171,13 @@ script = ExtResource("3_5odor")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="FusionResultPopup" unique_id=1714509820]
 layout_mode = 2
+theme_override_constants/separation = 11
 
 [node name="Label" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=261919470]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 30
-text = "FUSION SUCCESSFUL"
+theme_override_font_sizes/font_size = 40
+text = " NEW ELEMENT DISCOVERED "
 horizontal_alignment = 1
 
 [node name="IconTexture" type="TextureRect" parent="FusionResultPopup/VBoxContainer" unique_id=855505590]
@@ -178,26 +185,80 @@ layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=743603166]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="NumberLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=1777044249]
+[node name="NumberLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=994789245]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-autowrap_mode = 3
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="StatsLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=1347629648]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-autowrap_mode = 3
-
-[node name="ClaimButton" type="Button" parent="FusionResultPopup/VBoxContainer" unique_id=179383258]
+[node name="OkButton" type="Button" parent="FusionResultPopup/VBoxContainer" unique_id=179383258]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_colors/font_hover_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxFlat_36rvm")
-theme_override_styles/hover = SubResource("StyleBoxFlat_36rvm")
+theme_override_styles/hover = SubResource("StyleBoxFlat_5jn0c")
 text = "CLAIM ALLY
 "
+
+[node name="CapsulePanelPopup" type="Panel" parent="." unique_id=1834142268]
+custom_minimum_size = Vector2(300, 320)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_5km5i")
+
+[node name="CapsuleInventory" type="Label" parent="CapsulePanelPopup" unique_id=1104400108]
+layout_mode = 0
+offset_left = -149.5
+offset_top = 843.24
+offset_right = 449.5
+offset_bottom = 864.24
+text = "Capsule Inventory"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CapsulePanelPopup" unique_id=1342263731]
+z_index = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CapsuleList" type="VBoxContainer" parent="CapsulePanelPopup/ScrollContainer" unique_id=1755734774]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="SynthesisChambers" type="Label" parent="." unique_id=1147488399]
+z_index = 1
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.089
+anchor_right = 0.5
+anchor_bottom = 0.089
+offset_left = -299.5
+offset_right = 299.5
+offset_bottom = 111.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 70
+theme_override_styles/normal = SubResource("StyleBoxFlat_5odor")
+text = "Synthesis Chambers"
+horizontal_alignment = 1

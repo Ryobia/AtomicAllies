@@ -10,9 +10,9 @@ signal swap_selected(index)
 # --- UI References ---
 # We use a flexible lookup to find slots so you can rearrange them in the editor
 @onready var enemy_slots = [
-	find_child("EnemySlot2", true, false), # Vanguard (Middle)
-	find_child("EnemySlot1", true, false), # Flank (Left)
-	find_child("EnemySlot3", true, false)  # Flank (Right)
+	find_child("Enemy2", true, false), # Vanguard (Middle)
+	find_child("Enemy1", true, false), # Flank (Left)
+	find_child("Enemy3", true, false)  # Flank (Right)
 ]
 
 @onready var player_slots = [
@@ -37,8 +37,11 @@ signal swap_selected(index)
 
 @onready var move_container = find_child("MoveContainer", true, false)
 
-@onready var back_btn = find_child("BackButton", true, false)
+@onready var back_btn = find_child("Quit", true, false)
 @onready var quit_dialog = find_child("QuitConfirmationDialog", true, false)
+
+# Cache for UI nodes to avoid find_child every frame
+var _ui_cache = { "player": [], "enemy": [] }
 
 func _ready():
 	# Connect Control Deck Buttons
@@ -75,6 +78,8 @@ func _ready():
 				btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 				btn.mouse_filter = Control.MOUSE_FILTER_STOP
 				btn.pressed.connect(func(): target_selected.emit(i))
+	
+	_build_ui_cache()
 
 func _unhandled_input(event):
 	# Universal cancel action (Esc key or right mouse button)
@@ -88,6 +93,26 @@ func _gui_input(event: InputEvent):
 	# the input event, preventing it from reaching here.
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		cancel_targeting.emit()
+
+func _build_ui_cache():
+	# Pre-fetch all bars and labels so we don't use find_child in _process
+	for i in range(3):
+		_ui_cache.player.append({})
+		_ui_cache.enemy.append({})
+		
+		# Player Cache
+		if i < player_slots.size() and player_slots[i]:
+			_ui_cache.player[i]["slot_speed"] = player_slots[i].find_child("SpeedBar", true, false)
+			_ui_cache.player[i]["slot_hp"] = player_slots[i].find_child("HPBar", true, false)
+			
+		if i < stat_cards.size() and stat_cards[i]:
+			_ui_cache.player[i]["card_speed"] = stat_cards[i].find_child("SpeedBar", true, false)
+			_ui_cache.player[i]["card_hp"] = stat_cards[i].find_child("HPBar", true, false)
+			
+		# Enemy Cache
+		if i < enemy_slots.size() and enemy_slots[i]:
+			_ui_cache.enemy[i]["hp"] = enemy_slots[i].find_child("HPBar", true, false)
+			_ui_cache.enemy[i]["speed"] = enemy_slots[i].find_child("SpeedBar", true, false)
 
 func setup_ui(player_team: Array, enemy_team: Array):
 	# 1. Setup Enemies (Top Row)
@@ -117,14 +142,15 @@ func setup_ui(player_team: Array, enemy_team: Array):
 
 func update_hp(is_player: bool, index: int, new_hp: float, max_hp: float):
 	if is_player:
-		if index < stat_cards.size():
-			var bar = stat_cards[index].find_child("HPBar", true, false)
-			if bar: bar.value = new_hp
-	else:
-		# Enemy HP bars are usually smaller/hidden or on the slot itself
-		if index < enemy_slots.size():
-			var bar = enemy_slots[index].find_child("HPBar", true, false)
+		if index < _ui_cache.player.size():
+			var bar = _ui_cache.player[index].get("card_hp")
 			if bar: 
+				bar.max_value = max_hp
+				bar.value = new_hp
+	else:
+		if index < _ui_cache.enemy.size():
+			var bar = _ui_cache.enemy[index].get("hp")
+			if bar:
 				bar.max_value = max_hp
 				bar.value = new_hp
 
@@ -136,6 +162,87 @@ func update_stability(is_player: bool, index: int, new_stability: float, max_sta
 		if bar:
 			bar.max_value = max_stability
 			bar.value = new_stability
+
+func update_speed_bar(is_player: bool, index: int, value: float, max_value: float = 100.0):
+	var is_full = value >= max_value
+	
+	if is_player:
+		if index < _ui_cache.player.size():
+			var cache = _ui_cache.player[index]
+			if cache.get("slot_speed"):
+				_update_single_bar(cache["slot_speed"], value, max_value, is_full)
+			if cache.get("card_speed"):
+				_update_single_bar(cache["card_speed"], value, max_value, is_full)
+	else:
+		if index < _ui_cache.enemy.size():
+			var bar = _ui_cache.enemy[index].get("speed")
+			if bar:
+				_update_single_bar(bar, value, max_value, is_full)
+
+func _update_single_bar(bar: ProgressBar, value: float, max_val: float, is_full: bool):
+	bar.max_value = max_val
+	bar.value = value
+	_update_bar_style(bar, is_full)
+
+func _update_bar_style(bar: ProgressBar, is_full: bool):
+	var style = bar.get_theme_stylebox("fill")
+	
+	# Ensure the stylebox is unique to this instance to prevent sharing issues
+	if not bar.has_meta("style_unique"):
+		if style is StyleBoxFlat:
+			style = style.duplicate()
+		else:
+			style = StyleBoxFlat.new()
+		bar.add_theme_stylebox_override("fill", style)
+		bar.set_meta("style_unique", true)
+	
+	# Refresh reference to the (now unique) override
+	style = bar.get_theme_stylebox("fill")
+	
+	if not style is StyleBoxFlat:
+		return
+
+	if is_full:
+		if not bar.has_meta("pulsing") or not bar.get_meta("pulsing"):
+			bar.set_meta("pulsing", true)
+			_start_pulse_tween(bar, style)
+	else:
+		if bar.has_meta("pulsing") and bar.get_meta("pulsing"):
+			bar.set_meta("pulsing", false)
+			if bar.has_meta("pulse_tween"):
+				var t = bar.get_meta("pulse_tween")
+				if t and t.is_valid():
+					t.kill()
+			style.bg_color = Color("#ff9360")
+		elif style.bg_color != Color("#ff9360"):
+			style.bg_color = Color("#ff9360")
+
+func _start_pulse_tween(bar: ProgressBar, style: StyleBoxFlat):
+	var tween = bar.create_tween()
+	tween.set_loops()
+	tween.tween_property(style, "bg_color", Color("#fff5cc"), 0.5).from(Color("#ffd700"))
+	tween.tween_property(style, "bg_color", Color("#ffd700"), 0.5)
+	bar.set_meta("pulse_tween", tween)
+
+func highlight_active_unit(is_player: bool, index: int):
+	# Reset all slots to normal
+	for slot in enemy_slots + player_slots:
+		if slot:
+			var tween = create_tween()
+			tween.tween_property(slot, "scale", Vector2.ONE, 0.2)
+			tween.tween_property(slot, "modulate", Color.WHITE, 0.2)
+			slot.z_index = 0
+			
+	# Highlight the active one
+	var target_slots = player_slots if is_player else enemy_slots
+	if index >= 0 and index < target_slots.size():
+		var slot = target_slots[index]
+		if slot:
+			var tween = create_tween()
+			tween.set_parallel(true)
+			tween.tween_property(slot, "scale", Vector2(1.1, 1.1), 0.2)
+			tween.tween_property(slot, "modulate", Color(1.2, 1.2, 1.2), 0.2)
+			slot.z_index = 10
 
 func log_message(text: String):
 	if log_label:
@@ -183,11 +290,16 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 	if hp_bar:
 		hp_bar.max_value = stats.max_hp
 		hp_bar.value = stats.max_hp
+		
+	var speed_bar = slot.find_child("SpeedBar", true, false)
+	if speed_bar:
+		speed_bar.value = 0
 
 func _set_stat_card(card: Control, monster: MonsterData):
 	var name_lbl = card.find_child("NameLabel", true, false)
 	var hp_bar = card.find_child("HPBar", true, false)
 	var stab_bar = card.find_child("StabilityBar", true, false)
+	var speed_bar = card.find_child("SpeedBar", true, false)
 	
 	if name_lbl: name_lbl.text = monster.monster_name
 	var stats = monster.get_current_stats()
@@ -197,6 +309,8 @@ func _set_stat_card(card: Control, monster: MonsterData):
 	if stab_bar:
 		stab_bar.max_value = 100 # Or a value from monster data if it varies
 		stab_bar.value = 100 # Start full
+	if speed_bar:
+		speed_bar.value = 0
 
 func _connect_btn(name: String, action: String):
 	var btn = find_child(name, true, false)
@@ -242,6 +356,7 @@ func show_moves(moves: Array):
 		btn.text = "%s\n(%d Pwr)" % [move.name, move.power]
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_style_button(btn)
 		btn.pressed.connect(func(): _on_move_btn_pressed(move))
 		move_container.add_child(btn)
 		
@@ -249,6 +364,7 @@ func show_moves(moves: Array):
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Back"
 	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_button(cancel_btn)
 	cancel_btn.pressed.connect(show_actions)
 	move_container.add_child(cancel_btn)
 
@@ -282,6 +398,7 @@ func show_swap_options(monsters: Array):
 		btn.text = "Swap to %s (Lv. %d)" % [m.monster_name, m.level]
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_style_button(btn)
 		btn.pressed.connect(func(): swap_selected.emit(i))
 		move_container.add_child(btn)
 		
@@ -289,5 +406,73 @@ func show_swap_options(monsters: Array):
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Back"
 	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_button(cancel_btn)
 	cancel_btn.pressed.connect(show_actions)
 	move_container.add_child(cancel_btn)
+
+func _style_button(btn: Button):
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#60fafc")
+	style.bg_color.a = 0.75
+	
+	var hover_style = style.duplicate()
+	hover_style.bg_color = style.bg_color.lightened(0.2)
+	hover_style.bg_color.a = 0.9
+	
+	btn.add_theme_stylebox_override("normal", style)
+	btn.add_theme_stylebox_override("hover", hover_style)
+	btn.add_theme_stylebox_override("pressed", style)
+	btn.add_theme_color_override("font_color", Color("#010813"))
+	btn.add_theme_font_size_override("font_size", 40)
+
+func show_result(player_won: bool, rewards: Dictionary = {}):
+	# Hide interaction buttons
+	if move_container: move_container.visible = false
+	for btn in action_buttons:
+		if btn: btn.visible = false
+	if back_btn: back_btn.visible = false
+	
+	# Create a full-screen overlay
+	var overlay = ColorRect.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.color = Color(0, 0, 0, 0.85)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP # Block clicks
+	add_child(overlay)
+	
+	var center = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+	
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 30)
+	center.add_child(vbox)
+	
+	var label = Label.new()
+	label.text = "VICTORY!" if player_won else "DEFEAT..."
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 80)
+	label.add_theme_color_override("font_color", Color("#ffd700") if player_won else Color("#ff4d4d"))
+	vbox.add_child(label)
+	
+	# Display Rewards
+	if player_won and not rewards.is_empty():
+		var reward_header = Label.new()
+		reward_header.text = "REWARDS"
+		reward_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		reward_header.add_theme_font_size_override("font_size", 30)
+		reward_header.add_theme_color_override("font_color", Color("#60fafc"))
+		vbox.add_child(reward_header)
+		
+		if rewards.has("xp"):
+			var xp_lbl = Label.new()
+			xp_lbl.text = "+%d XP" % rewards["xp"]
+			xp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			xp_lbl.add_theme_font_size_override("font_size", 50)
+			vbox.add_child(xp_lbl)
+	
+	var btn = Button.new()
+	btn.text = "Continue"
+	btn.custom_minimum_size = Vector2(250, 60)
+	_style_button(btn) # Reuse your styling
+	btn.pressed.connect(_on_quit_confirmed)
+	vbox.add_child(btn)

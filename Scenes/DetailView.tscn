@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://2c6fujsuf5nu"]
 
 [ext_resource type="Script" uid="uid://cld3h0d5cobg5" path="res://Scripts/DetailView.gd" id="1_mhro5"]
-[ext_resource type="Texture2D" uid="uid://dcni3wq4llhgv" path="res://Assets/levelupetc.png" id="2_51vr3"]
+[ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="2_oxi4x"]
 [ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="3_oxi4x"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mhro5"]
@@ -22,6 +22,10 @@ expand_margin_top = 10.0
 expand_margin_right = 30.0
 expand_margin_bottom = 10.0
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_drcdi"]
+atlas = ExtResource("2_oxi4x")
+region = Rect2(600, 56.625, 211, 243)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oxi4x"]
 bg_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
 expand_margin_top = 20.0
@@ -34,27 +38,13 @@ border_width_right = 4
 border_width_bottom = 4
 border_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 border_blend = true
-corner_radius_top_left = 15
-corner_radius_top_right = 15
-corner_radius_bottom_right = 15
-corner_radius_bottom_left = 15
 expand_margin_left = 50.0
 expand_margin_top = 5.0
 expand_margin_right = 50.0
 expand_margin_bottom = 5.0
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_oxi4x"]
-atlas = ExtResource("2_51vr3")
-region = Rect2(112.59302, 105.34627, 310.8285, 304.3864)
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drcdi"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-corner_radius_top_left = 15
-corner_radius_top_right = 15
-corner_radius_bottom_right = 15
-corner_radius_bottom_left = 15
-expand_margin_top = 5.0
-expand_margin_bottom = 5.0
 
 [node name="DetailView" type="Control" unique_id=414824210]
 layout_mode = 3
@@ -104,6 +94,27 @@ theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_51vr3")
 horizontal_alignment = 1
 
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=283469872]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="ClassLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=864845258]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 32
+text = "CLASS ALKALINE METALS"
+horizontal_alignment = 1
+
+[node name="HelpIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1444427101]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = SubResource("AtlasTexture_drcdi")
+expand_mode = 5
+stretch_mode = 4
+
 [node name="IconTexture" type="TextureRect" parent="MarginContainer/VBoxContainer" unique_id=1310145462]
 custom_minimum_size = Vector2(250, 250)
 layout_mode = 2
@@ -115,54 +126,56 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_oxi4x")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Panel" unique_id=650672318]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/Panel" unique_id=1417119774]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 50
-
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1417119774]
-layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 20
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer" unique_id=1927488199]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Panel" unique_id=650672318]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.656
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 50
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1927488199]
 layout_mode = 2
-size_flags_vertical = 0
+size_flags_horizontal = 4
+size_flags_vertical = 2
+theme_override_constants/separation = 70
 alignment = 1
 
-[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/HBoxContainer" unique_id=1785362234]
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/HBoxContainer" unique_id=1785362234]
 z_index = 2
 layout_mode = 2
-size_flags_horizontal = 6
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_2wvlh")
 horizontal_alignment = 1
 
-[node name="LevelUpBtn" type="TextureButton" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/HBoxContainer" unique_id=811853578]
-custom_minimum_size = Vector2(150, 150)
+[node name="LevelUpButton" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/HBoxContainer" unique_id=2111651270]
 layout_mode = 2
-size_flags_horizontal = 6
-size_flags_vertical = 4
-texture_normal = SubResource("AtlasTexture_oxi4x")
-ignore_texture_size = true
-stretch_mode = 6
+theme_override_font_sizes/font_size = 40
+text = "LEVEL UP"
 
-[node name="GridStats" type="GridContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer" unique_id=1856869019]
+[node name="GridStats" type="GridContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1856869019]
 layout_mode = 2
-size_flags_vertical = 4
+size_flags_vertical = 3
 theme_override_constants/h_separation = 7
 theme_override_constants/v_separation = 19
 columns = 2
 
-[node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/GridStats" unique_id=204995007]
+[node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=204995007]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -172,18 +185,7 @@ theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HPUpgradeBtn" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/GridStats" unique_id=95478288]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_drcdi")
-text = "UPGRADE
-"
-
-[node name="AttackLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/GridStats" unique_id=1711693444]
+[node name="AttackLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=1711693444]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -193,18 +195,7 @@ theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="AtkUpgradeBtn" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/GridStats" unique_id=15704285]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_drcdi")
-text = "UPGRADE
-"
-
-[node name="DefenseLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/GridStats" unique_id=1889266181]
+[node name="DefenseLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=1889266181]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -214,18 +205,7 @@ theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DefUpgradeBtn" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/GridStats" unique_id=825218771]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_drcdi")
-text = "UPGRADE
-"
-
-[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/GridStats" unique_id=937785622]
+[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=937785622]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -235,16 +215,20 @@ theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SpdUpgradeBtn" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/MarginContainer/GridStats" unique_id=1590328872]
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=770951403]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 6
+size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_constants/outline_size = 5
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_drcdi")
-text = "UPGRADE
-"
+text = "Moves List"
+horizontal_alignment = 1
+
+[node name="MovesContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1963840616]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 7
+alignment = 1
 
 [node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("3_oxi4x")]
 z_index = 10

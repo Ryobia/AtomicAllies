@@ -22,12 +22,56 @@ var atom_p1: Node2D
 var atom_p2: Node2D
 var fusion_failure_popup
 
+# Confirmation UI
+var fusion_confirm_popup
+var confirm_fuse_btn
+var cancel_fuse_btn
+var confirm_label
+var popup_particles
+
+# Stability UI
+var stability_bar
+var stability_label
+var help_icon
+
 func _ready():
 	# Locate nodes dynamically to avoid path errors
 	parent_1_btn = find_child("Parent1Button", true, false)
 	parent_2_btn = find_child("Parent2Button", true, false)
 	breed_btn = find_child("BreedButton", true, false)
 	status_label = find_child("StatusLabel", true, false)
+	
+	fusion_confirm_popup = find_child("FusionConfirmPopup", true, false)
+	if fusion_confirm_popup:
+		fusion_confirm_popup.visible = false
+		confirm_fuse_btn = fusion_confirm_popup.find_child("ConfirmButton", true, false)
+		cancel_fuse_btn = fusion_confirm_popup.find_child("CancelButton", true, false)
+		confirm_label = fusion_confirm_popup.find_child("Label", true, false)
+		
+		if confirm_fuse_btn:
+			confirm_fuse_btn.pressed.connect(_on_confirm_fusion_pressed)
+		if cancel_fuse_btn:
+			cancel_fuse_btn.pressed.connect(func(): fusion_confirm_popup.visible = false)
+			
+		popup_particles = fusion_confirm_popup.find_child("PopupParticles", true, false)
+	
+	stability_bar = find_child("StabilityBar", true, false)
+	if stability_bar:
+		var bg_style = StyleBoxFlat.new()
+		bg_style.bg_color = Color(0.1, 0.1, 0.1)
+		bg_style.border_width_left = 4
+		bg_style.border_width_top = 4
+		bg_style.border_width_right = 4
+		bg_style.border_width_bottom = 4
+		bg_style.border_color = Color("#010813")
+		stability_bar.add_theme_stylebox_override("background", bg_style)
+
+	help_icon = find_child("HelpIcon", true, false)
+	if help_icon:
+		help_icon.tooltip_text = "Stability depends on Parent Levels.\nLevel up your monsters to increase success rate!"
+		help_icon.theme = GlobalManager.tooltip_theme
+
+	stability_label = find_child("StabilityLabel", true, false)
 	
 	fusion_failure_popup = find_child("FusionFailurePopup", true, false)
 	if fusion_failure_popup:
@@ -98,6 +142,42 @@ func _ready():
 	# DEBUG: If we have no monsters, give us the starters so we can test!
 	if PlayerData.owned_monsters.is_empty():
 		_debug_add_starters()
+
+			# Connect the error signal
+	if not SynthesisManager.fusion_error.is_connected(_on_fusion_error):
+		SynthesisManager.fusion_error.connect(_on_fusion_error)
+
+	if not SynthesisManager.capsule_created.is_connected(_on_capsule_created):
+		SynthesisManager.capsule_created.connect(_on_capsule_created)
+
+func _on_fusion_error(message: String):
+	var popup = find_child("ErrorPopup", true, false)
+	if popup:
+		popup.dialog_text = message
+		popup.popup_centered()
+	else:
+		print("Fusion Error: ", message)
+
+func _on_capsule_created(capsule_data):
+	# Reset Data
+	parent_1 = null
+	parent_2 = null
+	
+	# Reset UI
+	if parent_1_btn: parent_1_btn.text = "Select Parent 1"
+	if parent_2_btn: parent_2_btn.text = "Select Parent 2"
+	
+	if status_label:
+		var z = capsule_data.get("z", 0)
+		status_label.text = "Fusion Successful! Capsule Z-%d created." % z
+	
+	# Clear Visuals
+	if is_instance_valid(atom_p1): atom_p1.queue_free()
+	if is_instance_valid(atom_p2): atom_p2.queue_free()
+	atom_p1 = null
+	atom_p2 = null
+	
+	_update_stability_preview()
 
 func _process(_delta):
 	# Update the timer label in real-time
@@ -216,10 +296,13 @@ func _on_monster_selected(monster: MonsterData):
 		_update_slot_visuals(2, monster)
 	
 	selection_panel.visible = false
+	_update_stability_preview()
 
 # --- Breeding Logic ---
 func _on_breed_pressed():
 	print("Nexus: Breed Button Clicked!")
+	_animate_button_press(breed_btn)
+	
 	if not parent_1 or not parent_2:
 		status_label.text = "Please select two parents!"
 		return
@@ -228,7 +311,29 @@ func _on_breed_pressed():
 		status_label.text = "Cannot breed a monster with itself!"
 		return
 		
-	# Delegate logic to SynthesisManager
+	# Show confirmation popup instead of immediate fusion
+	if fusion_confirm_popup:
+		var target_z = parent_1.atomic_number + parent_2.atomic_number
+		var chance = 0.0
+		if SynthesisManager.has_method("calculate_stability"):
+			chance = SynthesisManager.calculate_stability(parent_1.level, parent_2.level, target_z)
+			
+		if confirm_label:
+			confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nStability: %d%%" % [parent_1.monster_name, parent_2.monster_name, target_z, int(chance)]
+			
+		fusion_confirm_popup.visible = true
+		fusion_confirm_popup.move_to_front()
+		
+		if popup_particles:
+			popup_particles.restart()
+			popup_particles.emitting = true
+	else:
+		# Fallback if no popup exists
+		SynthesisManager.attempt_fusion(parent_1, parent_2)
+
+func _on_confirm_fusion_pressed():
+	if fusion_confirm_popup:
+		fusion_confirm_popup.visible = false
 	SynthesisManager.attempt_fusion(parent_1, parent_2)
 
 func _on_fusion_completed(target_z: int, success: bool, reward: int):
@@ -250,17 +355,10 @@ func _on_fusion_completed(target_z: int, success: bool, reward: int):
 			status_label.text = "Fusion Failed! Instability detected.\nRecovered %d Neutron Dust." % reward
 
 func _get_monster_by_atomic_number(z: int) -> MonsterData:
-	# Simple lookup for the first 10 elements
-	var element_names = [
-		"Hydrogen", "Helium", "Lithium", "Beryllium", "Boron", 
-		"Carbon", "Nitrogen", "Oxygen", "Fluorine", "Neon"
-	]
-	
-	if z > 0 and z <= element_names.size():
-		var file_name = element_names[z - 1]
-		var path = "res://data/Monsters/" + file_name + ".tres"
-		if ResourceLoader.exists(path):
-			return load(path)
+	# Use the global lookup in PlayerData to support all implemented elements (up to Iron)
+	var path = PlayerData.get_monster_path_by_z(z)
+	if path != "" and ResourceLoader.exists(path):
+		return load(path)
 	
 	return null
 
@@ -282,10 +380,14 @@ func _update_slot_visuals(slot_idx: int, monster: MonsterData):
 			slot_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			slot_node.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			
-		icon_rect = slot_node.find_child("IconTexture", true, false)
+		icon_rect = slot_node.find_child("IconTexture" + str(slot_idx), true, false)
+		if not icon_rect:
+			icon_rect = slot_node.find_child("IconTexture", true, false)
 	else:
-		# 2. Fallback: Look for ParentXIcon directly
-		icon_rect = find_child(prefix + "Icon", true, false)
+		# 2. Fallback: Look for IconTextureX directly
+		icon_rect = find_child("IconTexture" + str(slot_idx), true, false)
+		if not icon_rect:
+			icon_rect = find_child(prefix + "Icon", true, false)
 	
 	if not icon_rect:
 		print("Nexus Warning: Could not find IconTexture for ", prefix)
@@ -311,6 +413,79 @@ func _update_slot_visuals(slot_idx: int, monster: MonsterData):
 			atom.position = icon_rect.size / 2.0
 			if slot_idx == 1: atom_p1 = atom
 			else: atom_p2 = atom
+
+func _update_stability_preview():
+	if parent_1 and parent_2:
+		var target_z = parent_1.atomic_number + parent_2.atomic_number
+		var chance = 0.0
+		
+		if SynthesisManager.has_method("calculate_stability"):
+			chance = SynthesisManager.calculate_stability(parent_1.level, parent_2.level, target_z)
+		
+		if stability_bar:
+			stability_bar.value = chance
+			_update_bar_color(chance)
+			
+		if stability_label:
+			stability_label.text = "Stability: %d%%" % int(chance)
+	else:
+		if stability_bar: stability_bar.value = 0
+		if stability_label: stability_label.text = "Stability: --"
+
+func _update_bar_color(chance: float):
+	if not stability_bar: return
+	
+	var style = stability_bar.get_theme_stylebox("fill")
+	if not style is StyleBoxFlat or not stability_bar.has_meta("custom_style"):
+		style = StyleBoxFlat.new()
+		stability_bar.add_theme_stylebox_override("fill", style)
+		stability_bar.set_meta("custom_style", true)
+	
+	# Reset any active pulse
+	if stability_bar.has_meta("pulse_tween"):
+		var t = stability_bar.get_meta("pulse_tween")
+		if t and t.is_valid():
+			t.kill()
+	
+	var base_color
+	var flash_color
+	
+	if chance >= 80.0: 
+		base_color = Color("#60fafc") # Cyan (Safe)
+		flash_color = Color("#ccffff") # Pale Cyan
+	elif chance >= 50.0: 
+		base_color = Color("#ffd700") # Gold (Risky)
+		flash_color = Color("#fff5cc") # Pale Gold
+	else: 
+		base_color = Color("#ff4d4d") # Red (Unstable)
+		flash_color = Color("#ffcccc") # Pale Red
+	
+	style.bg_color = base_color
+	_start_pulse(stability_bar, style, base_color, flash_color, chance)
+
+func _start_pulse(bar: ProgressBar, style: StyleBoxFlat, base_color: Color, flash_color: Color, chance: float):
+	var tween = create_tween()
+	tween.set_loops()
+	
+	# Slower pulse: 0.8s (at 0%) to 4.0s (at 100%)
+	var duration = 0.8 + (chance / 100.0) * 3.2
+	
+	# Subtle pulse at high stability: Blend flash color closer to base color
+	# At 100%, intensity is ~0.17 (very subtle). At 0%, intensity is 1.0 (full flash).
+	var intensity = 1.0 - (chance / 120.0)
+	var target_flash = base_color.lerp(flash_color, intensity)
+	
+	tween.tween_property(style, "bg_color", target_flash, duration * 0.5).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(style, "bg_color", base_color, duration * 0.5).set_trans(Tween.TRANS_SINE)
+	
+	bar.set_meta("pulse_tween", tween)
+
+func _animate_button_press(btn: Control):
+	if not btn: return
+	btn.pivot_offset = btn.size / 2
+	var tween = create_tween()
+	tween.tween_property(btn, "scale", Vector2(0.95, 0.95), 0.1)
+	tween.tween_property(btn, "scale", Vector2.ONE, 0.1)
 
 func _create_atom(monster: MonsterData) -> Node2D:
 	var atom_script = load("res://Scripts/DynamicAtom.gd")

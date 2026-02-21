@@ -2,54 +2,41 @@
 
 [ext_resource type="Script" uid="uid://53vf2w623bi3" path="res://Scripts/Nexus.gd" id="1_88gcs"]
 [ext_resource type="PackedScene" uid="uid://deeit4dexuhou" path="res://Scenes/monster_card.tscn" id="2_i3m1b"]
-[ext_resource type="Script" uid="uid://cluhau08kbrc3" path="res://Scripts/FusionCheatSheet.gd" id="3_170cc"]
 [ext_resource type="Texture2D" uid="uid://d4lln7paci7ts" path="res://Images/Fusion.png" id="3_ut1jl"]
-[ext_resource type="Script" uid="uid://g4o21gt6qrb5" path="res://Scripts/FusionFailurePopup.gd" id="4_h8wke"]
 [ext_resource type="Texture2D" uid="uid://dtmntevxwbd33" path="res://data/ElectronGlow.tres" id="5_ut1jl"]
 [ext_resource type="Texture2D" uid="uid://b4cloiewemyyx" path="res://Assets/initiatefusionbtn.png" id="7_26528"]
+[ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="8_26528"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n15nf"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_170cc"]
-content_margin_left = 10.0
-content_margin_top = 10.0
-content_margin_right = 10.0
-content_margin_bottom = 10.0
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3h3en"]
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7ece5"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.9019608)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hoak4"]
+atlas = ExtResource("8_26528")
+region = Rect2(598.9166, 59.840717, 211.87073, 244.17729)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h8wke"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-corner_radius_top_left = 15
-corner_radius_top_right = 15
-corner_radius_bottom_right = 15
-corner_radius_bottom_left = 15
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lkuis"]
-bg_color = Color(0.18542793, 0, 0.023579603, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-expand_margin_left = 10.0
-expand_margin_top = 10.0
-expand_margin_right = 10.0
-expand_margin_bottom = 10.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_26528"]
-content_margin_left = 5.0
-content_margin_top = 5.0
-content_margin_right = 5.0
-content_margin_bottom = 5.0
-bg_color = Color(0, 0, 0, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hoak4"]
-bg_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 15
-corner_radius_top_right = 15
-corner_radius_bottom_right = 15
-corner_radius_bottom_left = 15
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ut1jl"]
+bg_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ut1jl"]
+particle_flag_disable_z = true
+emission_shape = 2
+emission_sphere_radius = 200.0
+gravity = Vector3(0, 0, 0)
+radial_accel_min = 99.99999
+radial_accel_max = 99.99999
 
 [node name="Nexus" type="Control" unique_id=1082065202]
 layout_mode = 3
@@ -61,13 +48,46 @@ grow_vertical = 2
 script = ExtResource("1_88gcs")
 monster_card_scene = ExtResource("2_i3m1b")
 
-[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1801925989]
+[node name="TextureRect" type="TextureRect" parent="." unique_id=106351309]
+show_behind_parent = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_ut1jl")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1191734600]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.49
+anchor_top = 0.437
+anchor_right = 0.49
+anchor_bottom = 0.437
+offset_left = -202.0
+offset_top = -100.0
+offset_right = 202.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="IconTexture1" type="TextureRect" parent="HBoxContainer" unique_id=1018375149]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+size_flags_horizontal = 10
+size_flags_vertical = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="IconTexture2" type="TextureRect" parent="HBoxContainer" unique_id=1825551555]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+size_flags_horizontal = 2
+size_flags_vertical = 3
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
 visible = false
@@ -104,9 +124,9 @@ z_index = 5
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
-anchor_top = 0.7
+anchor_top = 0.6
 anchor_right = 0.5
-anchor_bottom = 0.7
+anchor_bottom = 0.6
 offset_left = -241.0
 offset_top = -88.0
 offset_right = 241.0
@@ -118,16 +138,21 @@ texture_pressed = ExtResource("7_26528")
 
 [node name="VboxContainer" type="VBoxContainer" parent="." unique_id=479629868]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = -1
+anchor_top = 0.678
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 360.0
-offset_bottom = -992.0
+anchor_bottom = 0.866
+offset_top = -0.040039063
+offset_bottom = -0.00012207031
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
 
-[node name="Label" type="Label" parent="VboxContainer" unique_id=394862114]
+[node name="StatusLabel" type="Label" parent="VboxContainer" unique_id=1683976128]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_3h3en")
+horizontal_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VboxContainer" unique_id=1544332229]
 layout_mode = 2
@@ -137,165 +162,133 @@ alignment = 1
 [node name="Parent1Button" type="Button" parent="VboxContainer/HBoxContainer" unique_id=823115648]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_7ece5")
+text = "Select Element 1"
 icon_alignment = 1
 expand_icon = true
-
-[node name="Parent1Slot" type="Container" parent="VboxContainer/HBoxContainer/Parent1Button" unique_id=1735521439]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="IconTexture" type="TextureRect" parent="VboxContainer/HBoxContainer/Parent1Button/Parent1Slot" unique_id=1018375149]
-custom_minimum_size = Vector2(200, 200)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="VboxContainer/HBoxContainer" unique_id=1956871001]
-layout_mode = 2
-theme_override_font_sizes/font_size = 50
-text = "+"
 
 [node name="Parent2Button" type="Button" parent="VboxContainer/HBoxContainer" unique_id=798526465]
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="Parent2Slot" type="Container" parent="VboxContainer/HBoxContainer/Parent2Button" unique_id=1087064757]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="IconTexture" type="TextureRect" parent="VboxContainer/HBoxContainer/Parent2Button/Parent2Slot" unique_id=1825551555]
-custom_minimum_size = Vector2(200, 200)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="StatusLabel" type="Label" parent="VboxContainer" unique_id=1683976128]
-layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 40
-horizontal_alignment = 1
+theme_override_styles/normal = SubResource("StyleBoxFlat_7ece5")
+text = "Select Element 2"
 
 [node name="CheatSheetButton" type="Button" parent="VboxContainer" unique_id=1072632395]
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "Fusion Guide"
 
-[node name="FusionCheatSheet" type="PanelContainer" parent="." unique_id=1212309574]
-visible = false
-z_index = 1
-custom_minimum_size = Vector2(500, 400)
+[node name="ErrorPopup" type="AcceptDialog" parent="." unique_id=1400983032]
+oversampling_override = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1394945458]
+custom_minimum_size = Vector2(140, 0)
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = -1
+anchor_left = 0.093
+anchor_top = 0.234
+anchor_right = 0.093
+anchor_bottom = 0.533
+offset_top = -35.5
+offset_right = 66.0
+offset_bottom = 35.5
+grow_vertical = 2
+
+[node name="HelpIcon" type="TextureRect" parent="VBoxContainer" unique_id=1787347281]
+custom_minimum_size = Vector2(66, 66)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_hoak4")
+expand_mode = 5
+stretch_mode = 4
+
+[node name="StabilityBar" type="ProgressBar" parent="VBoxContainer" unique_id=1065992710]
+custom_minimum_size = Vector2(66, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 32
+value = 100.0
+fill_mode = 3
+
+[node name="StabilityLabel" type="Label" parent="VBoxContainer" unique_id=1425843288]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 24
+
+[node name="FusionConfirmPopup" type="PanelContainer" parent="." unique_id=1747203823]
+custom_minimum_size = Vector2(350, 250)
+layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 0.389
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
+anchor_bottom = 0.389
+offset_left = -29.5
 offset_top = -20.0
-offset_right = 20.0
+offset_right = 29.5
 offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_170cc")
-script = ExtResource("3_170cc")
+theme_override_styles/panel = SubResource("StyleBoxFlat_h8wke")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="FusionCheatSheet" unique_id=357009145]
+[node name="MarginContainer" type="MarginContainer" parent="FusionConfirmPopup" unique_id=1768150864]
 layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
 
-[node name="Label" type="Label" parent="FusionCheatSheet/VBoxContainer" unique_id=1360270653]
+[node name="Label" type="Label" parent="FusionConfirmPopup/MarginContainer" unique_id=25140591]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "Fusion Recipes"
-
-[node name="ScrollContainer" type="ScrollContainer" parent="FusionCheatSheet/VBoxContainer" unique_id=1841327272]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="RecipeList" type="VBoxContainer" parent="FusionCheatSheet/VBoxContainer/ScrollContainer" unique_id=958610762]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="CloseButton" type="Button" parent="FusionCheatSheet/VBoxContainer" unique_id=472487327]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "Close"
-
-[node name="FusionFailurePopup" type="PanelContainer" parent="." unique_id=308219615]
-visible = false
-custom_minimum_size = Vector2(400, 300)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -150.0
-offset_right = 150.0
-offset_bottom = 150.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_lkuis")
-script = ExtResource("4_h8wke")
-
-[node name="VBoxContainer" type="VBoxContainer" parent="FusionFailurePopup" unique_id=922604805]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="FusionFailurePopup/VBoxContainer" unique_id=560617547]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.74509805, 0, 0.023529412, 1)
-theme_override_font_sizes/font_size = 40
-theme_override_styles/normal = SubResource("StyleBoxFlat_26528")
-text = "FUSION UNSTABLE"
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="Label2" type="Label" parent="FusionFailurePopup/VBoxContainer" unique_id=1786036321]
+[node name="HBoxContainer" type="HBoxContainer" parent="FusionConfirmPopup/MarginContainer" unique_id=1408633696]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "The Atoms Failed to Stabilize"
-horizontal_alignment = 1
+size_flags_vertical = 8
+alignment = 1
 
-[node name="IconTexture" type="TextureRect" parent="FusionFailurePopup/VBoxContainer" unique_id=751346349]
-modulate = Color(0, 0, 0, 1)
-custom_minimum_size = Vector2(200, 200)
+[node name="ConfirmButton" type="Button" parent="FusionConfirmPopup/MarginContainer/HBoxContainer" unique_id=1624059872]
 layout_mode = 2
-texture = ExtResource("5_ut1jl")
-stretch_mode = 5
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_ut1jl")
+text = "FUSE"
 
-[node name="RewardLabel" type="Label" parent="FusionFailurePopup/VBoxContainer" unique_id=971617830]
+[node name="CancelButton" type="Button" parent="FusionConfirmPopup/MarginContainer/HBoxContainer" unique_id=1586337905]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Recovered 0 Neutron Dust"
-horizontal_alignment = 1
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_styles/normal = SubResource("StyleBoxFlat_ut1jl")
+text = "CANCEL"
 
-[node name="OkButton" type="Button" parent="FusionFailurePopup/VBoxContainer" unique_id=1249537776]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxFlat_hoak4")
-text = "Collect Dust
-"
-
-[node name="TextureRect" type="TextureRect" parent="." unique_id=106351309]
+[node name="PopupParticles" type="GPUParticles2D" parent="FusionConfirmPopup" unique_id=2075506987]
 show_behind_parent = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("3_ut1jl")
-expand_mode = 1
-stretch_mode = 6
+position = Vector2(146, 146.12)
+emitting = false
+amount = 30
+texture = ExtResource("5_ut1jl")
+one_shot = true
+process_material = SubResource("ParticleProcessMaterial_ut1jl")
 
 [connection signal="pressed" from="BreedButton" to="." method="_on_breed_button_pressed"]

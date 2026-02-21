@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://da0wbdgl1unt8"]
+
+[ext_resource type="SpriteFrames" uid="uid://d360pd42rhd6c" path="res://Assets/Animations/CapsuleStabilizing.tres" id="1_vwwx7"]
+
+[node name="Node2D" type="AnimatedSprite2D" unique_id=1059748733]
+sprite_frames = ExtResource("1_vwwx7")
+animation = &"energycapsule"
+autoplay = "energycapsule"
+frame_progress = 0.35865706

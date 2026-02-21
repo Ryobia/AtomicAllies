@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://d360pd42rhd6c"]
+
+[ext_resource type="Texture2D" uid="uid://bv5qau7u1ydvl" path="res://Assets/FusionCapsuleSprite.png" id="1_x8y8d"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7v20d"]
+atlas = ExtResource("1_x8y8d")
+region = Rect2(0, 250, 352, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vy8mc"]
+atlas = ExtResource("1_x8y8d")
+region = Rect2(352, 250, 352, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3hqfx"]
+atlas = ExtResource("1_x8y8d")
+region = Rect2(704, 250, 352, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_45txa"]
+atlas = ExtResource("1_x8y8d")
+region = Rect2(352, 250, 352, 250)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7v20d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vy8mc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3hqfx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_45txa")
+}],
+"loop": true,
+"name": &"energycapsule",
+"speed": 5.0
+}]

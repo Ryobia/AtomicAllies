@@ -26,6 +26,12 @@ var turn_queue: Array = []
 var current_acting_unit: BattleMonster = null
 var selected_move: MoveData = null
 
+# --- Signals for UI Decoupling ---
+signal log_event(text)
+signal hud_update_atb(is_player, index, value)
+signal hud_update_hp(is_player, index, new_hp, max_hp)
+signal hud_highlight_unit(is_player, index)
+
 func _ready():
 	if not battle_hud:
 		battle_hud = find_child("BattleHUD", true, false)
@@ -37,6 +43,12 @@ func _ready():
 		battle_hud.target_selected.connect(_on_target_selected)
 		battle_hud.cancel_targeting.connect(_on_cancel_targeting)
 		battle_hud.swap_selected.connect(_on_swap_selected)
+		
+		# Connect Manager -> HUD signals
+		log_event.connect(battle_hud.log_message)
+		hud_update_atb.connect(battle_hud.update_speed_bar)
+		hud_update_hp.connect(battle_hud.update_hp)
+		hud_highlight_unit.connect(battle_hud.highlight_active_unit)
 	else:
 		push_warning("BattleManager: BattleHUD not found or assigned!")
 
@@ -51,8 +63,8 @@ func _ready():
 	# If we are running this scene directly (for testing), generate a battle.
 	# In the full game, SceneManager or MainMenu would call start_battle().
 	if PlayerData.owned_monsters.size() > 0:
-		# Generate 3 random enemies for a 3v3 setup
-		var enemies = generate_random_enemies(3)
+		# Generate 3 Null Walkers for the tutorial fight
+		var enemies = generate_void_enemies(3)
 		start_battle(enemies)
 
 func _process(delta):
@@ -65,20 +77,18 @@ func process_atb(delta):
 	for unit in all_monsters:
 		if unit.is_dead: continue
 		
-		# ATB Formula: Speed * Delta * Scale
-		var speed = unit.stats.get("speed", 10)
-		unit.atb_value += speed * delta * 0.5 # 0.5 is a tuning factor
+		# Delegate math to the monster
+		unit.update_atb(delta, 0.5)
 		
-		# Update HUD Stability Bar
-		if battle_hud:
-			var index = -1
-			if unit.is_player:
-				index = active_player_monsters.find(unit)
-			else:
-				index = active_enemy_monsters.find(unit)
-			
-			if index != -1:
-				battle_hud.update_stability(unit.is_player, index, unit.atb_value)
+		# Update HUD Speed Bar
+		var index = -1
+		if unit.is_player:
+			index = active_player_monsters.find(unit)
+		else:
+			index = active_enemy_monsters.find(unit)
+		
+		if index != -1:
+			hud_update_atb.emit(unit.is_player, index, unit.atb_value)
 		
 		if unit.atb_value >= 100.0:
 			unit.atb_value = 100.0
@@ -187,6 +197,22 @@ func generate_random_enemies(count: int) -> Array[MonsterData]:
 			
 	return enemies
 
+func generate_void_enemies(count: int) -> Array[MonsterData]:
+	var enemies: Array[MonsterData] = []
+	
+	for i in range(count):
+		var enemy = MonsterData.new()
+		enemy.monster_name = "Null Walker"
+		enemy.level = 1
+		enemy.tier = 1
+		# Assuming MonsterData has a 'group' property. 
+		# If not, you might need to add it to MonsterData.gd first.
+		if "group" in enemy:
+			enemy.group = AtomicConfig.Group.VOID
+		
+		enemies.append(enemy)
+	return enemies
+
 # --- Turn Logic ---
 
 func start_turn():
@@ -195,15 +221,18 @@ func start_turn():
 	
 	print("Turn Start: ", current_acting_unit.data.monster_name)
 	
+	# Highlight the active unit
+	var index = active_player_monsters.find(current_acting_unit) if current_acting_unit.is_player else active_enemy_monsters.find(current_acting_unit)
+	hud_highlight_unit.emit(current_acting_unit.is_player, index)
+	
 	if current_acting_unit.is_player:
 		# Enable UI
+		log_event.emit("It's %s's turn!" % current_acting_unit.data.monster_name)
 		if battle_hud:
-			battle_hud.log_message("It's %s's turn!" % current_acting_unit.data.monster_name)
 			battle_hud.show_actions()
 	else:
 		# AI Turn
-		if battle_hud:
-			battle_hud.log_message("Enemy %s is attacking!" % current_acting_unit.data.monster_name)
+		log_event.emit("Enemy %s is attacking!" % current_acting_unit.data.monster_name)
 		
 		# Simple AI: Wait a second then attack random player
 		await get_tree().create_timer(1.0).timeout
@@ -235,14 +264,14 @@ func _on_action_selected(action_type):
 		# For MVP, just load basic moves. Later, load from MonsterData.
 		var moves = current_acting_unit.data.moves
 		if moves.is_empty():
-			if battle_hud: battle_hud.log_message("%s has no moves!" % current_acting_unit.data.monster_name)
+			log_event.emit("%s has no moves!" % current_acting_unit.data.monster_name)
 			return
 		
 		if battle_hud:
 			battle_hud.show_moves(moves)
 	elif action_type == "swap":
 		if benched_player_monsters.is_empty():
-			if battle_hud: battle_hud.log_message("No monsters to swap with!")
+			log_event.emit("No monsters to swap with!")
 			return
 		if battle_hud:
 			battle_hud.show_swap_options(benched_player_monsters)
@@ -273,7 +302,7 @@ func _on_move_selected(move: MoveData):
 	# Hide the move list and enable targeting mode on the HUD
 	battle_hud.move_container.visible = false
 	battle_hud.set_targeting_mode(true, valid_targets)
-	battle_hud.log_message("Select a target for %s..." % move.name)
+	log_event.emit("Select a target for %s..." % move.name)
 
 func _on_cancel_targeting():
 	# This is triggered by right-click or Esc in the HUD.
@@ -286,7 +315,7 @@ func _on_cancel_targeting():
 	
 	battle_hud.set_targeting_mode(false)
 	battle_hud.move_container.visible = true # Re-show the move list
-	battle_hud.log_message("It's %s's turn!" % current_acting_unit.data.monster_name)
+	log_event.emit("It's %s's turn!" % current_acting_unit.data.monster_name)
 
 func _on_target_selected(index: int):
 	if current_state != BattleState.TARGET_SELECTION: return
@@ -295,14 +324,14 @@ func _on_target_selected(index: int):
 	
 	# --- Target Validation ---
 	if defender.is_dead:
-		battle_hud.log_message("Target is already defeated!")
+		log_event.emit("Target is already defeated!")
 		return # Stay in targeting mode
 		
 	# Vanguard logic: The monster at index 0 is the vanguard.
 	var vanguard = active_enemy_monsters[0]
 	if vanguard and not vanguard.is_dead and defender != vanguard:
 		if not selected_move.is_snipe:
-			battle_hud.log_message("Must attack the vanguard first!")
+			log_event.emit("Must attack the vanguard first!")
 			return # Stay in targeting mode
 
 	battle_hud.set_targeting_mode(false)
@@ -321,8 +350,7 @@ func _on_swap_selected(index: int):
 func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index: int):
 	current_state = BattleState.EXECUTING
 	
-	if battle_hud:
-		battle_hud.log_message("%s retreats!" % active_unit.data.monster_name)
+	log_event.emit("%s retreats!" % active_unit.data.monster_name)
 		
 	await get_tree().create_timer(1.0).timeout
 	
@@ -336,8 +364,7 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	all_monsters.erase(active_unit)
 	active_unit.queue_free()
 	
-	if battle_hud:
-		battle_hud.log_message("Go! %s!" % new_data.monster_name)
+	log_event.emit("Go! %s!" % new_data.monster_name)
 		
 	spawn_unit(new_data, marker, true)
 	
@@ -351,22 +378,20 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveData):
 	current_state = BattleState.EXECUTING
 	
-	if battle_hud:
-		battle_hud.log_message("%s used %s!" % [attacker.data.monster_name, move.name])
+	log_event.emit("%s used %s!" % [attacker.data.monster_name, move.name])
 	
 	# Calculate Damage using the new calculator
 	var calc_result = DamageCalculator.calculate_damage(attacker, defender, move)
 	var damage = calc_result["damage"]
 	
-	if battle_hud:
-		# Show effectiveness messages
-		if calc_result["effectiveness"] > 1.0:
-			battle_hud.log_message("It's super effective! (%s)" % calc_result["reaction"])
-		elif calc_result["effectiveness"] < 1.0:
-			battle_hud.log_message("It's not very effective... (%s)" % calc_result["reaction"])
-			
-		if calc_result["is_crit"]:
-			battle_hud.log_message("Critical Hit!")
+	# Show effectiveness messages
+	if calc_result["effectiveness"] > 1.0:
+		log_event.emit("It's super effective! (%s)" % calc_result["reaction"])
+	elif calc_result["effectiveness"] < 1.0:
+		log_event.emit("It's not very effective... (%s)" % calc_result["reaction"])
+		
+	if calc_result["is_crit"]:
+		log_event.emit("Critical Hit!")
 	
 	defender.take_damage(damage)
 	
@@ -380,10 +405,9 @@ func end_turn():
 		current_acting_unit.atb_value = 0
 		
 		# Reset HUD bar for this unit
-		if battle_hud:
-			var index = active_player_monsters.find(current_acting_unit) if current_acting_unit.is_player else active_enemy_monsters.find(current_acting_unit)
-			if index != -1:
-				battle_hud.update_stability(current_acting_unit.is_player, index, 0)
+		var index = active_player_monsters.find(current_acting_unit) if current_acting_unit.is_player else active_enemy_monsters.find(current_acting_unit)
+		if index != -1:
+			hud_update_atb.emit(current_acting_unit.is_player, index, 0)
 				
 	current_acting_unit = null
 	selected_move = null
@@ -397,11 +421,21 @@ func end_turn():
 func end_battle(player_won: bool):
 	current_state = BattleState.END
 	print("Battle Over. Player Won: ", player_won)
+	
+	var rewards = {}
+	if player_won:
+		var total_xp = 0
+		for unit in active_enemy_monsters:
+			# XP Calculation: Base 50 + (Level * 10)
+			total_xp += 50 + (unit.data.level * 10)
+		
+		rewards["xp"] = total_xp
+		# Add to global pool
+		if PlayerData:
+			PlayerData.add_resource("experience", total_xp)
+
 	if battle_hud:
-		if player_won:
-			battle_hud.log_message("VICTORY!")
-		else:
-			battle_hud.log_message("DEFEAT...")
+		battle_hud.show_result(player_won, rewards)
 
 func _on_monster_death(_monster: BattleMonster):
 	# A small delay to let the death animation play out
@@ -428,12 +462,11 @@ func check_win_condition():
 		end_battle(true)
 
 func _on_unit_hp_changed(unit: BattleMonster, new_hp: int, max_hp: int):
-	if battle_hud:
-		var index = -1
-		if unit.is_player:
-			index = active_player_monsters.find(unit)
-		else:
-			index = active_enemy_monsters.find(unit)
-		
-		if index != -1:
-			battle_hud.update_hp(unit.is_player, index, new_hp, max_hp)
+	var index = -1
+	if unit.is_player:
+		index = active_player_monsters.find(unit)
+	else:
+		index = active_enemy_monsters.find(unit)
+	
+	if index != -1:
+		hud_update_hp.emit(unit.is_player, index, new_hp, max_hp)

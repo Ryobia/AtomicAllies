@@ -13,8 +13,29 @@ var scenes = {
 	"nursery": "res://Scenes/Nursery.tscn",
 	"detail_view": "res://Scenes/DetailView.tscn",
 	"periodic_table": "res://Scenes/PeriodicTable.tscn",
-	"attunement": "res://Scenes/AttunementChamber.tscn",
 }
+
+var tooltip_theme: Theme
+
+func _ready():
+	_create_tooltip_theme()
+
+func _create_tooltip_theme():
+	tooltip_theme = Theme.new()
+	var tooltip_bg = StyleBoxFlat.new()
+	tooltip_bg.bg_color = Color(0.02, 0.05, 0.1, 0.95) # Less transparent
+	tooltip_bg.border_width_left = 1
+	tooltip_bg.border_width_top = 1
+	tooltip_bg.border_width_right = 1
+	tooltip_bg.border_width_bottom = 1
+	tooltip_bg.border_color = Color("#60fafc")
+	tooltip_bg.content_margin_left = 10
+	tooltip_bg.content_margin_right = 10
+	tooltip_bg.content_margin_top = 5
+	tooltip_bg.content_margin_bottom = 5
+	tooltip_theme.set_stylebox("panel", "TooltipPanel", tooltip_bg)
+	tooltip_theme.set_color("font_color", "TooltipLabel", Color("#60fafc"))
+	tooltip_theme.set_font_size("font_size", "TooltipLabel", 20)
 
 func switch_scene(scene_key: String):
 	print("GlobalManager: Switching to " + scene_key)

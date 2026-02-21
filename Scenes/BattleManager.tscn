@@ -21,12 +21,22 @@ bg_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r3dt2"]
 bg_color = Color(0.20881853, 0.58101416, 0.16588986, 1)
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_l362f"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6mgkg"]
+bg_color = Color(1, 0.5764706, 0.3764706, 1)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_yygwm"]
 atlas = ExtResource("4_272bk")
 region = Rect2(1003.4751, 50.556934, 258.214, 254.22102)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wivlx"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wd8r5"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jkk6h"]
+bg_color = Color(1, 0.5764706, 0.3764706, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mj6kv"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -144,6 +154,14 @@ theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
 
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy1" unique_id=297625786]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_vertical = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_l362f")
+theme_override_styles/fill = SubResource("StyleBoxFlat_6mgkg")
+show_percentage = false
+
 [node name="Enemy2" type="VBoxContainer" parent="BattleHUD/Theater/EnemyRow" unique_id=814047354]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -207,6 +225,14 @@ theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
 
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy2" unique_id=2033474835]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_vertical = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_l362f")
+theme_override_styles/fill = SubResource("StyleBoxFlat_6mgkg")
+show_percentage = false
+
 [node name="Enemy3" type="VBoxContainer" parent="BattleHUD/Theater/EnemyRow" unique_id=233960037]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -256,6 +282,14 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
+
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy3" unique_id=250917209]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_vertical = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_l362f")
+theme_override_styles/fill = SubResource("StyleBoxFlat_6mgkg")
+show_percentage = false
 
 [node name="ReactionSpace" type="Control" parent="BattleHUD/Theater" unique_id=163394752]
 layout_mode = 2
@@ -338,6 +372,13 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_wivlx")
 [node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard1" unique_id=308187073]
 layout_mode = 2
 
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1852077598]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
+theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
+show_percentage = false
+
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1616180284]
 layout_mode = 2
 size_flags_vertical = 3
@@ -364,6 +405,13 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_mj6kv")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard2" unique_id=17070277]
 layout_mode = 2
+
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=412822927]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
+theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
+show_percentage = false
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=1472754783]
 layout_mode = 2
@@ -403,6 +451,13 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_f42mu")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard3" unique_id=937547351]
 layout_mode = 2
+
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=1562555143]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
+theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
+show_percentage = false
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=40486499]
 layout_mode = 2

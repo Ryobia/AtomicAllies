@@ -1,8 +1,12 @@
 [gd_scene format=3 uid="uid://b2l1bfl8d5h0a"]
 
 [ext_resource type="Script" uid="uid://e7h0368smvxs" path="res://Scripts/BattleMonster.gd" id="1_6ectm"]
+[ext_resource type="Texture2D" uid="uid://by40qmhlgrjag" path="res://icon.svg" id="2_o53rd"]
 
 [node name="BattleMonster" type="Node2D" unique_id=1202526393]
 script = ExtResource("1_6ectm")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1435021043]
+texture = ExtResource("2_o53rd")
+
+[node name="CenterPoint" type="Marker2D" parent="." unique_id=1584949434]
