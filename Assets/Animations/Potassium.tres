@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://clrua16iu7yit"]
+
+[ext_resource type="Texture2D" uid="uid://d1ofexfsxim3m" path="res://Assets/Potassium.png" id="1_ttypd"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gex08"]
+atlas = ExtResource("1_ttypd")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yod2m"]
+atlas = ExtResource("1_ttypd")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pk58o"]
+atlas = ExtResource("1_ttypd")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t6431"]
+atlas = ExtResource("1_ttypd")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gex08")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yod2m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pk58o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_t6431")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

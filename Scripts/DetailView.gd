@@ -18,6 +18,11 @@ var icon_texture
 var moves_container
 var class_label
 var class_help_icon
+var view_toggle
+var prev_button
+var next_button
+var _touch_start_pos = Vector2.ZERO
+var _min_swipe_distance = 50
 
 
 func _ready():
@@ -36,6 +41,15 @@ func _ready():
 	moves_container = find_child("MovesContainer", true, false)
 	class_label = find_child("ClassLabel", true, false)
 	class_help_icon = find_child("HelpIcon", true, false)
+	view_toggle = find_child("ViewToggle", true, false)
+	prev_button = find_child("PrevButton", true, false)
+	next_button = find_child("NextButton", true, false)
+	
+	if prev_button: prev_button.pressed.connect(_on_prev_pressed)
+	if next_button: next_button.pressed.connect(_on_next_pressed)
+	
+	if view_toggle:
+		view_toggle.toggled.connect(_on_view_toggle_toggled)
 	
 	if class_help_icon:
 		class_help_icon.theme = GlobalManager.tooltip_theme
@@ -52,7 +66,7 @@ func _ready():
 	# We assume current_monster has been set by the previous screen.
 	if is_instance_valid(current_monster):
 		update_ui()
-		_setup_atom()
+		_update_visuals()
 	
 	# Connect the button's "pressed" signal to our level-up function.
 	if level_up_button:
@@ -61,15 +75,40 @@ func _ready():
 	# Listen for global resource changes to keep the UI fresh.
 	PlayerData.resource_updated.connect(_on_player_resource_updated)
 
+func _input(event):
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_touch_start_pos = event.position
+		else:
+			var drag = event.position - _touch_start_pos
+			if drag.length() > _min_swipe_distance:
+				if abs(drag.x) > abs(drag.y): # Horizontal swipe
+					# Swipe Right (positive X) -> Go Previous
+					# Swipe Left (negative X) -> Go Next
+					if drag.x > 0:
+						_on_prev_pressed()
+					else:
+						_on_next_pressed()
+
+func _on_prev_pressed():
+	_navigate_monster(-1)
+
+func _on_next_pressed():
+	_navigate_monster(1)
 
 func update_ui():
 	# This function refreshes all the text on the screen.
 	if not is_instance_valid(current_monster):
 		return
 		
+	var is_owned = PlayerData.is_monster_owned(current_monster.monster_name)
+	var content_modulate = Color.WHITE if is_owned else Color(1, 1, 1, 0.5)
+		
 	if name_label: name_label.text = current_monster.monster_name
-	if level_label: level_label.text = "Level: " + str(current_monster.level)
-	if player_xp_label: player_xp_label.text = "Player XP: " + str(PlayerData.resources.get("experience", 0))
+	if level_label: level_label.text = ("Level: " + str(current_monster.level)) if is_owned else "Not Acquired"
+	if player_xp_label: 
+		player_xp_label.text = "Player XP: " + str(PlayerData.resources.get("experience", 0))
+		player_xp_label.visible = is_owned
 	if number_label: number_label.text = "#" + str(current_monster.atomic_number)
 	
 	if current_monster.has_method("get_current_stats"):
@@ -78,6 +117,11 @@ func update_ui():
 		if attack_label: attack_label.text = "Attack: " + str(stats.attack)
 		if defense_label: defense_label.text = "Defense: " + str(stats.defense)
 		if speed_label: speed_label.text = "Speed: " + str(stats.speed)
+		
+		if hp_label: hp_label.modulate = content_modulate
+		if attack_label: attack_label.modulate = content_modulate
+		if defense_label: defense_label.modulate = content_modulate
+		if speed_label: speed_label.modulate = content_modulate
 
 	if class_label and "group" in current_monster:
 		var group_name = AtomicConfig.Group.find_key(current_monster.group)
@@ -87,6 +131,7 @@ func update_ui():
 			if class_help_icon:
 				class_help_icon.tooltip_text = _get_class_description(current_monster.group)
 
+	if moves_container: moves_container.modulate = content_modulate
 	if moves_container and "moves" in current_monster:
 		for child in moves_container.get_children():
 			child.queue_free()
@@ -120,11 +165,16 @@ func update_ui():
 				moves_container.add_child(sep)
 	
 	var cost = AtomicConfig.calculate_xp_requirement(current_monster.level)
-	if cost_label: cost_label.text = "Cost: " + str(cost) + " XP"
+	if cost_label: 
+		cost_label.text = "Cost: " + str(cost) + " XP"
+		cost_label.visible = is_owned
 	
 	# Automatically disable the button if the player can't afford the upgrade.
 	if level_up_button:
-		level_up_button.disabled = PlayerData.resources.get("experience", 0) < cost
+		level_up_button.visible = is_owned
+		var can_afford = (PlayerData.resources.get("experience", 0) >= cost)
+		level_up_button.disabled = not can_afford
+		_update_level_up_button_animation(can_afford and is_owned)
 
 
 func _on_level_up_pressed():
@@ -139,13 +189,148 @@ func _on_player_resource_updated(resource_type: String, _new_amount: int):
 	if resource_type == "experience":
 		update_ui()
 
-func _setup_atom():
+func _on_view_toggle_toggled(_toggled_on: bool):
+	_update_visuals()
+
+func _navigate_monster(direction: int):
+	if not current_monster: return
+	
+	var max_z = PlayerData.starter_monster_paths.size()
+	var new_z = current_monster.atomic_number + direction
+	
+	if new_z < 1: new_z = max_z
+	if new_z > max_z: new_z = 1
+	
+	var path = PlayerData.get_monster_path_by_z(new_z)
+	if path != "":
+		var base_monster = load(path)
+		if base_monster:
+			# 1. Create proxy of current state for animation
+			var old_proxy = _create_visual_proxy()
+			
+			# Check if we own a copy to show stats/level
+			var owned = PlayerData.get_owned_monster(base_monster.monster_name)
+			if owned:
+				current_monster = owned
+			else:
+				current_monster = base_monster
+			
+			update_ui()
+			# Update visuals immediately without icon animation (we animate the whole page)
+			_update_visuals(0, true)
+			
+			# 2. Create proxy of new state
+			var new_proxy = _create_visual_proxy()
+			var slide_offset = get_viewport_rect().size.x * direction
+			new_proxy.global_position.x += slide_offset
+			
+			# 3. Hide real elements during animation
+			for child in get_children():
+				if child != old_proxy and child != new_proxy and child is CanvasItem:
+					child.modulate.a = 0.0
+			
+			# 4. Animate
+			var tween = create_tween()
+			tween.set_parallel(true)
+			tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			
+			tween.tween_property(old_proxy, "global_position:x", old_proxy.global_position.x - slide_offset, 0.3)
+			tween.tween_property(new_proxy, "global_position:x", new_proxy.global_position.x - slide_offset, 0.3)
+			
+			tween.chain().tween_callback(func():
+				if is_instance_valid(old_proxy): old_proxy.queue_free()
+				if is_instance_valid(new_proxy): new_proxy.queue_free()
+				# Restore visibility
+				for child in get_children():
+					if child is CanvasItem:
+						child.modulate.a = 1.0
+			)
+
+func _create_visual_proxy() -> Control:
+	var proxy = Control.new()
+	proxy.top_level = true
+	proxy.global_position = global_position
+	proxy.size = size
+	add_child(proxy)
+	
+	for child in get_children():
+		if child == proxy: continue
+		# Don't duplicate existing proxies or popups
+		if child is CanvasItem and child.top_level: continue
+		if child.name == "InfoPopup": continue
+		
+		if child is Control or child is Node2D:
+			var dup = child.duplicate(0)
+			proxy.add_child(dup)
+	return proxy
+
+func _update_visuals(slide_direction: int = 0, skip_animation: bool = false):
 	if not icon_texture or not current_monster: return
 	
-	# Clear existing atoms
-	for child in icon_texture.get_children():
-		child.queue_free()
+	# Capture old visuals to fade them out
+	var old_visuals = icon_texture.get_children()
 	
+	# Clear the background texture if it was set
+	icon_texture.texture = null
+	
+	var is_owned = PlayerData.is_monster_owned(current_monster.monster_name)
+	var target_modulate = Color.WHITE if is_owned else Color(0.2, 0.2, 0.2, 0.8)
+	
+	var new_visual = null
+	
+	if view_toggle and view_toggle.button_pressed:
+		new_visual = _setup_sprite()
+	else:
+		new_visual = _setup_atom()
+	
+	if new_visual:
+		if skip_animation:
+			new_visual.modulate = target_modulate
+			for child in old_visuals:
+				child.queue_free()
+			return
+
+		var tween = create_tween()
+		tween.set_parallel(true)
+		
+		if slide_direction == 0:
+			# Default Fade Transition
+			new_visual.modulate = target_modulate
+			new_visual.modulate.a = 0.0
+			tween.tween_property(new_visual, "modulate:a", target_modulate.a, 0.3)
+			
+			for child in old_visuals:
+				tween.tween_property(child, "modulate:a", 0.0, 0.3)
+		else:
+			# Slide Transition
+			var offset = icon_texture.size.x
+			var start_x = new_visual.position.x + (offset * slide_direction)
+			var end_x = new_visual.position.x
+			
+			# Setup new visual start position
+			new_visual.position.x = start_x
+			new_visual.modulate = target_modulate
+			new_visual.modulate.a = 0.0 # Start transparent for smoother entry
+			
+			# Animate New Visual In
+			tween.tween_property(new_visual, "position:x", end_x, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			tween.tween_property(new_visual, "modulate:a", target_modulate.a, 0.3)
+			
+			# Animate Old Visuals Out
+			for child in old_visuals:
+				var child_end_x = child.position.x - (offset * slide_direction)
+				tween.tween_property(child, "position:x", child_end_x, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+				tween.tween_property(child, "modulate:a", 0.0, 0.3)
+		
+		tween.chain().tween_callback(func():
+			for child in old_visuals:
+				if is_instance_valid(child):
+					child.queue_free()
+		)
+
+func _setup_atom() -> Node2D:
+	if not icon_texture or not current_monster: return null
+
 	var atom_script = load("res://Scripts/DynamicAtom.gd")
 	var electron_tex = load("res://data/ElectronGlow.tres")
 	
@@ -159,6 +344,54 @@ func _setup_atom():
 		# Center the atom in the TextureRect
 		atom.position = icon_texture.size / 2
 		icon_texture.add_child(atom)
+		return atom
+	return null
+
+func _setup_sprite() -> Node2D:
+	if not icon_texture or not current_monster: return null
+	
+	var anim_path = "res://Assets/Animations/" + current_monster.monster_name.replace(" ", "") + ".tres"
+	
+	if ResourceLoader.exists(anim_path):
+		var sprite_frames = load(anim_path)
+		if sprite_frames:
+			var sprite = AnimatedSprite2D.new()
+			sprite.sprite_frames = sprite_frames
+			
+			# Robust animation playing
+			var anim_to_play = "idle"
+			if not sprite_frames.has_animation(anim_to_play):
+				if sprite_frames.has_animation("default"):
+					anim_to_play = "default"
+				else:
+					var anims = sprite_frames.get_animation_names()
+					if anims.size() > 0:
+						anim_to_play = anims[0]
+			
+			sprite.play(anim_to_play)
+			sprite.position = icon_texture.size / 2
+			
+			# Scale sprite to fit container (with padding)
+			var tex = sprite_frames.get_frame_texture(anim_to_play, 0)
+			if tex:
+				var s = (icon_texture.size.y * 0.8) / float(tex.get_height())
+				sprite.scale = Vector2(s, s)
+				
+			icon_texture.add_child(sprite)
+			return sprite
+	else:
+		# Fallback to static icon as a child Sprite2D for transitions
+		var sprite = Sprite2D.new()
+		sprite.texture = current_monster.icon
+		sprite.position = icon_texture.size / 2
+		
+		if current_monster.icon:
+			var s = (icon_texture.size.y * 0.8) / float(current_monster.icon.get_height())
+			sprite.scale = Vector2(s, s)
+			
+		icon_texture.add_child(sprite)
+		return sprite
+	return null
 
 func _get_class_description(group: int) -> String:
 	match group:
@@ -234,3 +467,26 @@ func _show_tooltip_popup(text: String):
 	
 	popup.dialog_text = text
 	popup.popup_centered()
+
+func _update_level_up_button_animation(should_animate: bool):
+	if not level_up_button: return
+	
+	# Ensure pivot is centered for scaling
+	level_up_button.pivot_offset = level_up_button.size / 2
+	
+	var current_tween = level_up_button.get_meta("pulse_tween") if level_up_button.has_meta("pulse_tween") else null
+	
+	if should_animate:
+		if current_tween and current_tween.is_valid():
+			return # Already animating
+			
+		var tween = create_tween()
+		tween.set_loops()
+		tween.tween_property(level_up_button, "scale", Vector2(1.05, 1.05), 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(level_up_button, "scale", Vector2.ONE, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		level_up_button.set_meta("pulse_tween", tween)
+	else:
+		if current_tween:
+			current_tween.kill()
+			level_up_button.set_meta("pulse_tween", null)
+		level_up_button.scale = Vector2.ONE

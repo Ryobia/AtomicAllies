@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://cnon1wnx8k2d2"]
+
+[ext_resource type="Texture2D" uid="uid://bs75cjonpy3le" path="res://Assets/Scandium.png" id="1_0x21q"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n4r46"]
+atlas = ExtResource("1_0x21q")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m3or1"]
+atlas = ExtResource("1_0x21q")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cpjvn"]
+atlas = ExtResource("1_0x21q")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ig0ru"]
+atlas = ExtResource("1_0x21q")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n4r46")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m3or1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cpjvn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ig0ru")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

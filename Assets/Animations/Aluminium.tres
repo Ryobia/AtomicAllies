@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://codixra23po8e"]
+
+[ext_resource type="Texture2D" uid="uid://d1pcrjst1qjw1" path="res://Assets/Aluminium.png" id="1_y8lx5"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ucacj"]
+atlas = ExtResource("1_y8lx5")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rtb47"]
+atlas = ExtResource("1_y8lx5")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eep4d"]
+atlas = ExtResource("1_y8lx5")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tlln4"]
+atlas = ExtResource("1_y8lx5")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ucacj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rtb47")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eep4d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tlln4")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

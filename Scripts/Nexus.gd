@@ -172,8 +172,7 @@ func _on_capsule_created(capsule_data):
 	if parent_2_btn: parent_2_btn.text = "Select Parent 2"
 	
 	if status_label:
-		var z = capsule_data.get("z", 0)
-		status_label.text = "Fusion Successful! Capsule created." % z
+		status_label.text = "Fusion Successful! Capsule created!"
 	
 	# Clear Visuals
 	if is_instance_valid(atom_p1): atom_p1.queue_free()

@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cld3h0d5cobg5" path="res://Scripts/DetailView.gd" id="1_mhro5"]
 [ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="2_oxi4x"]
 [ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="3_oxi4x"]
+[ext_resource type="Texture2D" uid="uid://23gn5h5l5hwm" path="res://Assets/leftrightsheet.png" id="4_drcdi"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mhro5"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -43,8 +44,20 @@ expand_margin_top = 5.0
 expand_margin_right = 50.0
 expand_margin_bottom = 5.0
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_a75jg"]
+atlas = ExtResource("4_drcdi")
+region = Rect2(77, 219, 389, 148)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drcdi"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2wvlh"]
+atlas = ExtResource("4_drcdi")
+region = Rect2(77.040695, 53.891, 170.9593, 115.99999)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_c8ywg"]
+atlas = ExtResource("4_drcdi")
+region = Rect2(292.54712, 53.241608, 173.2193, 115.86575)
 
 [node name="DetailView" type="Control" unique_id=414824210]
 layout_mode = 3
@@ -163,10 +176,14 @@ theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_2wvlh")
 horizontal_alignment = 1
 
-[node name="LevelUpButton" type="Button" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/HBoxContainer" unique_id=2111651270]
+[node name="LevelUpButton" type="TextureButton" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/HBoxContainer" unique_id=1555056659]
+custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
-text = "LEVEL UP"
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = SubResource("AtlasTexture_a75jg")
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="GridStats" type="GridContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1856869019]
 layout_mode = 2
@@ -231,5 +248,42 @@ alignment = 1
 [node name="BackButton" parent="." unique_id=684150519 instance=ExtResource("3_oxi4x")]
 z_index = 10
 layout_mode = 1
+
+[node name="ViewToggle" type="CheckButton" parent="." unique_id=86154768]
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -50.0
+offset_right = -20.0
+offset_bottom = 50.0
+grow_horizontal = 0
+grow_vertical = 2
+text = "MONSTER
+VIEW"
+alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=995398781]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.376
+anchor_right = 1.0
+anchor_bottom = 0.376
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PrevButton" type="TextureButton" parent="HBoxContainer" unique_id=1590775721]
+layout_mode = 2
+size_flags_horizontal = 2
+texture_normal = SubResource("AtlasTexture_2wvlh")
+
+[node name="NextButton" type="TextureButton" parent="HBoxContainer" unique_id=463214141]
+layout_mode = 2
+size_flags_horizontal = 10
+texture_normal = SubResource("AtlasTexture_c8ywg")
 
 [connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]

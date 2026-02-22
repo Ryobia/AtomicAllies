@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://6w8bfo5c4klk"]
+
+[ext_resource type="Texture2D" uid="uid://d0owprwkbikds" path="res://Assets/Chromium.png" id="1_n7w00"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5pgr5"]
+atlas = ExtResource("1_n7w00")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2kuti"]
+atlas = ExtResource("1_n7w00")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0sclc"]
+atlas = ExtResource("1_n7w00")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tdatj"]
+atlas = ExtResource("1_n7w00")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5pgr5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2kuti")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0sclc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tdatj")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

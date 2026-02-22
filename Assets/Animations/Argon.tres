@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://dv7miekhnvaiq"]
+
+[ext_resource type="Texture2D" uid="uid://cegbfo46u8m4f" path="res://Assets/Argon.png" id="1_t8v6l"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0k8b3"]
+atlas = ExtResource("1_t8v6l")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_60eft"]
+atlas = ExtResource("1_t8v6l")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6u3qa"]
+atlas = ExtResource("1_t8v6l")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wv27n"]
+atlas = ExtResource("1_t8v6l")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0k8b3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_60eft")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6u3qa")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wv27n")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

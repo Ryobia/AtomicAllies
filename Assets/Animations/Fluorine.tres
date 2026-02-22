@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://ov7xqel7obxr"]
+
+[ext_resource type="Texture2D" uid="uid://y2clly8rfwbp" path="res://Assets/Fluorine.png" id="1_tgepk"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rl452"]
+atlas = ExtResource("1_tgepk")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5pbi7"]
+atlas = ExtResource("1_tgepk")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lnujt"]
+atlas = ExtResource("1_tgepk")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lfvo2"]
+atlas = ExtResource("1_tgepk")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rl452")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5pbi7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lnujt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lfvo2")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

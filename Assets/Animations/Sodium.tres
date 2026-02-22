@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://jlnds8rh7166"]
+
+[ext_resource type="Texture2D" uid="uid://mtkgxwai1cqa" path="res://Assets/Sodium.png" id="1_a2x2k"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t6i03"]
+atlas = ExtResource("1_a2x2k")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ft05i"]
+atlas = ExtResource("1_a2x2k")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j8vjd"]
+atlas = ExtResource("1_a2x2k")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rlt5i"]
+atlas = ExtResource("1_a2x2k")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_t6i03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ft05i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j8vjd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rlt5i")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

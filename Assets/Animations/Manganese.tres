@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bm8p4t6cafosq"]
+
+[ext_resource type="Texture2D" uid="uid://67ln6532c6vr" path="res://Assets/Manganese.png" id="1_385e3"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_585em"]
+atlas = ExtResource("1_385e3")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2bx42"]
+atlas = ExtResource("1_385e3")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oc0yl"]
+atlas = ExtResource("1_385e3")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4hdq7"]
+atlas = ExtResource("1_385e3")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_585em")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2bx42")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oc0yl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4hdq7")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

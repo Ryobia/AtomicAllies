@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bqotf8a3n4ft3"]
+
+[ext_resource type="Texture2D" uid="uid://bxnh0et0esc6g" path="res://Assets/Vanadium.png" id="1_65ko8"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2lfcy"]
+atlas = ExtResource("1_65ko8")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vbtaw"]
+atlas = ExtResource("1_65ko8")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qsh8m"]
+atlas = ExtResource("1_65ko8")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b0lan"]
+atlas = ExtResource("1_65ko8")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2lfcy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vbtaw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qsh8m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b0lan")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://cenmq6vblsk4o"]
+
+[ext_resource type="Texture2D" uid="uid://c1h6o7mm4il7a" path="res://Assets/Oxygen.png" id="1_p4a5r"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qgyqr"]
+atlas = ExtResource("1_p4a5r")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uf6cw"]
+atlas = ExtResource("1_p4a5r")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e6hxs"]
+atlas = ExtResource("1_p4a5r")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_abbjq"]
+atlas = ExtResource("1_p4a5r")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qgyqr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uf6cw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e6hxs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_abbjq")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

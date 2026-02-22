@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://mceibyij61nc"]
+
+[ext_resource type="Texture2D" uid="uid://cb0ps8nktpm15" path="res://Assets/Iron.png" id="1_r72p1"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r2u32"]
+atlas = ExtResource("1_r72p1")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gu5hc"]
+atlas = ExtResource("1_r72p1")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5qvfj"]
+atlas = ExtResource("1_r72p1")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8ouym"]
+atlas = ExtResource("1_r72p1")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r2u32")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gu5hc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5qvfj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8ouym")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://xfxqnxgrgc5f"]
+
+[ext_resource type="Texture2D" uid="uid://cbyvwxpgg2cl3" path="res://Assets/Titanium.png" id="1_hs0r0"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j7ptj"]
+atlas = ExtResource("1_hs0r0")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gvbqx"]
+atlas = ExtResource("1_hs0r0")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m3ycj"]
+atlas = ExtResource("1_hs0r0")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6lwga"]
+atlas = ExtResource("1_hs0r0")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j7ptj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gvbqx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m3ycj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6lwga")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

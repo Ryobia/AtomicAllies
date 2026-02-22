@@ -207,3 +207,40 @@ func _notification(what):
 	# Auto-save on exit or pause (mobile backgrounding)
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		save_game()
+
+func reset_save():
+	print("PlayerData: Resetting save data...")
+	
+	# 1. Clear In-Memory Data
+	owned_monsters.clear()
+	capsules.clear()
+	synthesis_chambers.clear()
+	resources = {
+		"neutron_dust": 0,
+		"experience": 0,
+		"gems": 0
+	}
+	
+	# 2. Delete Save Files
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(SAVE_PATH)
+	if FileAccess.file_exists("user://timers.save"):
+		DirAccess.remove_absolute("user://timers.save")
+		
+	# 3. Re-initialize (Starter Logic)
+	for i in range(4):
+		synthesis_chambers.append({
+			"is_unlocked": (i == 0),
+			"capsule": null
+		})
+		
+	var he = load("res://data/Monsters/Helium.tres")
+	var h = load("res://data/Monsters/Hydrogen.tres")
+	if h: owned_monsters.append(h.duplicate())
+	if he: owned_monsters.append(he.duplicate())
+	
+	# 4. Save (creates fresh file)
+	save_game()
+	
+	print("PlayerData: Save reset. Reloading scene...")
+	get_tree().reload_current_scene()

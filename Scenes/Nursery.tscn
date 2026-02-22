@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://dir1y46pq877y" path="res://Scripts/Nursery.gd" id="1_xqppg"]
 [ext_resource type="Texture2D" uid="uid://ist0tl0il484" path="res://Images/Synthesis.png" id="2_8qu53"]
 [ext_resource type="Script" uid="uid://i8qoui2cnkcf" path="res://Scripts/FusionResultPopup.gd" id="3_5odor"]
+[ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="3_8qu53"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f5c0i"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -10,6 +11,10 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_36rvm"]
+atlas = ExtResource("3_8qu53")
+region = Rect2(587, 60.917, 323, 401)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qwcqv"]
 bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
@@ -35,9 +40,9 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-expand_margin_left = 5.0
+expand_margin_left = 10.0
 expand_margin_top = 5.0
-expand_margin_right = 5.0
+expand_margin_right = 10.0
 expand_margin_bottom = 5.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5jn0c"]
@@ -110,7 +115,7 @@ size_flags_vertical = 3
 theme_override_constants/h_separation = 4
 
 [node name="DissolvePopup" type="Panel" parent="." unique_id=1411993256]
-custom_minimum_size = Vector2(300, 200)
+custom_minimum_size = Vector2(600, 500)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -144,20 +149,34 @@ alignment = 1
 [node name="Label" type="Label" parent="DissolvePopup/MarginContainer/VBoxContainer" unique_id=669005128]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 40
 text = "Duplicate Found!"
 horizontal_alignment = 1
 autowrap_mode = 3
+
+[node name="IconTexture" type="TextureRect" parent="DissolvePopup/MarginContainer/VBoxContainer" unique_id=89299534]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 6
+texture = SubResource("AtlasTexture_36rvm")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="OkButton" type="Button" parent="DissolvePopup/MarginContainer/VBoxContainer" unique_id=1818981316]
 layout_mode = 2
 size_flags_vertical = 10
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_font_sizes/font_size = 32
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 50
 theme_override_styles/normal = SubResource("StyleBoxFlat_qwcqv")
 text = "Collect Neutron Dust"
 
 [node name="FusionResultPopup" type="PanelContainer" parent="." unique_id=580002729]
+custom_minimum_size = Vector2(500, 500)
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
@@ -169,46 +188,60 @@ grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_8qu53")
 script = ExtResource("3_5odor")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="FusionResultPopup" unique_id=1714509820]
+[node name="MarginContainer" type="MarginContainer" parent="FusionResultPopup" unique_id=580993209]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="FusionResultPopup/MarginContainer" unique_id=1714509820]
 layout_mode = 2
 theme_override_constants/separation = 11
 
-[node name="Label" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=261919470]
+[node name="Label" type="Label" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=261919470]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 40
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 50
 text = " NEW ELEMENT DISCOVERED "
 horizontal_alignment = 1
 
-[node name="IconTexture" type="TextureRect" parent="FusionResultPopup/VBoxContainer" unique_id=855505590]
+[node name="IconTexture" type="TextureRect" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=855505590]
+custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
+size_flags_vertical = 3
 
-[node name="NameLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=743603166]
+[node name="NameLabel" type="Label" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=743603166]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="NumberLabel" type="Label" parent="FusionResultPopup/VBoxContainer" unique_id=994789245]
+[node name="NumberLabel" type="Label" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=994789245]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="OkButton" type="Button" parent="FusionResultPopup/VBoxContainer" unique_id=179383258]
+[node name="OkButton" type="Button" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=179383258]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_colors/font_hover_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 50
 theme_override_styles/normal = SubResource("StyleBoxFlat_36rvm")
 theme_override_styles/hover = SubResource("StyleBoxFlat_5jn0c")
 text = "CLAIM ALLY
 "
 
 [node name="CapsulePanelPopup" type="Panel" parent="." unique_id=1834142268]
-custom_minimum_size = Vector2(300, 320)
+visible = false
+custom_minimum_size = Vector2(600, 500)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -222,14 +255,6 @@ offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_5km5i")
-
-[node name="CapsuleInventory" type="Label" parent="CapsulePanelPopup" unique_id=1104400108]
-layout_mode = 0
-offset_left = -149.5
-offset_top = 843.24
-offset_right = 449.5
-offset_bottom = 864.24
-text = "Capsule Inventory"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="CapsulePanelPopup" unique_id=1342263731]
 z_index = 2

@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bx2nbaetea407"]
+
+[ext_resource type="Texture2D" uid="uid://c25p8rusoo3sk" path="res://Assets/Phosphorus.png" id="1_x570d"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bg3hu"]
+atlas = ExtResource("1_x570d")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hlj6g"]
+atlas = ExtResource("1_x570d")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w27f5"]
+atlas = ExtResource("1_x570d")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jtaf6"]
+atlas = ExtResource("1_x570d")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bg3hu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hlj6g")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w27f5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jtaf6")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

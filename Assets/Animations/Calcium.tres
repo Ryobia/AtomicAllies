@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://dcmx8b4nfvgd8"]
+
+[ext_resource type="Texture2D" uid="uid://dcrhfrk14aeru" path="res://Assets/Calcium.png" id="1_tre72"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pv0b5"]
+atlas = ExtResource("1_tre72")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g8l6y"]
+atlas = ExtResource("1_tre72")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rsf8u"]
+atlas = ExtResource("1_tre72")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gb571"]
+atlas = ExtResource("1_tre72")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pv0b5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g8l6y")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rsf8u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gb571")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

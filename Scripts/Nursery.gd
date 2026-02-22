@@ -166,7 +166,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 			
 			# Load the resource you just created
 			var anim_path = "res://Assets/Animations/CapsuleStabilizing.tres"
-			if FileAccess.file_exists(anim_path):
+			if ResourceLoader.exists(anim_path):
 				var anim_frames = load(anim_path)
 				if anim_frames:
 					sprite.sprite_frames = anim_frames
@@ -285,13 +285,26 @@ func _on_synthesis_completed(z_num, success, reward):
 	else:
 		# New Monster
 		if fusion_result_popup:
+			fusion_result_popup.visible = true # Show first so UI layout updates size
+			
 			var new_monster = PlayerData.owned_monsters.back()
 			var name_lbl = fusion_result_popup.find_child("NameLabel", true, false)
 			var icon_tex = fusion_result_popup.find_child("IconTexture", true, false)
 			
 			if name_lbl: name_lbl.text = new_monster.monster_name
-			if icon_tex: icon_tex.texture = new_monster.icon
-			fusion_result_popup.visible = true
+			if icon_tex:
+				icon_tex.texture = new_monster.icon
+				# Clear previous atoms
+				for child in icon_tex.get_children():
+					child.queue_free()
+				var atom = _create_atom(new_monster)
+				if atom:
+					icon_tex.add_child(atom)
+					# Wait one frame for layout to calculate correct size
+					get_tree().process_frame.connect(func():
+						if is_instance_valid(atom) and is_instance_valid(icon_tex):
+							atom.position = icon_tex.size / 2
+					, CONNECT_ONE_SHOT)
 	
 	update_ui()
 
@@ -318,3 +331,17 @@ func _style_button(btn: Button):
 	btn.add_theme_stylebox_override("hover", hover_style)
 	btn.add_theme_stylebox_override("pressed", style)
 	btn.add_theme_color_override("font_color", Color("#010813"))
+
+func _create_atom(monster: MonsterData) -> Node2D:
+	var atom_script = load("res://Scripts/DynamicAtom.gd")
+	var electron_tex = load("res://data/ElectronGlow.tres")
+	
+	if not atom_script or not electron_tex:
+		return null
+		
+	var atom = Node2D.new()
+	atom.set_script(atom_script)
+	atom.atomic_number = monster.atomic_number
+	atom.electron_texture = electron_tex
+	atom.rotation_speed = 20.0
+	return atom

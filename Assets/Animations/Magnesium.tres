@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://derhyr72g15w5"]
+
+[ext_resource type="Texture2D" uid="uid://e56b0boilxbl" path="res://Assets/Magnesium.png" id="1_pj5ip"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w5lhd"]
+atlas = ExtResource("1_pj5ip")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xr0f4"]
+atlas = ExtResource("1_pj5ip")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_orxyx"]
+atlas = ExtResource("1_pj5ip")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3n31f"]
+atlas = ExtResource("1_pj5ip")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w5lhd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xr0f4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_orxyx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3n31f")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

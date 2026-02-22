@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bywqsnntko8dn"]
+
+[ext_resource type="Texture2D" uid="uid://bubmy0h3l6ynf" path="res://Assets/Chlorine.png" id="1_evo37"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4ahvc"]
+atlas = ExtResource("1_evo37")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xydsq"]
+atlas = ExtResource("1_evo37")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8weqg"]
+atlas = ExtResource("1_evo37")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1eglp"]
+atlas = ExtResource("1_evo37")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ahvc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xydsq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8weqg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1eglp")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]

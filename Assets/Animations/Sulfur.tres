@@ -1,0 +1,39 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bxe4ji0jd7t24"]
+
+[ext_resource type="Texture2D" uid="uid://duw31w2qtlsvv" path="res://Assets/Sulfur.png" id="1_5e7jd"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sjmcd"]
+atlas = ExtResource("1_5e7jd")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jav0t"]
+atlas = ExtResource("1_5e7jd")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yhyk2"]
+atlas = ExtResource("1_5e7jd")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6c3f2"]
+atlas = ExtResource("1_5e7jd")
+region = Rect2(768, 0, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sjmcd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jav0t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yhyk2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6c3f2")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]
