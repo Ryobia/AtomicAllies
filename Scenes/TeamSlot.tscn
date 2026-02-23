@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://dqcsdjljllyn7"]
+
+[ext_resource type="Script" uid="uid://sbkswxblaaga" path="res://Scripts/TeamSlot.gd" id="1_72oob"]
+
+[node name="TeamSlot" type="Button" unique_id=463532497]
+custom_minimum_size = Vector2(0, 250)
+offset_right = 8.0
+offset_bottom = 250.0
+size_flags_horizontal = 3
+script = ExtResource("1_72oob")
+
+[node name="LabelsContainer" type="VBoxContainer" parent="." unique_id=1087792362]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="RoleLabel" type="Label" parent="LabelsContainer" unique_id=2113093037]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+
+[node name="NameLabel" type="Label" parent="LabelsContainer" unique_id=968345187]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="SpriteCenter" type="Control" parent="." unique_id=1000976678]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_top = 15.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="EmptyLabel" type="Label" parent="." unique_id=2108814057]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_font_sizes/font_size = 32
+text = "Tap to Select"
+horizontal_alignment = 1

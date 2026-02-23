@@ -30,6 +30,10 @@ var synthesis_chambers: Array = [] # Array of { "is_unlocked": bool, "capsule": 
 var pending_egg: MonsterData = null
 var selected_monster: MonsterData = null
 
+# Battle Prep Data
+var active_team: Array[MonsterData] = []
+var pending_enemy_team: Array[MonsterData] = []
+
 # Resources
 var resources = {
 	"neutron_dust": 0,

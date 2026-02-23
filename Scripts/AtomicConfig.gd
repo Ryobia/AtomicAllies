@@ -17,6 +17,22 @@ enum Group {
 	VOID
 }
 
+# Group Colors for UI
+const GROUP_COLORS = {
+	Group.ALKALI_METAL: Color("#ff4d4d"), # Red
+	Group.ALKALINE_EARTH: Color("#ff9360"), # Orange
+	Group.TRANSITION_METAL: Color("#ffd700"), # Gold
+	Group.POST_TRANSITION: Color("#a0a0a0"), # Grey/Silver
+	Group.METALLOID: Color("#ff69b4"), # Pink
+	Group.NONMETAL: Color("#60fafc"), # Cyan
+	Group.HALOGEN: Color("#bf40bf"), # Purple
+	Group.NOBLE_GAS: Color("#1e90ff"), # Blue
+	Group.ACTINIDE: Color("#ccff00"), # Radioactive Green
+	Group.LANTHANIDE: Color("#228b22"), # Dark Green
+	Group.UNKNOWN: Color("#333333"),
+	Group.VOID: Color("#000000")
+}
+
 # Baseline Stats (Scale 1-10) from the Design Document
 const BASELINES = {
 	Group.ALKALI_METAL:    { "hp": 3, "atk": 8, "def": 2, "spd": 9 }, # Glass Cannons

@@ -62,10 +62,13 @@ func _ready():
 	
 	# If we are running this scene directly (for testing), generate a battle.
 	# In the full game, SceneManager or MainMenu would call start_battle().
-	if PlayerData.owned_monsters.size() > 0:
-		# Generate 3 Null Walkers for the tutorial fight
-		var enemies = generate_void_enemies(3)
-		start_battle(enemies)
+	
+	# Check for pending battle data from BattlePrepare
+	if not PlayerData.pending_enemy_team.is_empty():
+		start_battle(PlayerData.pending_enemy_team)
+	elif PlayerData.owned_monsters.size() > 0:
+		# Fallback: Generate 3 Null Walkers for testing
+		start_battle(generate_void_enemies(3))
 
 func _process(delta):
 	if current_state == BattleState.COUNTING:
@@ -105,16 +108,21 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	clear_battlefield()
 	
 	# 1. Spawn Player Team
-	# We take the first N monsters from the player's collection, 
-	# where N is the number of available spawn points (e.g., 3).
-	var player_roster = PlayerData.owned_monsters
+	# Use active_team if set, otherwise fallback to owned_monsters
+	var player_roster = PlayerData.active_team
+	if player_roster.is_empty():
+		player_roster = PlayerData.owned_monsters
+	
 	benched_player_monsters.clear()
 	
 	for i in range(player_roster.size()):
+		var unit_data = player_roster[i]
+		if unit_data == null: continue
+		
 		if i < player_spawn_points.size():
-			spawn_unit(player_roster[i], player_spawn_points[i], true)
+			spawn_unit(unit_data, player_spawn_points[i], true)
 		else:
-			benched_player_monsters.append(player_roster[i])
+			benched_player_monsters.append(unit_data)
 		
 	# 2. Spawn Enemy Team
 	var enemy_count = min(enemy_data_list.size(), enemy_spawn_points.size())
@@ -200,14 +208,22 @@ func generate_random_enemies(count: int) -> Array[MonsterData]:
 func generate_void_enemies(count: int) -> Array[MonsterData]:
 	var enemies: Array[MonsterData] = []
 	
+	# Try to load from resource if it exists, otherwise generate procedurally
+	var base_enemy = null
+	if ResourceLoader.exists("res://data/Enemies/NullWalker.tres"):
+		base_enemy = load("res://data/Enemies/NullWalker.tres")
+	
 	for i in range(count):
-		var enemy = MonsterData.new()
-		enemy.monster_name = "Null Walker"
-		enemy.level = 1
-		# Assuming MonsterData has a 'group' property. 
-		# If not, you might need to add it to MonsterData.gd first.
-		if "group" in enemy:
-			enemy.group = AtomicConfig.Group.VOID
+		var enemy
+		if base_enemy:
+			enemy = base_enemy.duplicate()
+		else:
+			enemy = MonsterData.new()
+			enemy.monster_name = "Null Walker"
+			enemy.level = 1
+			enemy.atomic_number = 0
+			if "group" in enemy:
+				enemy.group = AtomicConfig.Group.VOID
 		
 		enemies.append(enemy)
 	return enemies
@@ -379,16 +395,10 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	
 	log_event.emit("%s used %s!" % [attacker.data.monster_name, move.name])
 	
-	# Calculate Damage using the new calculator
-	var calc_result = DamageCalculator.calculate_damage(attacker, defender, move)
+	# Calculate Damage using CombatManager
+	var calc_result = CombatManager.calculate_damage(attacker, defender, move)
 	var damage = calc_result["damage"]
 	
-	# Show effectiveness messages
-	if calc_result["effectiveness"] > 1.0:
-		log_event.emit("It's super effective! (%s)" % calc_result["reaction"])
-	elif calc_result["effectiveness"] < 1.0:
-		log_event.emit("It's not very effective... (%s)" % calc_result["reaction"])
-		
 	if calc_result["is_crit"]:
 		log_event.emit("Critical Hit!")
 	

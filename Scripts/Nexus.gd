@@ -93,6 +93,7 @@ func _ready():
 			selection_container.add_theme_constant_override("v_separation", 10)
 			# Ensure the grid itself expands to fill the ScrollContainer width
 			selection_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			selection_container.mouse_filter = Control.MOUSE_FILTER_PASS
 	
 	# Connect UI signals
 	if parent_1_btn: parent_1_btn.pressed.connect(func(): _open_selection(1))
@@ -237,6 +238,7 @@ func _populate_selection_list():
 			wrapper.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 			wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			wrapper.custom_minimum_size = Vector2(0, 250)
+			wrapper.mouse_filter = Control.MOUSE_FILTER_PASS
 			selection_container.add_child(wrapper)
 			
 			var card = monster_card_scene.instantiate()
@@ -252,6 +254,8 @@ func _populate_selection_list():
 			btn.flat = true
 			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			btn.mouse_filter = Control.MOUSE_FILTER_PASS
+			btn.focus_mode = Control.FOCUS_NONE
 			btn.pressed.connect(func(): _on_monster_selected(monster))
 			
 			# Hover effects: Grow and Light Up
@@ -279,6 +283,8 @@ func _populate_selection_list():
 			btn.custom_minimum_size = Vector2(200, 250)
 			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			btn.add_theme_font_size_override("font_size", 56)
+			btn.mouse_filter = Control.MOUSE_FILTER_PASS
+			btn.focus_mode = Control.FOCUS_NONE
 			btn.pressed.connect(func(): _on_monster_selected(monster))
 			selection_container.add_child(btn)
 			

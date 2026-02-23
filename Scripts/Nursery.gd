@@ -112,7 +112,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 	# Visual placeholder for the capsule animation
 	var visual = CenterContainer.new()
 	visual.name = "CapsuleVisual"
-	visual.custom_minimum_size = Vector2(0, 150)
+	visual.custom_minimum_size = Vector2(0, 250)
 	container.add_child(visual)
 	
 	var pivot = Control.new()
@@ -175,18 +175,36 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 					if anim_frames.has_animation("energycapsule") and anim_frames.get_frame_count("energycapsule") > 0:
 						var tex = anim_frames.get_frame_texture("energycapsule", 0)
 						if tex:
-							var s = 150.0 / float(tex.get_height())
+							var s = 200.0 / float(tex.get_height())
 							sprite.scale = Vector2(s, s)
 			else:
 				print("Warning: Capsule animation not found at: ", anim_path)
 			
 			visual.visible = true
+			_start_bobbing_tween(sprite)
 		else:
 			label.text = "Isotope Stable!"
 			btn.text = "Stabilize"
 			btn.pressed.connect(func(): _on_stabilize_pressed(index))
-			# Optional: Change visual to "Ready" state
+			
+			# Load the resource for the ready state
+			var anim_path = "res://Assets/Animations/CapsuleStabilizing.tres"
+			if ResourceLoader.exists(anim_path):
+				var anim_frames = load(anim_path)
+				if anim_frames:
+					sprite.sprite_frames = anim_frames
+					if anim_frames.has_animation("ready"):
+						sprite.play("ready")
+						if anim_frames.get_frame_count("ready") > 0:
+							var tex = anim_frames.get_frame_texture("ready", 0)
+							if tex:
+								var s = 200.0 / float(tex.get_height())
+								sprite.scale = Vector2(s, s)
+					else:
+						sprite.play("energycapsule")
+
 			visual.visible = true
+			_start_bobbing_tween(sprite)
 			
 	return container
 
@@ -195,7 +213,8 @@ func _populate_capsule_list():
 	
 	var close_btn = Button.new()
 	close_btn.text = "Close"
-	close_btn.custom_minimum_size = Vector2(0, 40)
+	close_btn.custom_minimum_size = Vector2(0, 100)
+	close_btn.add_theme_font_size_override("font_size", 40)
 	close_btn.pressed.connect(func():
 		selected_chamber_index = -1
 		update_ui()
@@ -209,6 +228,7 @@ func _populate_capsule_list():
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		lbl.add_theme_color_override("font_color", Color("#60fafc"))
+		lbl.add_theme_font_size_override("font_size", 32)
 		capsule_list.add_child(lbl)
 		return
 
@@ -216,7 +236,8 @@ func _populate_capsule_list():
 		var btn = Button.new()
 		var parents = capsule.get("parents", [0, 0])
 		btn.text = "Capsule: Z%d + Z%d" % [parents[0], parents[1]]
-		btn.custom_minimum_size = Vector2(0, 50)
+		btn.custom_minimum_size = Vector2(0, 120)
+		btn.add_theme_font_size_override("font_size", 40)
 		
 		# To add a sprite animation here, you can add a TextureRect as a child of the button
 		# or assign an AnimatedTexture to the button's icon.
@@ -345,3 +366,10 @@ func _create_atom(monster: MonsterData) -> Node2D:
 	atom.electron_texture = electron_tex
 	atom.rotation_speed = 20.0
 	return atom
+
+func _start_bobbing_tween(node: Node2D):
+	var start_y = node.position.y
+	var tween = node.create_tween()
+	tween.set_loops()
+	tween.tween_property(node, "position:y", start_y - 10, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(node, "position:y", start_y, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

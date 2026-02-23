@@ -12,7 +12,7 @@ func _ready():
 		
 	var battle_btn = find_child("BattleButton", true, false)
 	if battle_btn:
-		battle_btn.pressed.connect(func(): GlobalManager.switch_scene("battle"))
+		battle_btn.pressed.connect(func(): GlobalManager.switch_scene("battle_prepare"))
 		
 	var nursery_btn = find_child("NurseryButton", true, false)
 	if nursery_btn:

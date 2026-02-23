@@ -18,6 +18,22 @@ region = Rect2(704, 250, 352, 250)
 atlas = ExtResource("1_x8y8d")
 region = Rect2(352, 250, 352, 250)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_x8y8d"]
+atlas = ExtResource("1_x8y8d")
+region = Rect2(0, 500, 352, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_spxg2"]
+atlas = ExtResource("1_x8y8d")
+region = Rect2(352, 500, 352, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ijgoo"]
+atlas = ExtResource("1_x8y8d")
+region = Rect2(704, 500, 352, 250)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r8xuc"]
+atlas = ExtResource("1_x8y8d")
+region = Rect2(1056, 500, 352, 250)
+
 [resource]
 animations = [{
 "frames": [{
@@ -35,5 +51,22 @@ animations = [{
 }],
 "loop": true,
 "name": &"energycapsule",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x8y8d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_spxg2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ijgoo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r8xuc")
+}],
+"loop": true,
+"name": &"ready",
 "speed": 5.0
 }]

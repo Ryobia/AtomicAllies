@@ -12,7 +12,7 @@ func _ready():
 	_connect_btn("NexusButton", "nexus")
 	
 	# Try both names to ensure it works regardless of scene setup
-	_connect_btn("BattleButton", "battle")
+	_connect_btn("BattleButton", "battle_prepare")
 	_connect_btn("SynthesisButton", "nursery")
 
 func _connect_btn(btn_name: String, scene_key: String):
@@ -30,7 +30,7 @@ func _on_nav_pressed(scene_key: String):
 
 func _on_scene_changed(scene_key: String):
 	# Logic to hide the bar in specific scenes (like Battle)
-	if scene_key == "battle":
+	if scene_key == "battle" or scene_key == "battle_prepare" or scene_key == "detail_view":
 		visible = false
 	else:
 		visible = true
@@ -44,7 +44,7 @@ func _update_highlights(active_key: String):
 		"periodic_table": ["CollectionButton"],
 		"nexus": ["NexusButton"],
 		"nursery": ["NurseryButton", "SynthesisButton"],
-        "battle:": ["BattleButton"] # If you add a Battle button in the future
+        "battle_prepare": ["BattleButton"] # If you add a Battle button in the future
 	}
 	
 	# 1. Reset all buttons

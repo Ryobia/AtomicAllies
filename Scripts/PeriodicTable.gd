@@ -50,6 +50,8 @@ func _ready():
 	research_popup = find_child("ResearchNotesPopup", true, false)
 	if research_popup:
 		research_popup.visible = false
+		
+	_setup_legend_ui()
 
 func _populate_table(grid: GridContainer):
 	# Clear existing
@@ -112,9 +114,15 @@ func _add_card(grid: Container, z: int):
 	# Force a fixed size for the table cells so they align perfectly
 	card.custom_minimum_size = Vector2(100, 120) 
 	
+	var monster = _find_monster_by_z(z)
+	
 	# --- Custom Styling ---
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color("#010813")
+	var card_color = Color("#010813")
+	if monster and "group" in monster:
+		card_color = AtomicConfig.GROUP_COLORS.get(monster.group, card_color)
+	
+	style.bg_color = card_color
 	style.bg_color.a = 0.5 # Much less opaque
 	style.set_corner_radius_all(8)
 	card.add_theme_stylebox_override("panel", style)
@@ -124,8 +132,6 @@ func _add_card(grid: Container, z: int):
 		if lbl:
 			lbl.add_theme_color_override("font_color", Color("#60fafc"))
 			lbl.add_theme_font_size_override("font_size", lbl.get_theme_font_size("font_size") + 4)
-	
-	var monster = _find_monster_by_z(z)
 	
 	if monster:
 		card.set_monster(monster)
@@ -251,3 +257,86 @@ func _input(event):
 					var new_scroll_pos = (point_on_grid_unscaled * new_scale) - (current_center - container_global_pos)
 					_scroll_container.scroll_horizontal = int(new_scroll_pos.x)
 					_scroll_container.scroll_vertical = int(new_scroll_pos.y)
+
+func _setup_legend_ui():
+	var layer = CanvasLayer.new()
+	layer.layer = 10
+	add_child(layer)
+
+	var btn = Button.new()
+	btn.text = "Legend"
+	btn.add_theme_font_size_override("font_size", 32)
+	
+	# Styling
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#60fafc")
+	style.bg_color.a = 0.9
+	style.set_corner_radius_all(8)
+	
+	var hover_style = style.duplicate()
+	hover_style.bg_color = style.bg_color.lightened(0.2)
+	
+	btn.add_theme_stylebox_override("normal", style)
+	btn.add_theme_stylebox_override("hover", hover_style)
+	btn.add_theme_stylebox_override("pressed", style)
+	btn.add_theme_color_override("font_color", Color("#010813"))
+	
+	# Position top-left
+	btn.anchor_left = 0.0
+	btn.anchor_right = 0.0
+	btn.offset_left = 30
+	btn.offset_top = 30
+	btn.offset_right = 190
+	btn.offset_bottom = 100
+	layer.add_child(btn)
+	
+	var panel = PanelContainer.new()
+	panel.visible = false
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	layer.add_child(panel)
+	
+	# Panel Styling
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color("#010813")
+	panel_style.border_width_left = 2
+	panel_style.border_width_top = 2
+	panel_style.border_width_right = 2
+	panel_style.border_width_bottom = 2
+	panel_style.border_color = Color("#60fafc")
+	panel.add_theme_stylebox_override("panel", panel_style)
+	
+	btn.pressed.connect(func(): panel.visible = !panel.visible)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	panel.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "Atomic Classes"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+	
+	var grid = GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 15)
+	grid.add_theme_constant_override("v_separation", 5)
+	vbox.add_child(grid)
+	
+	for group in AtomicConfig.GROUP_COLORS:
+		if group == AtomicConfig.Group.UNKNOWN or group == AtomicConfig.Group.VOID: continue
+		
+		var rect = ColorRect.new()
+		rect.custom_minimum_size = Vector2(30, 30)
+		rect.color = AtomicConfig.GROUP_COLORS[group]
+		grid.add_child(rect)
+		
+		var lbl = Label.new()
+		lbl.text = AtomicConfig.Group.find_key(group).replace("_", " ").capitalize()
+		grid.add_child(lbl)
