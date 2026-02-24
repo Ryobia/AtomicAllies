@@ -7,3 +7,4 @@ script = ExtResource("1_script")
 monster_name = "Aluminium"
 atomic_number = 13
 group = 3
+level = 1

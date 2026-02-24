@@ -10,24 +10,25 @@ signal swap_selected(index)
 # --- UI References ---
 # We use a flexible lookup to find slots so you can rearrange them in the editor
 @onready var enemy_slots = [
-	find_child("Enemy2", true, false), # Vanguard (Middle)
-	find_child("Enemy1", true, false), # Flank (Left)
+	find_child("Enemy2", true, false),
+	find_child("Enemy1", true, false),
 	find_child("Enemy3", true, false)  # Flank (Right)
 ]
 
 @onready var player_slots = [
-	find_child("PlayerSlot2", true, false), # Vanguard (Middle)
-	find_child("PlayerSlot1", true, false), # Flank (Left)
+	find_child("PlayerSlot2", true, false),
+	find_child("PlayerSlot1", true, false),
 	find_child("PlayerSlot3", true, false)  # Flank (Right)
 ]
 
 @onready var stat_cards = [
-	find_child("StatCard2", true, false), # Vanguard (Middle)
-	find_child("StatCard1", true, false), # Flank (Left)
+	find_child("StatCard2", true, false),
+	find_child("StatCard1", true, false),
 	find_child("StatCard3", true, false)  # Flank (Right)
 ]
 
 @onready var log_label = find_child("BattleLogLabel", true, false)
+@onready var reaction_space = find_child("ReactionSpace", true, false)
 
 @onready var action_buttons = [
 	find_child("AttackButton", true, false),
@@ -245,6 +246,29 @@ func highlight_active_unit(is_player: bool, index: int):
 			slot.z_index = 10
 
 func log_message(text: String):
+	if reaction_space:
+		# Clear previous messages to keep the space clean
+		for child in reaction_space.get_children():
+			child.queue_free()
+			
+		var label = Label.new()
+		label.text = text
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.set_anchors_preset(Control.PRESET_FULL_RECT)
+		label.add_theme_font_size_override("font_size", 36)
+		label.add_theme_color_override("font_outline_color", Color.BLACK)
+		label.add_theme_constant_override("outline_size", 4)
+		reaction_space.add_child(label)
+		
+		# Animate entrance and exit
+		label.modulate.a = 0.0
+		var tween = create_tween()
+		tween.tween_property(label, "modulate:a", 1.0, 0.2)
+		tween.tween_property(label, "modulate:a", 0.0, 0.5).set_delay(1.5)
+		tween.tween_callback(label.queue_free)
+		return
+
 	if log_label:
 		log_label.text = text
 		# Optional: Fade out effect
@@ -408,7 +432,8 @@ func show_moves(moves: Array):
 	# Create new buttons
 	for move in moves:
 		var btn = Button.new()
-		btn.text = "%s\n(%d Pwr)" % [move.name, move.power]
+		var snipe_text = " [Snipe]" if move.is_snipe else ""
+		btn.text = "%s%s\n(%d Pwr)" % [move.name, snipe_text, move.power]
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		_style_button(btn)

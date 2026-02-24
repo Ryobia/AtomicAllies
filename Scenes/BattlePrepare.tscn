@@ -2,7 +2,11 @@
 
 [ext_resource type="Script" uid="uid://d1xu68gwq230m" path="res://Scripts/BattlePrepare.gd" id="1_jifvb"]
 [ext_resource type="Texture2D" uid="uid://b21fv7oeh7gqt" path="res://Images/battleground.png" id="2_gs6tb"]
+[ext_resource type="Texture2D" uid="uid://bx0ak5ilvn0q0" path="res://Assets/Icon_Physical.tres" id="2_pge3j"]
+[ext_resource type="Texture2D" uid="uid://cuy6lujwvqoo1" path="res://Assets/Icon_Special.tres" id="3_5f25f"]
 [ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="3_gs6tb"]
+[ext_resource type="Texture2D" uid="uid://brdd8al3jw0ab" path="res://Assets/Status_Hostile.tres" id="4_ybltu"]
+[ext_resource type="Texture2D" uid="uid://ci5ufhq38b3a5" path="res://Assets/Status_Friendly.tres" id="5_81dwr"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_gs6tb"]
 color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -10,6 +14,15 @@ thickness = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jifvb"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="BattlePrepare" type="Control" unique_id=1575290455]
 layout_mode = 3
@@ -19,6 +32,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_jifvb")
+icon_physical = ExtResource("2_pge3j")
+icon_special = ExtResource("3_5f25f")
+icon_hostile = ExtResource("4_ybltu")
+icon_friendly = ExtResource("5_81dwr")
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1733427341]
 self_modulate = Color(1, 1, 1, 0.59607846)
@@ -91,7 +108,7 @@ theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_constants/outline_size = 10
 theme_override_font_sizes/font_size = 40
-text = "COLLECTION"
+text = "LEGEND"
 horizontal_alignment = 1
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=464732082]
@@ -101,7 +118,6 @@ size_flags_vertical = 3
 [node name="LegendContainer" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=1376741378]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 columns = 5
 
 [node name="FooterButtons" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1427586155]

@@ -21,14 +21,6 @@ fill = 1
 fill_from = Vector2(0.51304346, 0.5478261)
 fill_to = Vector2(1, 1)
 
-[sub_resource type="Animation" id="Animation_6ectm"]
-resource_name = "new_animation"
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_o53rd"]
-_data = {
-&"new_animation": SubResource("Animation_6ectm")
-}
-
 [node name="BattleMonster" type="Node2D" unique_id=1202526393]
 script = ExtResource("1_6ectm")
 
@@ -44,6 +36,3 @@ position = Vector2(0, 56)
 texture = SubResource("GradientTexture2D_5x00h")
 
 [node name="CenterPoint" type="Marker2D" parent="." unique_id=1584949434]
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1498656784]
-libraries/ = SubResource("AnimationLibrary_o53rd")

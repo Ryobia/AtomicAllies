@@ -7,3 +7,4 @@ script = ExtResource("1_script")
 monster_name = "Argon"
 atomic_number = 18
 group = 7
+level = 1

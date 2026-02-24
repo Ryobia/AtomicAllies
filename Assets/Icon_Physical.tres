@@ -1,0 +1,7 @@
+[gd_resource type="AtlasTexture" format=3 uid="uid://bx0ak5ilvn0q0"]
+
+[ext_resource type="Texture2D" uid="uid://cstr7ph3ieaeg" path="res://Assets/movesicons.png" id="1_ceik8"]
+
+[resource]
+atlas = ExtResource("1_ceik8")
+region = Rect2(90.25585, 101.805595, 363.34412, 352.75012)

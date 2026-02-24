@@ -7,6 +7,11 @@ var start_btn
 var back_btn
 var clear_btn
 
+@export var icon_physical: Texture2D
+@export var icon_special: Texture2D
+@export var icon_hostile: Texture2D
+@export var icon_friendly: Texture2D
+
 var _selection_popup: PanelContainer
 var _target_slot_index: int = -1
 var _collection_popup_node: Control = null
@@ -152,11 +157,16 @@ func _show_collection_selector():
 	if _collection_popup_node: _collection_popup_node.queue_free()
 	
 	_collection_popup_node = PanelContainer.new()
-	_collection_popup_node.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_collection_popup_node.anchor_left = 0.05
+	_collection_popup_node.anchor_right = 0.95
+	_collection_popup_node.anchor_top = 0.15
+	_collection_popup_node.anchor_bottom = 0.75
 	_collection_popup_node.z_index = 20
 	
 	var bg_style = StyleBoxFlat.new()
-	bg_style.bg_color = Color(0.05, 0.05, 0.1, 0.98)
+	bg_style.bg_color = Color("#010813")
+	bg_style.bg_color.a = 0.7
+	bg_style.set_corner_radius_all(12)
 	_collection_popup_node.add_theme_stylebox_override("panel", bg_style)
 	
 	var main_vbox = VBoxContainer.new()
@@ -179,11 +189,14 @@ func _show_collection_selector():
 	# Scroll Area
 	var scroll = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	main_vbox.add_child(scroll)
 	
 	var grid = GridContainer.new()
 	grid.columns = 3
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 15)
 	grid.add_theme_constant_override("v_separation", 15)
 	scroll.add_child(grid)
@@ -195,15 +208,43 @@ func _show_collection_selector():
 			continue
 			
 		var btn = Button.new()
-		btn.custom_minimum_size = Vector2(0, 150)
+		btn.custom_minimum_size = Vector2(0, 220)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.text = monster.monster_name + "\nLv." + str(monster.level)
+		
+		# Custom Layout for Mobile Friendly Icon
+		var btn_margin = MarginContainer.new()
+		btn_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		btn_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn_margin.add_theme_constant_override("margin_left", 10)
+		btn_margin.add_theme_constant_override("margin_right", 10)
+		btn_margin.add_theme_constant_override("margin_top", 10)
+		btn_margin.add_theme_constant_override("margin_bottom", 10)
+		btn.add_child(btn_margin)
+		
+		var btn_vbox = VBoxContainer.new()
+		btn_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn_margin.add_child(btn_vbox)
 		
 		if monster.icon:
-			btn.icon = monster.icon
-			btn.expand_icon = true
-			btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			btn.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+			var icon_rect = TextureRect.new()
+			icon_rect.texture = monster.icon
+			icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			icon_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			icon_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			btn_vbox.add_child(icon_rect)
+		else:
+			var spacer = Control.new()
+			spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			btn_vbox.add_child(spacer)
+			
+		var lbl = Label.new()
+		lbl.text = monster.monster_name + "\nLv." + str(monster.level)
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 24)
+		btn_vbox.add_child(lbl)
 			
 		# Style
 		var style = StyleBoxFlat.new()
@@ -216,15 +257,22 @@ func _show_collection_selector():
 		btn.add_theme_stylebox_override("hover", style)
 		btn.add_theme_stylebox_override("pressed", style)
 		
-		btn.add_theme_font_size_override("font_size", 24)
 		btn.pressed.connect(func(): _show_mini_detail(monster))
 		grid.add_child(btn)
 		
 	# Footer Buttons
+	var footer_style = StyleBoxFlat.new()
+	footer_style.bg_color = Color("#010813")
+	footer_style.set_corner_radius_all(8)
+	
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Cancel"
 	cancel_btn.custom_minimum_size = Vector2(0, 80)
 	cancel_btn.add_theme_font_size_override("font_size", 32)
+	cancel_btn.add_theme_color_override("font_color", Color("#60fafc"))
+	cancel_btn.add_theme_stylebox_override("normal", footer_style)
+	cancel_btn.add_theme_stylebox_override("hover", footer_style)
+	cancel_btn.add_theme_stylebox_override("pressed", footer_style)
 	cancel_btn.pressed.connect(_collection_popup_node.queue_free)
 	main_vbox.add_child(cancel_btn)
 	
@@ -234,6 +282,10 @@ func _show_collection_selector():
 		remove_btn.text = "Remove from Squad"
 		remove_btn.custom_minimum_size = Vector2(0, 80)
 		remove_btn.add_theme_font_size_override("font_size", 32)
+		remove_btn.add_theme_color_override("font_color", Color("#60fafc"))
+		remove_btn.add_theme_stylebox_override("normal", footer_style)
+		remove_btn.add_theme_stylebox_override("hover", footer_style)
+		remove_btn.add_theme_stylebox_override("pressed", footer_style)
 		remove_btn.pressed.connect(func():
 			PlayerData.active_team[_target_slot_index] = null
 			_update_team_display()
@@ -242,6 +294,11 @@ func _show_collection_selector():
 		main_vbox.add_child(remove_btn)
 	
 	add_child(_collection_popup_node)
+	
+	# Animate popup in (Fade)
+	_collection_popup_node.modulate.a = 0.0
+	var tween = create_tween()
+	tween.tween_property(_collection_popup_node, "modulate:a", 1.0, 0.2)
 
 func _show_mini_detail(monster: MonsterData):
 	if _selection_popup and is_instance_valid(_selection_popup): _selection_popup.queue_free()
@@ -250,47 +307,151 @@ func _show_mini_detail(monster: MonsterData):
 	_selection_popup.set_anchors_preset(Control.PRESET_CENTER)
 	_selection_popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_selection_popup.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_selection_popup.custom_minimum_size = Vector2(600, 400)
+	_selection_popup.custom_minimum_size = Vector2(800, 700)
 	_selection_popup.z_index = 30 # Ensure it's on top of collection popup
 	
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.05, 0.1, 0.95)
-	style.border_width_left = 2; style.border_width_top = 2
-	style.border_width_right = 2; style.border_width_bottom = 2
+	style.bg_color = Color("#010813")
+	style.bg_color.a = 0.98
+	style.border_width_left = 3; style.border_width_top = 3
+	style.border_width_right = 3; style.border_width_bottom = 3
 	style.border_color = Color("#60fafc")
+	style.set_corner_radius_all(16)
 	_selection_popup.add_theme_stylebox_override("panel", style)
 	
 	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 20)
+	vbox.add_theme_constant_override("separation", 25)
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_top", 15)
-	margin.add_theme_constant_override("margin_left", 15)
-	margin.add_theme_constant_override("margin_right", 15)
-	margin.add_theme_constant_override("margin_bottom", 15)
+	margin.add_theme_constant_override("margin_top", 30)
+	margin.add_theme_constant_override("margin_left", 30)
+	margin.add_theme_constant_override("margin_right", 30)
+	margin.add_theme_constant_override("margin_bottom", 30)
 	margin.add_child(vbox)
 	_selection_popup.add_child(margin)
 	
 	var title = Label.new()
 	title.text = monster.monster_name + " (Lv. " + str(monster.level) + ")"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color("#60fafc"))
 	vbox.add_child(title)
 	
-	var stats = monster.get_current_stats()
-	var stats_lbl = Label.new()
-	stats_lbl.text = "HP: %d | ATK: %d | DEF: %d | SPD: %d" % [stats.max_hp, stats.attack, stats.defense, stats.speed]
-	stats_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(stats_lbl)
+	if "group" in monster:
+		var type_lbl = Label.new()
+		var group_name = AtomicConfig.Group.find_key(monster.group).replace("_", " ").capitalize()
+		type_lbl.text = group_name
+		type_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		type_lbl.add_theme_font_size_override("font_size", 32)
+		var type_color = AtomicConfig.GROUP_COLORS.get(monster.group, Color.WHITE)
+		type_lbl.add_theme_color_override("font_color", type_color)
+		vbox.add_child(type_lbl)
 	
+	# Stats Row
+	var stats_hbox = HBoxContainer.new()
+	stats_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	stats_hbox.add_theme_constant_override("separation", 50)
+	vbox.add_child(stats_hbox)
+	
+	var stats = monster.get_current_stats()
+	var stat_list = [
+		{"name": "HP", "val": stats.max_hp},
+		{"name": "ATK", "val": stats.attack},
+		{"name": "DEF", "val": stats.defense},
+		{"name": "SPD", "val": stats.speed}
+	]
+	
+	for s in stat_list:
+		var s_vbox = VBoxContainer.new()
+		s_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		
+		var val_lbl = Label.new()
+		val_lbl.text = str(s.val)
+		val_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		val_lbl.add_theme_font_size_override("font_size", 42)
+		val_lbl.add_theme_color_override("font_color", Color.WHITE)
+		s_vbox.add_child(val_lbl)
+		
+		var name_lbl = Label.new()
+		name_lbl.text = s.name
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_lbl.add_theme_font_size_override("font_size", 24)
+		name_lbl.add_theme_color_override("font_color", Color("#60fafc"))
+		s_vbox.add_child(name_lbl)
+		
+		stats_hbox.add_child(s_vbox)
+	
+	# Moves Section
 	var moves_lbl = Label.new()
 	moves_lbl.text = "Moves:"
+	moves_lbl.add_theme_font_size_override("font_size", 32)
+	moves_lbl.add_theme_color_override("font_color", Color("#60fafc"))
 	vbox.add_child(moves_lbl)
-	for m in monster.moves:
-		var m_lbl = Label.new()
-		m_lbl.text = "- " + m.name + " (" + str(m.power) + " Pwr)"
-		m_lbl.add_theme_color_override("font_color", Color("#a0a0a0"))
-		vbox.add_child(m_lbl)
+	
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(scroll)
+	
+	var moves_vbox = VBoxContainer.new()
+	moves_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	moves_vbox.add_theme_constant_override("separation", 15)
+	scroll.add_child(moves_vbox)
+	
+	var moves_list = monster.moves
+	if moves_list.is_empty() and "group" in monster:
+		moves_list = AtomicConfig.GROUP_MOVES.get(monster.group, [])
+	
+	for m in moves_list:
+		var m_panel = PanelContainer.new()
+		var m_style = StyleBoxFlat.new()
+		m_style.bg_color = Color(0.1, 0.1, 0.1, 0.5)
+		m_style.set_corner_radius_all(8)
+		m_panel.add_theme_stylebox_override("panel", m_style)
+		moves_vbox.add_child(m_panel)
 		
+		var m_margin = MarginContainer.new()
+		m_margin.add_theme_constant_override("margin_left", 15)
+		m_margin.add_theme_constant_override("margin_right", 15)
+		m_margin.add_theme_constant_override("margin_top", 10)
+		m_margin.add_theme_constant_override("margin_bottom", 10)
+		m_panel.add_child(m_margin)
+		
+		var m_content = VBoxContainer.new()
+		m_margin.add_child(m_content)
+		
+		var row1 = HBoxContainer.new()
+		row1.add_theme_constant_override("separation", 15)
+		m_content.add_child(row1)
+		
+		var type_badge = _create_move_type_badge(m.get("type", "Physical"))
+		row1.add_child(type_badge)
+		
+		var m_name = Label.new()
+		m_name.text = m.name
+		m_name.add_theme_font_size_override("font_size", 28)
+		m_name.add_theme_color_override("font_color", Color.WHITE)
+		row1.add_child(m_name)
+		
+		var m_pwr = Label.new()
+		m_pwr.text = "Pwr: " + str(m.power)
+		m_pwr.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		m_pwr.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		m_pwr.add_theme_font_size_override("font_size", 24)
+		m_pwr.add_theme_color_override("font_color", Color("#a0a0a0"))
+		row1.add_child(m_pwr)
+		
+		var m_desc = Label.new()
+		var desc_text = m.get("description")
+		m_desc.text = desc_text if desc_text else "No description available."
+		m_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		m_desc.add_theme_font_size_override("font_size", 22)
+		m_desc.add_theme_color_override("font_color", Color("#cccccc"))
+		m_content.add_child(m_desc)
+		
+	# Footer Buttons
+	var footer_style = StyleBoxFlat.new()
+	footer_style.bg_color = Color("#010813")
+	footer_style.set_corner_radius_all(8)
+	
 	var hbox = HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	hbox.add_theme_constant_override("separation", 40)
@@ -298,17 +459,58 @@ func _show_mini_detail(monster: MonsterData):
 	
 	var back_btn_popup = Button.new()
 	back_btn_popup.text = "Back"
-	back_btn_popup.custom_minimum_size = Vector2(150, 60)
+	back_btn_popup.custom_minimum_size = Vector2(200, 80)
+	back_btn_popup.add_theme_font_size_override("font_size", 32)
+	back_btn_popup.add_theme_color_override("font_color", Color("#60fafc"))
+	back_btn_popup.add_theme_stylebox_override("normal", footer_style)
+	back_btn_popup.add_theme_stylebox_override("hover", footer_style)
+	back_btn_popup.add_theme_stylebox_override("pressed", footer_style)
 	back_btn_popup.pressed.connect(_selection_popup.queue_free)
 	hbox.add_child(back_btn_popup)
 	
 	var add_btn = Button.new()
 	add_btn.text = "Add to Squad"
-	add_btn.custom_minimum_size = Vector2(200, 60)
+	add_btn.custom_minimum_size = Vector2(250, 80)
+	add_btn.add_theme_font_size_override("font_size", 32)
+	add_btn.add_theme_color_override("font_color", Color("#60fafc"))
+	add_btn.add_theme_stylebox_override("normal", footer_style)
+	add_btn.add_theme_stylebox_override("hover", footer_style)
+	add_btn.add_theme_stylebox_override("pressed", footer_style)
 	add_btn.pressed.connect(func(): _confirm_assignment(monster))
 	hbox.add_child(add_btn)
 	
 	add_child(_selection_popup)
+	
+	# Animate mini detail popup (Pop + Fade)
+	_selection_popup.pivot_offset = _selection_popup.custom_minimum_size / 2
+	_selection_popup.scale = Vector2(0.9, 0.9)
+	_selection_popup.modulate.a = 0.0
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(_selection_popup, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_selection_popup, "modulate:a", 1.0, 0.2)
+
+func _create_move_type_badge(move_type: String) -> Control:
+	var icon_rect = TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(40, 40)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	
+	match move_type:
+		"Physical":
+			icon_rect.texture = icon_physical
+			icon_rect.tooltip_text = "Physical Attack"
+		"Special":
+			icon_rect.texture = icon_special
+			icon_rect.tooltip_text = "Special Attack"
+		"Status_Hostile":
+			icon_rect.texture = icon_hostile
+			icon_rect.tooltip_text = "Hostile Status"
+		"Status_Friendly", "Passive":
+			icon_rect.texture = icon_friendly
+			icon_rect.tooltip_text = "Friendly Status"
+	
+	return icon_rect
 
 func _confirm_assignment(monster: MonsterData):
 	if _target_slot_index != -1:

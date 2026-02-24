@@ -115,12 +115,23 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	
 	benched_player_monsters.clear()
 	
+	# Mapping for 3v3 Triangle: 
+	# Team Index 0 (Vanguard) -> Spawn Point 1 (Center)
+	# Team Index 1 (Flank)    -> Spawn Point 0 (Left)
+	# Team Index 2 (Flank)    -> Spawn Point 2 (Right)
+	var spawn_map = [1, 0, 2]
+	
 	for i in range(player_roster.size()):
 		var unit_data = player_roster[i]
 		if unit_data == null: continue
 		
-		if i < player_spawn_points.size():
-			spawn_unit(unit_data, player_spawn_points[i], true)
+		if i < 3:
+			var spawn_idx = i
+			if player_spawn_points.size() >= 3:
+				spawn_idx = spawn_map[i]
+			
+			if spawn_idx < player_spawn_points.size():
+				spawn_unit(unit_data, player_spawn_points[spawn_idx], true)
 		else:
 			benched_player_monsters.append(unit_data)
 		
@@ -128,7 +139,12 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	var enemy_count = min(enemy_data_list.size(), enemy_spawn_points.size())
 	
 	for i in range(enemy_count):
-		spawn_unit(enemy_data_list[i], enemy_spawn_points[i], false)
+		var spawn_idx = i
+		if i < 3 and enemy_spawn_points.size() >= 3:
+			spawn_idx = spawn_map[i]
+			
+		if spawn_idx < enemy_spawn_points.size():
+			spawn_unit(enemy_data_list[i], enemy_spawn_points[spawn_idx], false)
 		
 	var player_count = active_player_monsters.size()
 	print("BattleManager: Battle started with %d vs %d units." % [player_count, enemy_count])
@@ -159,6 +175,7 @@ func spawn_unit(data: MonsterData, spawn_marker: Marker2D, is_player: bool):
 		unit.setup(data, is_player)
 		unit.died.connect(_on_monster_death)
 		unit.hp_changed.connect(func(new_hp, max_hp): _on_unit_hp_changed(unit, new_hp, max_hp))
+		unit.log_action.connect(func(text): log_event.emit(text))
 	else:
 		push_warning("BattleManager: Spawned unit is missing 'setup' method.")
 	
@@ -234,6 +251,13 @@ func start_turn():
 	current_state = BattleState.ACTION_SELECTION
 	current_acting_unit = turn_queue.pop_front()
 	
+	current_acting_unit.on_turn_start()
+	
+	# Check if unit died from start-of-turn effects (like Corrosion)
+	if current_acting_unit.is_dead:
+		end_turn()
+		return
+		
 	print("Turn Start: ", current_acting_unit.data.monster_name)
 	
 	# Highlight the active unit
@@ -256,6 +280,12 @@ func start_turn():
 func execute_ai_turn():
 	# Pick a random living player target
 	var targets = active_player_monsters.filter(func(m): return not m.is_dead)
+	
+	# Check for Taunt
+	var taunt_targets = targets.filter(func(m): return m.has_status("taunt"))
+	if not taunt_targets.is_empty():
+		targets = taunt_targets
+		
 	if targets.is_empty():
 		end_battle(false)
 		return
@@ -276,8 +306,9 @@ func _on_action_selected(action_type):
 		return
 
 	if action_type == "attack":
-		# For MVP, just load basic moves. Later, load from MonsterData.
-		var moves = current_acting_unit.data.moves
+		# Load moves via CombatManager (handles defaults)
+		var moves = CombatManager.get_active_moves(current_acting_unit.data)
+		
 		if moves.is_empty():
 			log_event.emit("%s has no moves!" % current_acting_unit.data.monster_name)
 			return
@@ -299,20 +330,31 @@ func _on_move_selected(move: MoveData):
 	
 	# --- Calculate Valid Targets ---
 	var valid_targets = []
-	var vanguard_alive = false
-	if active_enemy_monsters.size() > 0 and not active_enemy_monsters[0].is_dead:
-		vanguard_alive = true
 	
+	# Check for Taunt
+	var taunt_targets = []
 	for i in range(active_enemy_monsters.size()):
 		var enemy = active_enemy_monsters[i]
-		if enemy.is_dead: continue
+		if not enemy.is_dead and enemy.has_status("taunt"):
+			taunt_targets.append(i)
+			
+	if not taunt_targets.is_empty():
+		valid_targets = taunt_targets
+	else:
+		var vanguard_alive = false
+		if active_enemy_monsters.size() > 0 and not active_enemy_monsters[0].is_dead:
+			vanguard_alive = true
 		
-		# If Vanguard is alive and move is NOT Snipe, you can only target the Vanguard (Index 0)
-		if vanguard_alive and not move.is_snipe:
-			if i == 0: valid_targets.append(i)
-		else:
-			# Otherwise (Vanguard dead OR Snipe move), you can target anyone
-			valid_targets.append(i)
+		for i in range(active_enemy_monsters.size()):
+			var enemy = active_enemy_monsters[i]
+			if enemy.is_dead: continue
+			
+			# If Vanguard is alive and move is NOT Snipe, you can only target the Vanguard (Index 0)
+			if vanguard_alive and not move.is_snipe:
+				if i == 0: valid_targets.append(i)
+			else:
+				# Otherwise (Vanguard dead OR Snipe move), you can target anyone
+				valid_targets.append(i)
 	
 	# Hide the move list and enable targeting mode on the HUD
 	battle_hud.move_container.visible = false
@@ -341,13 +383,25 @@ func _on_target_selected(index: int):
 	if defender.is_dead:
 		log_event.emit("Target is already defeated!")
 		return # Stay in targeting mode
-		
-	# Vanguard logic: The monster at index 0 is the vanguard.
-	var vanguard = active_enemy_monsters[0]
-	if vanguard and not vanguard.is_dead and defender != vanguard:
-		if not selected_move.is_snipe:
-			log_event.emit("Must attack the vanguard first!")
-			return # Stay in targeting mode
+	
+	# Check Taunt
+	var taunt_active = false
+	for enemy in active_enemy_monsters:
+		if not enemy.is_dead and enemy.has_status("taunt"):
+			taunt_active = true
+			break
+			
+	if taunt_active:
+		if not defender.has_status("taunt"):
+			log_event.emit("Must attack the taunting unit!")
+			return
+	else:
+		# Vanguard logic: The monster at index 0 is the vanguard.
+		var vanguard = active_enemy_monsters[0]
+		if vanguard and not vanguard.is_dead and defender != vanguard:
+			if not selected_move.is_snipe:
+				log_event.emit("Must attack the vanguard first!")
+				return # Stay in targeting mode
 
 	battle_hud.set_targeting_mode(false)
 	perform_move(current_acting_unit, defender, selected_move)
@@ -396,13 +450,29 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	log_event.emit("%s used %s!" % [attacker.data.monster_name, move.name])
 	
 	# Calculate Damage using CombatManager
-	var calc_result = CombatManager.calculate_damage(attacker, defender, move)
-	var damage = calc_result["damage"]
+	var result = CombatManager.execute_move(attacker, defender, move)
 	
-	if calc_result["is_crit"]:
-		log_event.emit("Critical Hit!")
-	
-	defender.take_damage(damage)
+	if not result.success:
+		# Missed
+		for msg in result.messages:
+			log_event.emit(msg)
+	else:
+		# Hit
+		if result.damage > 0:
+			defender.take_damage(result.damage)
+			log_event.emit("Dealt %d damage!" % result.damage)
+			
+		# Log other messages (status effects etc)
+		for i in range(result.messages.size()):
+			# Skip the damage message if we already logged it manually or just log all
+			if "damage" not in result.messages[i]:
+				log_event.emit(result.messages[i])
+				
+		# Apply result.effects to BattleMonster nodes
+		for effect in result.effects:
+			var target_unit = effect.target
+			if target_unit and is_instance_valid(target_unit):
+				target_unit.apply_effect(effect)
 	
 	# Wait for animation/text
 	await get_tree().create_timer(1.0).timeout
@@ -411,6 +481,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 
 func end_turn():
 	if is_instance_valid(current_acting_unit):
+		current_acting_unit.on_turn_end()
 		current_acting_unit.atb_value = 0
 		
 		# Reset HUD bar for this unit
