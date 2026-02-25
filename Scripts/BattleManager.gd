@@ -43,6 +43,7 @@ func _ready():
 		battle_hud.target_selected.connect(_on_target_selected)
 		battle_hud.cancel_targeting.connect(_on_cancel_targeting)
 		battle_hud.swap_selected.connect(_on_swap_selected)
+		battle_hud.inspect_unit.connect(_on_inspect_unit)
 		
 		# Connect Manager -> HUD signals
 		log_event.connect(battle_hud.log_message)
@@ -51,6 +52,10 @@ func _ready():
 		hud_highlight_unit.connect(battle_hud.highlight_active_unit)
 	else:
 		push_warning("BattleManager: BattleHUD not found or assigned!")
+
+	var resource_header = find_child("ResourceHeader", true, false)
+	if resource_header:
+		resource_header.visible = false
 
 	# --- Sanity Checks for Scene Setup ---
 	if monster_scene == null:
@@ -358,37 +363,54 @@ func _on_move_selected(move: MoveData):
 	selected_move = move
 	current_state = BattleState.TARGET_SELECTION
 	
+	# Handle Self-Targeting immediately
+	if move.target_type == MoveData.TargetType.SELF:
+		perform_move(current_acting_unit, current_acting_unit, move)
+		return
+	
 	# --- Calculate Valid Targets ---
 	var valid_targets = []
+	var target_allies = (move.target_type == MoveData.TargetType.ALLY)
 	
-	# Check for Taunt
-	var taunt_targets = []
-	for i in range(active_enemy_monsters.size()):
-		var enemy = active_enemy_monsters[i]
-		if not enemy.is_dead and enemy.has_status("taunt"):
-			taunt_targets.append(i)
-			
-	if not taunt_targets.is_empty():
-		valid_targets = taunt_targets
+	if target_allies:
+		# Ally Targeting
+		for i in range(active_player_monsters.size()):
+			var ally = active_player_monsters[i]
+			if not ally.is_dead:
+				# Optional: Prevent targeting self with ally moves if desired, 
+				# but usually "Ally" moves can target self too in many games.
+				# For now, allow all living team members.
+				valid_targets.append(i)
 	else:
-		var vanguard_alive = false
-		if active_enemy_monsters.size() > 0 and not active_enemy_monsters[0].is_dead:
-			vanguard_alive = true
-		
+		# Enemy Targeting
+		# Check for Taunt
+		var taunt_targets = []
 		for i in range(active_enemy_monsters.size()):
 			var enemy = active_enemy_monsters[i]
-			if enemy.is_dead: continue
+			if not enemy.is_dead and enemy.has_status("taunt"):
+				taunt_targets.append(i)
+				
+		if not taunt_targets.is_empty():
+			valid_targets = taunt_targets
+		else:
+			var vanguard_alive = false
+			if active_enemy_monsters.size() > 0 and not active_enemy_monsters[0].is_dead:
+				vanguard_alive = true
 			
-			# If Vanguard is alive and move is NOT Snipe, you can only target the Vanguard (Index 0)
-			if vanguard_alive and not move.is_snipe:
-				if i == 0: valid_targets.append(i)
-			else:
-				# Otherwise (Vanguard dead OR Snipe move), you can target anyone
-				valid_targets.append(i)
+			for i in range(active_enemy_monsters.size()):
+				var enemy = active_enemy_monsters[i]
+				if enemy.is_dead: continue
+				
+				# If Vanguard is alive and move is NOT Snipe, you can only target the Vanguard (Index 0)
+				if vanguard_alive and not move.is_snipe:
+					if i == 0: valid_targets.append(i)
+				else:
+					# Otherwise (Vanguard dead OR Snipe move), you can target anyone
+					valid_targets.append(i)
 	
 	# Hide the move list and enable targeting mode on the HUD
 	battle_hud.move_container.visible = false
-	battle_hud.set_targeting_mode(true, valid_targets)
+	battle_hud.set_targeting_mode(true, valid_targets, target_allies)
 	log_event.emit("Select a target for %s..." % move.name)
 
 func _on_cancel_targeting():
@@ -407,31 +429,37 @@ func _on_cancel_targeting():
 func _on_target_selected(index: int):
 	if current_state != BattleState.TARGET_SELECTION: return
 	
-	var defender = active_enemy_monsters[index]
+	var defender = null
+	if selected_move.target_type == MoveData.TargetType.ALLY:
+		defender = active_player_monsters[index]
+	else:
+		defender = active_enemy_monsters[index]
 	
 	# --- Target Validation ---
 	if defender.is_dead:
 		log_event.emit("Target is already defeated!")
 		return # Stay in targeting mode
 	
-	# Check Taunt
-	var taunt_active = false
-	for enemy in active_enemy_monsters:
-		if not enemy.is_dead and enemy.has_status("taunt"):
-			taunt_active = true
-			break
-			
-	if taunt_active:
-		if not defender.has_status("taunt"):
-			log_event.emit("Must attack the taunting unit!")
-			return
-	else:
-		# Vanguard logic: The monster at index 0 is the vanguard.
-		var vanguard = active_enemy_monsters[0]
-		if vanguard and not vanguard.is_dead and defender != vanguard:
-			if not selected_move.is_snipe:
-				log_event.emit("Must attack the vanguard first!")
-				return # Stay in targeting mode
+	# Enemy-specific validation (Taunt/Vanguard)
+	if selected_move.target_type == MoveData.TargetType.ENEMY:
+		# Check Taunt
+		var taunt_active = false
+		for enemy in active_enemy_monsters:
+			if not enemy.is_dead and enemy.has_status("taunt"):
+				taunt_active = true
+				break
+				
+		if taunt_active:
+			if not defender.has_status("taunt"):
+				log_event.emit("Must attack the taunting unit!")
+				return
+		else:
+			# Vanguard logic: The monster at index 0 is the vanguard.
+			var vanguard = active_enemy_monsters[0]
+			if vanguard and not vanguard.is_dead and defender != vanguard:
+				if not selected_move.is_snipe:
+					log_event.emit("Must attack the vanguard first!")
+					return # Stay in targeting mode
 
 	battle_hud.set_targeting_mode(false)
 	perform_move(current_acting_unit, defender, selected_move)
@@ -446,10 +474,23 @@ func _on_swap_selected(index: int):
 	var new_monster_data = benched_player_monsters[index]
 	perform_swap(current_acting_unit, new_monster_data, index)
 
+func _on_inspect_unit(index: int, is_player: bool):
+	var unit = null
+	if is_player:
+		if index < active_player_monsters.size():
+			unit = active_player_monsters[index]
+	else:
+		if index < active_enemy_monsters.size():
+			unit = active_enemy_monsters[index]
+			
+	if unit and battle_hud:
+		battle_hud.show_stat_popup(unit)
+
 func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index: int):
 	current_state = BattleState.EXECUTING
 	
 	log_event.emit("%s retreats!" % active_unit.data.monster_name)
+	await active_unit.play_move()
 		
 	await get_tree().create_timer(1.0).timeout
 	
@@ -478,6 +519,7 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 		active_player_monsters.append(new_unit)
 	
 	new_unit.atb_value = 0 # Start fresh
+	new_unit.play_move() # Play enter animation
 	
 	# Refresh HUD visuals (Sprites/Names) and restore Bars
 	if battle_hud:
@@ -508,6 +550,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	current_state = BattleState.EXECUTING
 	
 	log_event.emit("%s used %s!" % [attacker.data.monster_name, move.name])
+	await attacker.play_attack()
 	
 	# Calculate Damage using CombatManager
 	var result = CombatManager.execute_move(attacker, defender, move)
@@ -565,14 +608,19 @@ func end_battle(player_won: bool):
 	var rewards = {}
 	if player_won:
 		var total_xp = 0
+		var total_be = 0
 		for unit in active_enemy_monsters:
 			# XP Calculation: Base 50 + (Level * 10)
 			total_xp += 50 + (unit.data.level * 10)
+			# Binding Energy: Base 10 + (Level * 2)
+			total_be += 10 + (unit.data.level * 2)
 		
 		rewards["xp"] = total_xp
+		rewards["binding_energy"] = total_be
 		# Add to global pool
 		if PlayerData:
 			PlayerData.add_resource("experience", total_xp)
+			PlayerData.add_resource("binding_energy", total_be)
 
 	# Notify CampaignManager (if it exists as an Autoload)
 	if CampaignManager:
@@ -582,8 +630,7 @@ func end_battle(player_won: bool):
 		battle_hud.show_result(player_won, rewards)
 
 func _on_monster_death(_monster: BattleMonster):
-	# A small delay to let the death animation play out
-	await get_tree().create_timer(0.6).timeout
+	# Death animation is handled in BattleMonster.die(), so we just check win condition
 	check_win_condition()
 
 func check_win_condition():

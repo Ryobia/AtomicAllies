@@ -329,16 +329,23 @@ func _on_breed_pressed():
 	if parent_1 == parent_2:
 		status_label.text = "Cannot breed a monster with itself!"
 		return
+	
+	var target_z = parent_1.atomic_number + parent_2.atomic_number
+	var cost = AtomicConfig.calculate_fusion_cost(target_z)
+	
+	if PlayerData.resources.get("binding_energy", 0) < cost:
+		status_label.text = "Not enough Binding Energy! Need %d." % cost
+		return
 		
 	# Show confirmation popup instead of immediate fusion
 	if fusion_confirm_popup:
-		var target_z = parent_1.atomic_number + parent_2.atomic_number
 		var chance = 0.0
 		if SynthesisManager.has_method("calculate_stability"):
 			chance = SynthesisManager.calculate_stability(parent_1.level, parent_2.level, target_z)
 			
 		if confirm_label:
-			confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nStability: %d%%" % [parent_1.monster_name, parent_2.monster_name, target_z, int(chance)]
+			confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nStability: %d%%\nCost: %d Binding Energy" % \
+				[parent_1.monster_name, parent_2.monster_name, target_z, int(chance), cost]
 			
 		fusion_confirm_popup.visible = true
 		fusion_confirm_popup.move_to_front()
@@ -353,7 +360,14 @@ func _on_breed_pressed():
 func _on_confirm_fusion_pressed():
 	if fusion_confirm_popup:
 		fusion_confirm_popup.visible = false
-	SynthesisManager.attempt_fusion(parent_1, parent_2)
+	
+	var target_z = parent_1.atomic_number + parent_2.atomic_number
+	var cost = AtomicConfig.calculate_fusion_cost(target_z)
+	
+	if PlayerData.spend_resource("binding_energy", cost):
+		SynthesisManager.attempt_fusion(parent_1, parent_2)
+	else:
+		status_label.text = "Not enough Binding Energy!"
 
 func _on_fusion_completed(target_z: int, success: bool, reward: int):
 	if success:

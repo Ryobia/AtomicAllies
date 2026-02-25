@@ -5,6 +5,7 @@ signal action_selected(action_type) # "attack", "swap", "synthesize"
 signal target_selected(index) # 0-2
 signal move_selected(move) # New signal for specific moves
 signal cancel_targeting
+signal inspect_unit(index, is_player) # New signal for long press
 signal swap_selected(index)
 
 # --- UI References ---
@@ -44,6 +45,19 @@ signal swap_selected(index)
 # Cache for UI nodes to avoid find_child every frame
 var _ui_cache = { "player": [], "enemy": [] }
 
+# Input State
+var _targeting_active: bool = false
+var _valid_target_indices: Array = []
+var _targeting_allies: bool = false
+
+var _pressed_slot_index: int = -1
+var _pressed_is_player: bool = false
+var _press_timer: float = 0.0
+var _long_press_triggered: bool = false
+var _stat_popup_instance: Control = null
+
+var stat_popup_scene = preload("res://Scenes/StatPopup.tscn")
+
 func _ready():
 	# Connect Control Deck Buttons
 	_connect_btn("AttackButton", "attack")
@@ -71,16 +85,53 @@ func _ready():
 	# Connect target buttons on enemy slots
 	for i in range(enemy_slots.size()):
 		var slot = enemy_slots[i]
-		if slot:
-			# Assumes each slot has a Button child named "TargetButton"
-			var btn = slot.find_child("TargetButton", true, false)
-			if btn:
-				# Ensure the button covers the entire slot and intercepts clicks
-				btn.set_anchors_preset(Control.PRESET_FULL_RECT)
-				btn.mouse_filter = Control.MOUSE_FILTER_STOP
-				btn.pressed.connect(func(): target_selected.emit(i))
+		_setup_slot_input(slot, i, false)
+				
+	# Connect target buttons on player slots (for Ally targeting)
+	for i in range(player_slots.size()):
+		var slot = player_slots[i]
+		_setup_slot_input(slot, i, true)
 	
 	_build_ui_cache()
+
+func _process(delta):
+	if _pressed_slot_index != -1:
+		_press_timer += delta
+		if _press_timer >= 0.5 and not _long_press_triggered: # 0.5s is usually enough for "long press" feel
+			_long_press_triggered = true
+			inspect_unit.emit(_pressed_slot_index, _pressed_is_player)
+			# Reset press so we don't trigger again
+			_pressed_slot_index = -1
+
+func _setup_slot_input(slot: Control, index: int, is_player: bool):
+	if not slot: return
+	var btn = slot.find_child("TargetButton", true, false)
+	if btn:
+		btn.set_anchors_preset(Control.PRESET_FULL_RECT)
+		btn.mouse_filter = Control.MOUSE_FILTER_STOP
+		btn.disabled = false # Always enabled to catch input
+		
+		# Input Handling
+		btn.button_down.connect(func():
+			_pressed_slot_index = index
+			_pressed_is_player = is_player
+			_press_timer = 0.0
+			_long_press_triggered = false
+		)
+		
+		btn.button_up.connect(func():
+			_pressed_slot_index = -1
+		)
+		
+		btn.pressed.connect(func():
+			if _long_press_triggered: return # Ignore click if it was a long press
+			
+			# Handle Targeting Click
+			if _targeting_active:
+				# Check if this slot is a valid target
+				if is_player == _targeting_allies and index in _valid_target_indices:
+					target_selected.emit(index)
+		)
 
 func _unhandled_input(event):
 	# Universal cancel action (Esc key or right mouse button)
@@ -104,15 +155,24 @@ func _build_ui_cache():
 		# Player Cache
 		if i < player_slots.size() and player_slots[i]:
 			_ui_cache.player[i]["slot_speed"] = player_slots[i].find_child("SpeedBar", true, false)
-			_ui_cache.player[i]["slot_hp"] = player_slots[i].find_child("HPBar", true, false)
+			var hp_bar = player_slots[i].find_child("HPBar", true, false)
+			if hp_bar: hp_bar.show_percentage = false
+			_ui_cache.player[i]["slot_hp"] = hp_bar
+			_ui_cache.player[i]["slot_hp_lbl"] = player_slots[i].find_child("HPLabel", true, false)
 			
 		if i < stat_cards.size() and stat_cards[i]:
 			_ui_cache.player[i]["card_speed"] = stat_cards[i].find_child("SpeedBar", true, false)
-			_ui_cache.player[i]["card_hp"] = stat_cards[i].find_child("HPBar", true, false)
+			var card_hp = stat_cards[i].find_child("HPBar", true, false)
+			if card_hp: card_hp.show_percentage = false
+			_ui_cache.player[i]["card_hp"] = card_hp
+			_ui_cache.player[i]["card_hp_lbl"] = stat_cards[i].find_child("HPLabel", true, false)
 			
 		# Enemy Cache
 		if i < enemy_slots.size() and enemy_slots[i]:
-			_ui_cache.enemy[i]["hp"] = enemy_slots[i].find_child("HPBar", true, false)
+			var enemy_hp = enemy_slots[i].find_child("HPBar", true, false)
+			if enemy_hp: enemy_hp.show_percentage = false
+			_ui_cache.enemy[i]["hp"] = enemy_hp
+			_ui_cache.enemy[i]["hp_lbl"] = enemy_slots[i].find_child("HPLabel", true, false)
 			_ui_cache.enemy[i]["speed"] = enemy_slots[i].find_child("SpeedBar", true, false)
 
 func setup_ui(player_team: Array, enemy_team: Array):
@@ -144,16 +204,32 @@ func setup_ui(player_team: Array, enemy_team: Array):
 func update_hp(is_player: bool, index: int, new_hp: float, max_hp: float):
 	if is_player:
 		if index < _ui_cache.player.size():
+			# Update Stat Card
 			var bar = _ui_cache.player[index].get("card_hp")
 			if bar: 
 				bar.max_value = max_hp
 				bar.value = new_hp
+			var lbl = _ui_cache.player[index].get("card_hp_lbl")
+			if lbl:
+				lbl.text = "%d/%d" % [int(new_hp), int(max_hp)]
+				
+			# Update Slot (Visual)
+			var slot_bar = _ui_cache.player[index].get("slot_hp")
+			if slot_bar:
+				slot_bar.max_value = max_hp
+				slot_bar.value = new_hp
+			var slot_lbl = _ui_cache.player[index].get("slot_hp_lbl")
+			if slot_lbl:
+				slot_lbl.text = "%d/%d" % [int(new_hp), int(max_hp)]
 	else:
 		if index < _ui_cache.enemy.size():
 			var bar = _ui_cache.enemy[index].get("hp")
 			if bar:
 				bar.max_value = max_hp
 				bar.value = new_hp
+			var lbl = _ui_cache.enemy[index].get("hp_lbl")
+			if lbl:
+				lbl.text = "%d/%d" % [int(new_hp), int(max_hp)]
 
 func update_stability(is_player: bool, index: int, new_stability: float, max_stability: float = 100.0):
 	var slots = player_slots if is_player else enemy_slots
@@ -289,9 +365,30 @@ func log_message(text: String):
 		var tween = create_tween()
 		tween.tween_property(log_label, "modulate:a", 0.0, 2.0).set_delay(1.0)
 
-func set_targeting_mode(enabled: bool, valid_indices: Array = []):
-	for i in range(enemy_slots.size()):
-		var slot = enemy_slots[i]
+func set_targeting_mode(enabled: bool, valid_indices: Array = [], target_allies: bool = false):
+	_targeting_active = enabled
+	_valid_target_indices = valid_indices
+	_targeting_allies = target_allies
+	
+	if not enabled:
+		# Clear all indicators on both sides to be safe
+		for slot in player_slots + enemy_slots:
+			if slot:
+				# var btn = slot.find_child("TargetButton", true, false)
+				var indicator = slot.find_child("TargetIndicator", true, false)
+				
+				# if btn: btn.disabled = true # Don't disable anymore!
+				if indicator: indicator.visible = false
+				
+				# Reset visual effect
+				var tween = create_tween()
+				tween.tween_property(slot, "modulate", Color.WHITE, 0.1)
+		return
+
+	var slots = player_slots if target_allies else enemy_slots
+	
+	for i in range(slots.size()):
+		var slot = slots[i]
 		if slot and slot.visible:
 			var btn = slot.find_child("TargetButton", true, false)
 			var indicator = slot.find_child("TargetIndicator", true, false) # e.g. a TextureRect with a reticle
@@ -299,8 +396,8 @@ func set_targeting_mode(enabled: bool, valid_indices: Array = []):
 			# Only enable if the mode is on AND this specific slot is a valid target
 			var is_valid = enabled and (i in valid_indices)
 			
-			if btn:
-				btn.disabled = not is_valid
+			# if btn: btn.disabled = not is_valid # Don't disable anymore!
+			
 			if indicator:
 				indicator.visible = is_valid
 			
@@ -369,6 +466,9 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 	if hp_bar:
 		hp_bar.max_value = stats.max_hp
 		hp_bar.value = stats.max_hp
+	var hp_lbl = slot.find_child("HPLabel", true, false)
+	if hp_lbl:
+		hp_lbl.text = "%d/%d" % [int(stats.max_hp), int(stats.max_hp)]
 		
 	var speed_bar = slot.find_child("SpeedBar", true, false)
 	if speed_bar:
@@ -390,6 +490,7 @@ func _scale_sprite_to_fit(sprite: AnimatedSprite2D, target_height: float):
 func _set_stat_card(card: Control, monster: MonsterData):
 	var name_lbl = card.find_child("NameLabel", true, false)
 	var hp_bar = card.find_child("HPBar", true, false)
+	var hp_lbl = card.find_child("HPLabel", true, false)
 	var stab_bar = card.find_child("StabilityBar", true, false)
 	var speed_bar = card.find_child("SpeedBar", true, false)
 	
@@ -398,6 +499,8 @@ func _set_stat_card(card: Control, monster: MonsterData):
 	if hp_bar:
 		hp_bar.max_value = stats.max_hp
 		hp_bar.value = stats.max_hp
+	if hp_lbl:
+		hp_lbl.text = "%d/%d" % [int(stats.max_hp), int(stats.max_hp)]
 	if stab_bar:
 		stab_bar.max_value = 100 # Or a value from monster data if it varies
 		stab_bar.value = 100 # Start full
@@ -630,6 +733,13 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 			xp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			xp_lbl.add_theme_font_size_override("font_size", 50)
 			vbox.add_child(xp_lbl)
+			
+		if rewards.has("binding_energy"):
+			var be_lbl = Label.new()
+			be_lbl.text = "+%d Binding Energy" % rewards["binding_energy"]
+			be_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			be_lbl.add_theme_font_size_override("font_size", 40)
+			vbox.add_child(be_lbl)
 	
 	var btn = Button.new()
 	btn.text = "Continue"
@@ -637,3 +747,13 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 	_style_button(btn) # Reuse your styling
 	btn.pressed.connect(_on_quit_confirmed)
 	vbox.add_child(btn)
+
+func show_stat_popup(unit: BattleMonster):
+	if _stat_popup_instance: _stat_popup_instance.queue_free()
+	
+	_stat_popup_instance = stat_popup_scene.instantiate()
+	add_child(_stat_popup_instance)
+	_stat_popup_instance.set_anchors_preset(Control.PRESET_CENTER)
+	
+	if _stat_popup_instance.has_method("setup"):
+		_stat_popup_instance.setup(unit)

@@ -6,6 +6,7 @@ var legend_container
 var start_btn
 var back_btn
 var clear_btn
+var enemy_intel_label
 
 @export var icon_physical: Texture2D
 @export var icon_special: Texture2D
@@ -27,6 +28,7 @@ func _ready():
 	start_btn = find_child("StartButton", true, false)
 	back_btn = find_child("BackButton", true, false)
 	clear_btn = find_child("ClearButton", true, false)
+	enemy_intel_label = find_child("EnemyIntelLabel", true, false)
 	
 	if start_btn:
 		start_btn.pressed.connect(_on_start_pressed)
@@ -34,6 +36,13 @@ func _ready():
 		back_btn.pressed.connect(_on_back_pressed)
 	if clear_btn:
 		clear_btn.pressed.connect(_on_clear_team_pressed)
+		
+	var resource_header = find_child("ResourceHeader", true, false)
+	if resource_header:
+		resource_header.visible = false
+		
+	if enemy_intel_label:
+		enemy_intel_label.text = "Enemy Intel (Level %d)" % PlayerData.current_campaign_level
 		
 	var enemies = []
 	if not PlayerData.pending_enemy_team.is_empty():
@@ -78,7 +87,7 @@ func _update_enemy_preview(enemies: Array[MonsterData]):
 		enemy_container.add_child(vbox)
 		
 		var icon_container = Control.new()
-		icon_container.custom_minimum_size = Vector2(100, 100)
+		icon_container.custom_minimum_size = Vector2(250, 250)
 		vbox.add_child(icon_container)
 		
 		var anim_frames = _get_anim_frames(enemy.monster_name)
@@ -102,7 +111,7 @@ func _update_enemy_preview(enemies: Array[MonsterData]):
 			
 			var tex = sprite.sprite_frames.get_frame_texture(anim_to_play, 0)
 			if tex:
-				var s = 100.0 / float(tex.get_height())
+				var s = 250.0 / float(tex.get_height())
 				sprite.scale = Vector2(s, s)
 			icon_container.add_child(sprite)
 		elif enemy.icon:
@@ -191,7 +200,7 @@ func _populate_legend():
 	}
 	
 	for group in AtomicConfig.GROUP_COLORS:
-		if group == AtomicConfig.Group.UNKNOWN: continue
+		if group >= AtomicConfig.Group.UNKNOWN: continue
 		
 		var item = legend_item_scene.instantiate()
 		legend_container.add_child(item)
@@ -199,7 +208,11 @@ func _populate_legend():
 
 func _on_team_slot_pressed(index: int):
 	_target_slot_index = index
-	_show_collection_selector()
+	var monster = PlayerData.active_team[index]
+	if monster:
+		_show_mini_detail(monster, true)
+	else:
+		_show_collection_selector()
 
 func _show_collection_selector():
 	if _collection_popup_node: _collection_popup_node.queue_free()
@@ -335,7 +348,7 @@ func _show_collection_selector():
 				else:
 					btn.modulate = Color.WHITE
 					if Rect2(Vector2.ZERO, btn.size).has_point(event.position):
-						_show_mini_detail(monster)
+						_confirm_assignment(monster)
 		)
 		
 		grid.add_child(btn)
@@ -380,7 +393,7 @@ func _show_collection_selector():
 	var tween = create_tween()
 	tween.tween_property(_collection_popup_node, "modulate:a", 1.0, 0.2)
 
-func _show_mini_detail(monster: MonsterData):
+func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	if _selection_popup and is_instance_valid(_selection_popup): _selection_popup.queue_free()
 	
 	_selection_popup = PanelContainer.new()
@@ -545,16 +558,42 @@ func _show_mini_detail(monster: MonsterData):
 	back_btn_popup.pressed.connect(_selection_popup.queue_free)
 	hbox.add_child(back_btn_popup)
 	
-	var add_btn = Button.new()
-	add_btn.text = "Add to Squad"
-	add_btn.custom_minimum_size = Vector2(250, 80)
-	add_btn.add_theme_font_size_override("font_size", 32)
-	add_btn.add_theme_color_override("font_color", Color("#60fafc"))
-	add_btn.add_theme_stylebox_override("normal", footer_style)
-	add_btn.add_theme_stylebox_override("hover", footer_style)
-	add_btn.add_theme_stylebox_override("pressed", footer_style)
-	add_btn.pressed.connect(func(): _confirm_assignment(monster))
-	hbox.add_child(add_btn)
+	if is_squad_member:
+		var remove_btn = Button.new()
+		remove_btn.text = "Remove"
+		remove_btn.custom_minimum_size = Vector2(200, 80)
+		remove_btn.add_theme_font_size_override("font_size", 32)
+		remove_btn.add_theme_color_override("font_color", Color("#60fafc"))
+		remove_btn.add_theme_stylebox_override("normal", footer_style)
+		remove_btn.add_theme_stylebox_override("hover", footer_style)
+		remove_btn.add_theme_stylebox_override("pressed", footer_style)
+		remove_btn.pressed.connect(func(): _confirm_assignment(null))
+		hbox.add_child(remove_btn)
+		
+		var replace_btn = Button.new()
+		replace_btn.text = "Replace"
+		replace_btn.custom_minimum_size = Vector2(200, 80)
+		replace_btn.add_theme_font_size_override("font_size", 32)
+		replace_btn.add_theme_color_override("font_color", Color("#60fafc"))
+		replace_btn.add_theme_stylebox_override("normal", footer_style)
+		replace_btn.add_theme_stylebox_override("hover", footer_style)
+		replace_btn.add_theme_stylebox_override("pressed", footer_style)
+		replace_btn.pressed.connect(func(): 
+			_selection_popup.queue_free()
+			_show_collection_selector()
+		)
+		hbox.add_child(replace_btn)
+	else:
+		var add_btn = Button.new()
+		add_btn.text = "Add to Squad"
+		add_btn.custom_minimum_size = Vector2(250, 80)
+		add_btn.add_theme_font_size_override("font_size", 32)
+		add_btn.add_theme_color_override("font_color", Color("#60fafc"))
+		add_btn.add_theme_stylebox_override("normal", footer_style)
+		add_btn.add_theme_stylebox_override("hover", footer_style)
+		add_btn.add_theme_stylebox_override("pressed", footer_style)
+		add_btn.pressed.connect(func(): _confirm_assignment(monster))
+		hbox.add_child(add_btn)
 	
 	add_child(_selection_popup)
 	

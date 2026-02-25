@@ -63,16 +63,16 @@ const GROUP_MOVES = {
 		{ "name": "Reactive Spark", "power": 40, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Quick strike. Deals bonus damage if the enemy has recently moved or attacked." }
 	],
 	Group.ALKALINE_EARTH: [
-		{ "name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Increases Defense and Stability for 3 turns. Slows attackers." },
+		{ "name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense and Stability for 3 turns. Slows attackers." },
 		{ "name": "Magnesium Flash", "power": 50, "accuracy": 95, "type": "Physical", "description": "Shield bash. Chance to stun the enemy, forcing order onto chaotic movement." }
 	],
 	Group.TRANSITION_METAL: [
-		{ "name": "Metallic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Links HP with an ally. Shares damage taken, but both gain Attack boost." },
+		{ "name": "Metallic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Links HP with an ally. Shares damage taken, but both gain Attack boost." },
 		{ "name": "Heavy Impact", "power": 70, "accuracy": 90, "type": "Physical", "description": "Reliable, high-damage physical strike that scales with current HP." }
 	],
 	Group.POST_TRANSITION: [
-		{ "name": "Thermal Conduction", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Transfers a positive buff to an ally, or steals a debuff to dissipate it." },
-		{ "name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Heals an ally's Stability Gauge by reinforcing their atomic structure." }
+		{ "name": "Thermal Conduction", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Transfers a positive buff to an ally, or steals a debuff to dissipate it." },
+		{ "name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Heals an ally's Stability Gauge by reinforcing their atomic structure." }
 	],
 	Group.METALLOID: [
 		{ "name": "Semiconductor Flip", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Inverts the target's highest and lowest stats for 2 turns." },
@@ -87,8 +87,8 @@ const GROUP_MOVES = {
 		{ "name": "Reactive Vapor", "power": 40, "accuracy": 100, "type": "Special", "description": "Creates a cloud that deals damage to any enemy that passes through it." }
 	],
 	Group.NOBLE_GAS: [
-		{ "name": "Full Octet", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Immune to all damage/status for 1 turn, but cannot act." },
-		{ "name": "Neon Glow", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Passive-style move that draws enemy aggro without moving." }
+		{ "name": "Full Octet", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Immune to all damage/status for 1 turn, but cannot act." },
+		{ "name": "Neon Glow", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Passive-style move that draws enemy aggro without moving." }
 	],
 	Group.ACTINIDE: [
 		{ "name": "Supercritical Blast", "power": 120, "accuracy": 85, "type": "Special", "description": "Deals massive damage in a large area. High risk." },
@@ -103,11 +103,11 @@ const GROUP_MOVES = {
 		{ "name": "Void Scratch", "power": 30, "accuracy": 100, "type": "Physical", "description": "Basic void attack." }
 	],
 	Group.NULL_TANK: [
-		{ "name": "Void Harden", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Increases Defense." },
+		{ "name": "Void Harden", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense." },
 		{ "name": "Heavy Slam", "power": 50, "accuracy": 90, "type": "Physical", "description": "Heavy physical attack." }
 	],
 	Group.NULL_COMMANDER: [
-		{ "name": "Void Command", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Buffs ally attack." },
+		{ "name": "Void Command", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Buffs ally attack." },
 		{ "name": "Obliterate", "power": 80, "accuracy": 85, "type": "Special", "description": "Powerful void blast." }
 	]
 }
@@ -138,3 +138,8 @@ static func calculate_xp_requirement(current_level: int) -> int:
 	# Level 10 -> 1000 XP
 	# Level 50 -> 5000 XP
 	return current_level * 100
+
+# Calculates the Binding Energy cost to fuse a new element
+static func calculate_fusion_cost(target_z: int) -> int:
+	# Cost scales with Atomic Number. Heavier elements require more energy.
+	return target_z * 10

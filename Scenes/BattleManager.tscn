@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://cv3kkuvrp4hqw" path="res://Images/icon.svg" id="3_jqbkq"]
 [ext_resource type="Texture2D" uid="uid://b21fv7oeh7gqt" path="res://Images/battleground.png" id="3_l362f"]
 [ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="4_272bk"]
+[ext_resource type="Texture2D" uid="uid://by40qmhlgrjag" path="res://icon.svg" id="5_l362f"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jqbkq"]
 atlas = ExtResource("4_272bk")
@@ -28,6 +29,10 @@ bg_color = Color(1, 0.5764706, 0.3764706, 1)
 [sub_resource type="AtlasTexture" id="AtlasTexture_yygwm"]
 atlas = ExtResource("4_272bk")
 region = Rect2(1003.4751, 50.556934, 258.214, 254.22102)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hoy3w"]
+atlas = ExtResource("4_272bk")
+region = Rect2(160, 54.789482, 251, 245.71051)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wivlx"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -112,7 +117,8 @@ alignment = 1
 custom_minimum_size = Vector2(150, 150)
 layout_mode = 2
 size_flags_horizontal = 3
-texture = ExtResource("3_jqbkq")
+size_flags_vertical = 3
+texture = ExtResource("5_l362f")
 expand_mode = 4
 stretch_mode = 6
 
@@ -152,6 +158,17 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
+
+[node name="HPLabel" type="Label" parent="BattleHUD/Theater/EnemyRow/Enemy1/HPBar" unique_id=576421572]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy1" unique_id=297625786]
 custom_minimum_size = Vector2(0, 5)
@@ -224,6 +241,17 @@ theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
 
+[node name="HPLabel" type="Label" parent="BattleHUD/Theater/EnemyRow/Enemy2/HPBar" unique_id=433972005]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy2" unique_id=2033474835]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
@@ -282,6 +310,17 @@ theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
 
+[node name="HPLabel" type="Label" parent="BattleHUD/Theater/EnemyRow/Enemy3/HPBar" unique_id=529014208]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy3" unique_id=250917209]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
@@ -310,6 +349,27 @@ stretch_mode = 5
 [node name="PlayerSpawn1" type="Marker2D" parent="BattleHUD/Theater/PlayerRow/PlayerSlot1" unique_id=43957843]
 position = Vector2(184, 236)
 
+[node name="TargetIndicator" type="TextureRect" parent="BattleHUD/Theater/PlayerRow/PlayerSlot1" unique_id=504793175]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("AtlasTexture_hoy3w")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TargetButton" type="Button" parent="BattleHUD/Theater/PlayerRow/PlayerSlot1" unique_id=384135598]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="PlayerSlot2" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=1169970424]
 custom_minimum_size = Vector2(150, 150)
 layout_mode = 2
@@ -320,6 +380,27 @@ stretch_mode = 5
 [node name="PlayerSpawn2" type="Marker2D" parent="BattleHUD/Theater/PlayerRow/PlayerSlot2" unique_id=945274441]
 position = Vector2(178, 204)
 
+[node name="TargetIndicator" type="TextureRect" parent="BattleHUD/Theater/PlayerRow/PlayerSlot2" unique_id=2014057223]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("AtlasTexture_hoy3w")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TargetButton" type="Button" parent="BattleHUD/Theater/PlayerRow/PlayerSlot2" unique_id=950832035]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="PlayerSlot3" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=2038432426]
 custom_minimum_size = Vector2(150, 150)
 layout_mode = 2
@@ -329,6 +410,27 @@ stretch_mode = 5
 
 [node name="PlayerSpawn3" type="Marker2D" parent="BattleHUD/Theater/PlayerRow/PlayerSlot3" unique_id=496008191]
 position = Vector2(187, 236)
+
+[node name="TargetIndicator" type="TextureRect" parent="BattleHUD/Theater/PlayerRow/PlayerSlot3" unique_id=447432080]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("AtlasTexture_hoy3w")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TargetButton" type="Button" parent="BattleHUD/Theater/PlayerRow/PlayerSlot3" unique_id=325805649]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Dashboard" type="HBoxContainer" parent="BattleHUD" unique_id=284010607]
 layout_mode = 1
@@ -370,6 +472,17 @@ size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
+
+[node name="HPLabel" type="Label" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer/HPBar" unique_id=47095353]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1140169995]
 layout_mode = 2
@@ -417,6 +530,17 @@ theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
 
+[node name="HPLabel" type="Label" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer/HPBar" unique_id=1051136931]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=784228649]
 layout_mode = 2
 size_flags_vertical = 3
@@ -450,6 +574,17 @@ size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
+
+[node name="HPLabel" type="Label" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer/HPBar" unique_id=467160823]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=712019293]
 layout_mode = 2

@@ -22,6 +22,13 @@ func get_active_moves(monster: MonsterData) -> Array:
 			m.type = def.get("type", "Physical")
 			m.description = def.get("description", "")
 			m.is_snipe = def.get("is_snipe", false)
+			
+			var t_str = def.get("target_type", "Enemy")
+			match t_str:
+				"Self": m.target_type = MoveData.TargetType.SELF
+				"Ally": m.target_type = MoveData.TargetType.ALLY
+				_: m.target_type = MoveData.TargetType.ENEMY
+				
 			moves.append(m)
 	
 	return moves

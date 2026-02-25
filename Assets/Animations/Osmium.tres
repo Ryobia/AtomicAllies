@@ -3,12 +3,12 @@
 [resource]
 animations = [{
 "frames": [],
-"loop": true,
+"loop": false,
 "name": &"attack",
 "speed": 5.0
 }, {
 "frames": [],
-"loop": true,
+"loop": false,
 "name": &"die",
 "speed": 5.0
 }, {
@@ -18,7 +18,7 @@ animations = [{
 "speed": 5.0
 }, {
 "frames": [],
-"loop": true,
+"loop": false,
 "name": &"move",
 "speed": 5.0
 }]

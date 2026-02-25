@@ -99,12 +99,18 @@ func take_damage(amount: int, color: Color = Color("#ff4d4d")):
 			die()
 
 func die():
-	if is_dead: return
+	if is_dead: return 
 	is_dead = true
 	atb_value = 0.0
-	died.emit(self)
+	
+	if sprite.sprite_frames.has_animation("die"):
+		sprite.play("die")
+		await sprite.animation_finished
+	
 	var tween = create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.5)
+	await tween.finished
+	died.emit(self)
 
 func _spawn_damage_number(amount: int, color: Color):
 	var label = Label.new()
@@ -187,12 +193,33 @@ func _apply_stat_swap(effect: Dictionary):
 		var v2 = stats[s2]
 		stats[s1] = v2
 		stats[s2] = v1
-		
-		active_effects.append({
-			"type": "swap_stats",
-			"stats": [s1, s2],
-			"duration": effect.duration
-		})
+
+func play_attack():
+	if sprite.sprite_frames.has_animation("attack"):
+		sprite.play("attack")
+		await sprite.animation_finished
+		sprite.play("idle")
+	else:
+		# Fallback "Punch" tween
+		var original_pos = sprite.position
+		var forward_vec = Vector2(50, 0) if is_player else Vector2(-50, 0)
+		var tween = create_tween()
+		tween.tween_property(sprite, "position", original_pos + forward_vec, 0.1)
+		tween.tween_property(sprite, "position", original_pos, 0.1)
+		await tween.finished
+
+func play_move():
+	if sprite.sprite_frames.has_animation("move"):
+		sprite.play("move")
+		await sprite.animation_finished
+		sprite.play("idle")
+	else:
+		# Fallback "Jump" tween
+		var original_pos = sprite.position
+		var tween = create_tween()
+		tween.tween_property(sprite, "position:y", original_pos.y - 30, 0.15).set_trans(Tween.TRANS_SINE)
+		tween.tween_property(sprite, "position:y", original_pos.y, 0.15).set_trans(Tween.TRANS_SINE)
+		await tween.finished
 
 func has_status(status_name: String) -> bool:
 	for effect in active_effects:

@@ -39,7 +39,8 @@ var current_campaign_level: int = 1
 var resources = {
 	"neutron_dust": 0,
 	"experience": 0,
-	"gems": 0
+	"gems": 0,
+	"binding_energy": 0
 }
 
 # --- Helper Functions ---
@@ -200,7 +201,8 @@ func reset_save():
 	resources = {
 		"neutron_dust": 0,
 		"experience": 0,
-		"gems": 0
+		"gems": 0,
+		"binding_energy": 0
 	}
 	
 	# 2. Delete Save Files

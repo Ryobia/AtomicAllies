@@ -1,0 +1,74 @@
+[gd_scene format=3 uid="uid://cvbo5jmiqakul"]
+
+[ext_resource type="Script" uid="uid://bnegmr33hhrve" path="res://Scripts/StatPopup.gd" id="1_ibyab"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_khfvu"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ibyab"]
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+
+[node name="StatPopup" type="PanelContainer" unique_id=1735982455]
+custom_minimum_size = Vector2(500, 500)
+offset_right = 500.0
+offset_bottom = 500.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_khfvu")
+script = ExtResource("1_ibyab")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=186790202]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer" unique_id=1597382522]
+layout_mode = 2
+columns = 2
+
+[node name="HPLabel" type="Label" parent="MarginContainer/GridContainer" unique_id=1784295579]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+
+[node name="DefenseLabel" type="Label" parent="MarginContainer/GridContainer" unique_id=911392613]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+
+[node name="AttackLabel" type="Label" parent="MarginContainer/GridContainer" unique_id=903148752]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+
+[node name="SpeedLabel" type="Label" parent="MarginContainer/GridContainer" unique_id=864772590]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+
+[node name="CloseButton" type="Button" parent="MarginContainer" unique_id=369144118]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 32
+theme_override_styles/normal = SubResource("StyleBoxFlat_ibyab")
+text = "CLOSE"
