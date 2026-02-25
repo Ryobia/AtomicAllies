@@ -33,6 +33,7 @@ var selected_monster: MonsterData = null
 # Battle Prep Data
 var active_team: Array[MonsterData] = []
 var pending_enemy_team: Array[MonsterData] = []
+var current_campaign_level: int = 1
 
 # Resources
 var resources = {
@@ -40,36 +41,6 @@ var resources = {
 	"experience": 0,
 	"gems": 0
 }
-
-# List of all discoverable monsters (for the Collection Grid)
-var starter_monster_paths = [
-	"res://data/Monsters/Hydrogen.tres",
-	"res://data/Monsters/Helium.tres",
-	"res://data/Monsters/Lithium.tres",
-	"res://data/Monsters/Beryllium.tres",
-	"res://data/Monsters/Boron.tres",
-	"res://data/Monsters/Carbon.tres",
-	"res://data/Monsters/Nitrogen.tres",
-	"res://data/Monsters/Oxygen.tres",
-	"res://data/Monsters/Fluorine.tres",
-	"res://data/Monsters/Neon.tres",
-	"res://data/Monsters/Sodium.tres",
-	"res://data/Monsters/Magnesium.tres",
-	"res://data/Monsters/Aluminium.tres",
-	"res://data/Monsters/Silicon.tres",
-	"res://data/Monsters/Phosphorus.tres",
-	"res://data/Monsters/Sulfur.tres",
-	"res://data/Monsters/Chlorine.tres",
-	"res://data/Monsters/Argon.tres",
-	"res://data/Monsters/Potassium.tres",
-	"res://data/Monsters/Calcium.tres",
-	"res://data/Monsters/Scandium.tres",
-	"res://data/Monsters/Titanium.tres",
-	"res://data/Monsters/Vanadium.tres",
-	"res://data/Monsters/Chromium.tres",
-	"res://data/Monsters/Manganese.tres",
-	"res://data/Monsters/Iron.tres"
-]
 
 # --- Helper Functions ---
 
@@ -106,9 +77,8 @@ func add_essence(group: int, amount: int):
 	add_resource("neutron_dust", amount)
 
 func get_monster_path_by_z(z: int) -> String:
-	# Atomic Number 1 (Hydrogen) is at index 0
-	if z > 0 and z <= starter_monster_paths.size():
-		return starter_monster_paths[z - 1]
+	var m = MonsterManifest.get_monster(z)
+	if m: return m.resource_path
 	return ""
 
 func add_capsule(z: int, p1_z: int = 0, p2_z: int = 0) -> Dictionary:
@@ -135,7 +105,8 @@ func save_game():
 		"resources": resources,
 		"monsters": [],
 		"capsules": capsules,
-		"synthesis_chambers": synthesis_chambers
+		"synthesis_chambers": synthesis_chambers,
+		"current_campaign_level": current_campaign_level
 	}
 	
 	# Serialize Monsters
@@ -166,6 +137,10 @@ func load_game():
 	if TimeManager.has_method("load_timers"):
 		TimeManager.load_timers()
 	
+	# Ensure MonsterManifest is populated before we try to look up monsters
+	if MonsterManifest.all_monsters.is_empty():
+		MonsterManifest._scan_monsters()
+	
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
 		
@@ -186,16 +161,18 @@ func load_game():
 			
 		if "synthesis_chambers" in save_data:
 			synthesis_chambers = save_data["synthesis_chambers"]
+			
+		if "current_campaign_level" in save_data:
+			current_campaign_level = int(save_data["current_campaign_level"])
 
 		if "monsters" in save_data:
 			owned_monsters.clear()
 			for m_data in save_data["monsters"]:
 				var m_name = m_data["name"]
 				# Find the original resource to duplicate
-				for path in starter_monster_paths:
-					var res = load(path)
-					if res and res.monster_name == m_name:
-						var new_m = res.duplicate()
+				for m in MonsterManifest.all_monsters:
+					if m.monster_name == m_name:
+						var new_m = m.duplicate()
 						new_m.level = int(m_data["level"])
 						
 						# Load infusion stats
@@ -219,6 +196,7 @@ func reset_save():
 	owned_monsters.clear()
 	capsules.clear()
 	synthesis_chambers.clear()
+	current_campaign_level = 1
 	resources = {
 		"neutron_dust": 0,
 		"experience": 0,

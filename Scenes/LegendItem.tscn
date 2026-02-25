@@ -12,16 +12,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
-size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_16qrs")
 script = ExtResource("1_16qrs")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1049166684]
 layout_mode = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
+theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_bottom = 5
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=459224902]
 layout_mode = 2
@@ -37,10 +36,10 @@ size_flags_horizontal = 3
 [node name="TitleLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=63351019]
 layout_mode = 2
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 32
 
 [node name="DescLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1285024734]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8784314, 0.99607843, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 autowrap_mode = 3

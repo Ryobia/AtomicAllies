@@ -226,24 +226,37 @@ func _start_pulse_tween(bar: ProgressBar, style: StyleBoxFlat):
 	bar.set_meta("pulse_tween", tween)
 
 func highlight_active_unit(is_player: bool, index: int):
+	var target_slots = player_slots if is_player else enemy_slots
+	var active_slot = null
+	if index >= 0 and index < target_slots.size():
+		active_slot = target_slots[index]
+
 	# Reset all slots to normal
 	for slot in enemy_slots + player_slots:
 		if slot:
+			if slot.has_meta("active_tween"):
+				var t = slot.get_meta("active_tween")
+				if t and t.is_valid():
+					t.kill()
+			
+			if slot == active_slot:
+				continue
+				
 			var tween = create_tween()
 			tween.tween_property(slot, "scale", Vector2.ONE, 0.2)
 			tween.tween_property(slot, "modulate", Color.WHITE, 0.2)
 			slot.z_index = 0
 			
 	# Highlight the active one
-	var target_slots = player_slots if is_player else enemy_slots
-	if index >= 0 and index < target_slots.size():
-		var slot = target_slots[index]
-		if slot:
-			var tween = create_tween()
-			tween.set_parallel(true)
-			tween.tween_property(slot, "scale", Vector2(1.1, 1.1), 0.2)
-			tween.tween_property(slot, "modulate", Color(1.2, 1.2, 1.2), 0.2)
-			slot.z_index = 10
+	if active_slot:
+		active_slot.z_index = 10
+		active_slot.modulate = Color(1.3, 1.3, 1.3)
+		
+		var tween = create_tween()
+		tween.set_loops()
+		tween.tween_property(active_slot, "scale", Vector2(1.15, 1.15), 0.8).from(Vector2(1.05, 1.05)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(active_slot, "scale", Vector2(1.05, 1.05), 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		active_slot.set_meta("active_tween", tween)
 
 func log_message(text: String):
 	if reaction_space:
@@ -256,7 +269,7 @@ func log_message(text: String):
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.set_anchors_preset(Control.PRESET_FULL_RECT)
-		label.add_theme_font_size_override("font_size", 36)
+		label.add_theme_font_size_override("font_size", 64)
 		label.add_theme_color_override("font_outline_color", Color.BLACK)
 		label.add_theme_constant_override("outline_size", 4)
 		reaction_space.add_child(label)
@@ -457,7 +470,7 @@ func show_actions():
 func _on_move_btn_pressed(move):
 	move_selected.emit(move)
 
-func show_swap_options(monsters: Array):
+func show_swap_options(monsters: Array, forced: bool = false):
 	# Hide main actions
 	for btn in action_buttons:
 		if btn: btn.visible = false
@@ -475,20 +488,88 @@ func show_swap_options(monsters: Array):
 	for i in range(monsters.size()):
 		var m = monsters[i]
 		var btn = Button.new()
-		btn.text = "Swap to %s (Lv. %d)" % [m.monster_name, m.level]
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		btn.custom_minimum_size = Vector2(0, 100)
 		_style_button(btn)
+		
+		var margin = MarginContainer.new()
+		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.add_theme_constant_override("margin_left", 10)
+		margin.add_theme_constant_override("margin_right", 10)
+		margin.add_theme_constant_override("margin_top", 5)
+		margin.add_theme_constant_override("margin_bottom", 5)
+		btn.add_child(margin)
+		
+		var hbox = HBoxContainer.new()
+		hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hbox.add_theme_constant_override("separation", 15)
+		margin.add_child(hbox)
+		
+		var icon_con = Control.new()
+		icon_con.custom_minimum_size = Vector2(80, 80)
+		icon_con.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon_con.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		hbox.add_child(icon_con)
+		
+		_load_monster_visual(icon_con, m)
+		
+		var lbl = Label.new()
+		lbl.text = "%s\nLv. %d" % [m.monster_name, m.level]
+		lbl.add_theme_font_size_override("font_size", 24)
+		lbl.add_theme_color_override("font_color", Color("#010813"))
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hbox.add_child(lbl)
+		
 		btn.pressed.connect(func(): swap_selected.emit(i))
 		move_container.add_child(btn)
 		
-	# Cancel Button
-	var cancel_btn = Button.new()
-	cancel_btn.text = "Back"
-	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_button(cancel_btn)
-	cancel_btn.pressed.connect(show_actions)
-	move_container.add_child(cancel_btn)
+	if not forced:
+		# Cancel Button
+		var cancel_btn = Button.new()
+		cancel_btn.text = "Back"
+		cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cancel_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		cancel_btn.custom_minimum_size = Vector2(0, 80)
+		_style_button(cancel_btn)
+		cancel_btn.pressed.connect(show_actions)
+		move_container.add_child(cancel_btn)
+
+func _load_monster_visual(parent: Control, monster: MonsterData):
+	if not monster: return
+	
+	var anim_path = "res://Assets/Animations/" + monster.monster_name.replace(" ", "") + ".tres"
+	var anim_frames = null
+	
+	if ResourceLoader.exists(anim_path):
+		anim_frames = load(anim_path)
+		
+	if anim_frames:
+		var sprite = AnimatedSprite2D.new()
+		sprite.sprite_frames = anim_frames
+		
+		var anim_to_play = "idle"
+		if not anim_frames.has_animation(anim_to_play):
+			if anim_frames.has_animation("default"):
+				anim_to_play = "default"
+			else:
+				var anims = anim_frames.get_animation_names()
+				if anims.size() > 0:
+					anim_to_play = anims[0]
+		
+		sprite.play(anim_to_play)
+		sprite.position = parent.custom_minimum_size / 2
+		_scale_sprite_to_fit(sprite, parent.custom_minimum_size.y)
+		parent.add_child(sprite)
+	elif monster.icon:
+		var tex_rect = TextureRect.new()
+		tex_rect.texture = monster.icon
+		tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		parent.add_child(tex_rect)
 
 func _style_button(btn: Button):
 	var style = StyleBoxFlat.new()

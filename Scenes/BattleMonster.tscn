@@ -32,7 +32,7 @@ offset = Vector2(0.2730055, 0)
 
 [node name="Shadow" type="Sprite2D" parent="." unique_id=297285014]
 z_index = -1
-position = Vector2(0, 56)
+position = Vector2(0, 80)
 texture = SubResource("GradientTexture2D_5x00h")
 
 [node name="CenterPoint" type="Marker2D" parent="." unique_id=1584949434]

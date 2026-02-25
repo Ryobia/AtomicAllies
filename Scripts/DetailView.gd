@@ -3,6 +3,11 @@ extends Control
 # This variable will be set by your SceneManager before this scene is displayed.
 var current_monster: MonsterData
 
+@export var icon_physical: Texture2D
+@export var icon_special: Texture2D
+@export var icon_hostile: Texture2D
+@export var icon_friendly: Texture2D
+
 # --- UI Node References ---
 var name_label
 var level_label
@@ -132,16 +137,23 @@ func update_ui():
 				class_help_icon.tooltip_text = _get_class_description(current_monster.group)
 
 	if moves_container: moves_container.modulate = content_modulate
-	if moves_container and "moves" in current_monster:
+	if moves_container:
 		for child in moves_container.get_children():
 			child.queue_free()
-			
-		for m in current_monster.moves:
+		
+		var moves_list = CombatManager.get_active_moves(current_monster)
+		
+		for m in moves_list:
 			if m:
 				var margin = MarginContainer.new()
 				margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				margin.add_theme_constant_override("margin_left", 20)
 				margin.add_theme_constant_override("margin_right", 20)
+				
+				var hbox = HBoxContainer.new()
+				hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				hbox.add_theme_constant_override("separation", 15)
+				margin.add_child(hbox)
 				
 				var move_rtl = RichTextLabel.new()
 				move_rtl.bbcode_enabled = true
@@ -150,14 +162,35 @@ func update_ui():
 				
 				var pwr = m.power if "power" in m else 0
 				var desc = m.description if "description" in m else ""
+				var acc = m.accuracy if "accuracy" in m else 100
+				var m_type = m.type if "type" in m else "Physical"
+
+				var type_badge = _create_move_type_badge(m_type)
+				type_badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				hbox.add_child(type_badge)
 				
-				var text = "[color=#60fafc][font_size=40]• %s (Pwr: %d)[/font_size][/color]" % [m.name, pwr]
+				var text = "[color=#60fafc][font_size=40]%s (Pwr: %d)[/font_size][/color]" % [m.name, pwr]
 				if desc != "":
-					text += " [color=#e6e6e6][font_size=30]%s[/font_size][/color]" % desc
+					text += "\n[color=#e6e6e6][font_size=30]%s[/font_size][/color]" % desc
 				
 				move_rtl.text = text
-				margin.add_child(move_rtl)
+				move_rtl.tooltip_text = "Type: %s\nAccuracy: %d%%" % [m_type, acc]
+				move_rtl.mouse_filter = Control.MOUSE_FILTER_PASS
+				move_rtl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				hbox.add_child(move_rtl)
 				moves_container.add_child(margin)
+				
+				# Input Handling for Animation
+				var on_click = func(event):
+					if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+						_play_attack_animation()
+				
+				margin.mouse_filter = Control.MOUSE_FILTER_STOP
+				margin.gui_input.connect(on_click)
+				hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				type_badge.mouse_filter = Control.MOUSE_FILTER_PASS
+				type_badge.gui_input.connect(on_click)
+				move_rtl.gui_input.connect(on_click)
 				
 				var sep = HSeparator.new()
 				sep.modulate = Color("#60fafc")
@@ -195,7 +228,9 @@ func _on_view_toggle_toggled(_toggled_on: bool):
 func _navigate_monster(direction: int):
 	if not current_monster: return
 	
-	var max_z = PlayerData.starter_monster_paths.size()
+	var max_z = 0
+	if not MonsterManifest.all_monsters.is_empty():
+		max_z = MonsterManifest.all_monsters.back().atomic_number
 	var new_z = current_monster.atomic_number + direction
 	
 	if new_z < 1: new_z = max_z
@@ -490,3 +525,61 @@ func _update_level_up_button_animation(should_animate: bool):
 			current_tween.kill()
 			level_up_button.set_meta("pulse_tween", null)
 		level_up_button.scale = Vector2.ONE
+
+func _create_move_type_badge(move_type: String) -> Control:
+	var icon_rect = TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(40, 40)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	
+	match move_type:
+		"Physical":
+			icon_rect.texture = icon_physical
+			icon_rect.tooltip_text = "Physical Attack"
+		"Special":
+			icon_rect.texture = icon_special
+			icon_rect.tooltip_text = "Special Attack"
+		"Status_Hostile":
+			icon_rect.texture = icon_hostile
+			icon_rect.tooltip_text = "Hostile Status"
+		"Status_Friendly", "Passive":
+			icon_rect.texture = icon_friendly
+			icon_rect.tooltip_text = "Friendly Status"
+	
+	return icon_rect
+
+func _play_attack_animation():
+	if not icon_texture: return
+	
+	for child in icon_texture.get_children():
+		var handled = false
+		if child is AnimatedSprite2D:
+			if child.sprite_frames.has_animation("attack"):
+				child.play("attack")
+				if not child.animation_finished.is_connected(_return_to_idle):
+					child.animation_finished.connect(_return_to_idle, CONNECT_ONE_SHOT)
+				handled = true
+		
+		if not handled and child is Node2D:
+			# Feedback punch if no attack animation
+			var base_scale = child.get_meta("base_scale", child.scale)
+			if not child.has_meta("base_scale"):
+				child.set_meta("base_scale", base_scale)
+			
+			var tween = create_tween()
+			tween.tween_property(child, "scale", base_scale * 1.2, 0.1)
+			tween.tween_property(child, "scale", base_scale, 0.1)
+
+func _return_to_idle():
+	if not icon_texture: return
+	for child in icon_texture.get_children():
+		if child is AnimatedSprite2D:
+			var anim_to_play = "idle"
+			if not child.sprite_frames.has_animation(anim_to_play):
+				if child.sprite_frames.has_animation("default"):
+					anim_to_play = "default"
+				else:
+					var anims = child.sprite_frames.get_animation_names()
+					if anims.size() > 0:
+						anim_to_play = anims[0]
+			child.play(anim_to_play)

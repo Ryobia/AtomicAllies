@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MonsterData" format=3]
+
+[ext_resource type="Script" uid="uid://biuha7ykmyh1e" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Rubidium"
+atomic_number = 37
+group = 0
+level = 1

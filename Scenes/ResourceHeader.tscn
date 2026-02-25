@@ -53,14 +53,16 @@ script = ExtResource("1_kou55")
 [node name="PanelContainer" type="PanelContainer" parent="." unique_id=1295828350]
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 30.0
-offset_bottom = 144.0
+offset_top = 50.0
+offset_bottom = 164.0
 grow_horizontal = 2
+size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxEmpty_kou55")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer" unique_id=391658744]
 layout_mode = 2
 size_flags_horizontal = 8
+size_flags_vertical = 4
 theme_override_constants/separation = 50
 
 [node name="XPDisplay" type="PanelContainer" parent="PanelContainer/HBoxContainer" unique_id=1077197348]
@@ -81,7 +83,7 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 
 [node name="TextureRect" type="TextureRect" parent="PanelContainer/HBoxContainer/XPDisplay/MarginContainer/HBoxContainer" unique_id=1581232108]
-custom_minimum_size = Vector2(100, 100)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 size_flags_horizontal = 2
 size_flags_vertical = 4
@@ -113,7 +115,7 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 
 [node name="TextureRect2" type="TextureRect" parent="PanelContainer/HBoxContainer/XPDisplay2/MarginContainer/HBoxContainer2" unique_id=1085094970]
-custom_minimum_size = Vector2(100, 100)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 size_flags_horizontal = 0
 texture = SubResource("AtlasTexture_quwd7")
@@ -145,12 +147,13 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 
 [node name="TextureRect" type="TextureRect" parent="PanelContainer/HBoxContainer/XPDisplay3/MarginContainer/HBoxContainer" unique_id=1845199452]
-custom_minimum_size = Vector2(100, 100)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 texture = SubResource("AtlasTexture_fmpd0")
 expand_mode = 1
+stretch_mode = 5
 
 [node name="GemLabel" type="Label" parent="PanelContainer/HBoxContainer/XPDisplay3/MarginContainer/HBoxContainer" unique_id=773307934]
 layout_mode = 2

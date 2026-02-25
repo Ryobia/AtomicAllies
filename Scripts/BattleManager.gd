@@ -67,7 +67,7 @@ func _ready():
 	if not PlayerData.pending_enemy_team.is_empty():
 		start_battle(PlayerData.pending_enemy_team)
 	elif PlayerData.owned_monsters.size() > 0:
-		# Fallback: Generate 3 Null Walkers for testing
+		# Fallback: Generate 3 Void Enemies for testing
 		start_battle(generate_void_enemies(3))
 
 func _process(delta):
@@ -78,10 +78,10 @@ func process_atb(delta):
 	var anyone_ready = false
 	
 	for unit in all_monsters:
-		if unit.is_dead: continue
+		if unit.is_dead and not unit.is_player: continue
 		
 		# Delegate math to the monster
-		unit.update_atb(delta, 0.5)
+		unit.update_atb(delta, 2.5)
 		
 		# Update HUD Speed Bar
 		var index = -1
@@ -225,24 +225,32 @@ func generate_random_enemies(count: int) -> Array[MonsterData]:
 func generate_void_enemies(count: int) -> Array[MonsterData]:
 	var enemies: Array[MonsterData] = []
 	
-	# Try to load from resource if it exists, otherwise generate procedurally
-	var base_enemy = null
-	if ResourceLoader.exists("res://data/Enemies/NullWalker.tres"):
-		base_enemy = load("res://data/Enemies/NullWalker.tres")
+	# Define available enemy types
+	var enemy_paths = [
+		"res://data/Enemies/NullGrunt.tres",
+		"res://data/Enemies/NullTank.tres",
+		"res://data/Enemies/NullCommander.tres"
+	]
+	
+	# Determine scaling level
+	var scaling_level = 1
+	if not PlayerData.owned_monsters.is_empty():
+		scaling_level = PlayerData.owned_monsters[0].level
 	
 	for i in range(count):
-		var enemy
-		if base_enemy:
-			enemy = base_enemy.duplicate()
+		# Pick a random enemy type
+		var path = enemy_paths.pick_random()
+		if ResourceLoader.exists(path):
+			var base = load(path)
+			var enemy = base.duplicate()
+			
+			# Scale level with some variance
+			enemy.level = max(1, scaling_level + randi_range(-1, 1))
+			
+			enemies.append(enemy)
 		else:
-			enemy = MonsterData.new()
-			enemy.monster_name = "Null Walker"
-			enemy.level = 1
-			enemy.atomic_number = 0
-			if "group" in enemy:
-				enemy.group = AtomicConfig.Group.VOID
+			push_warning("BattleManager: Could not load enemy at " + path)
 		
-		enemies.append(enemy)
 	return enemies
 
 # --- Turn Logic ---
@@ -251,10 +259,32 @@ func start_turn():
 	current_state = BattleState.ACTION_SELECTION
 	current_acting_unit = turn_queue.pop_front()
 	
+	# Handle dead unit turn (Force Swap)
+	if current_acting_unit.is_dead:
+		if current_acting_unit.is_player:
+			if benched_player_monsters.is_empty():
+				end_turn()
+				return
+			
+			log_event.emit("%s has fallen! Choose a replacement!" % current_acting_unit.data.monster_name)
+			var index = active_player_monsters.find(current_acting_unit)
+			hud_highlight_unit.emit(true, index)
+			if battle_hud:
+				battle_hud.show_swap_options(benched_player_monsters, true)
+			return
+		else:
+			end_turn()
+			return
+
 	current_acting_unit.on_turn_start()
 	
 	# Check if unit died from start-of-turn effects (like Corrosion)
 	if current_acting_unit.is_dead:
+		if current_acting_unit.is_player and not benched_player_monsters.is_empty():
+			log_event.emit("%s has fallen! Choose a replacement!" % current_acting_unit.data.monster_name)
+			if battle_hud:
+				battle_hud.show_swap_options(benched_player_monsters, true)
+			return
 		end_turn()
 		return
 		
@@ -429,7 +459,8 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	
 	# Swap physical unit
 	var marker = active_unit.get_parent()
-	active_player_monsters.erase(active_unit)
+	var index = active_player_monsters.find(active_unit)
+	
 	all_monsters.erase(active_unit)
 	active_unit.queue_free()
 	
@@ -437,9 +468,38 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 		
 	spawn_unit(new_data, marker, true)
 	
-	# The new unit is the last added to active_player_monsters
-	var new_unit = active_player_monsters.back()
+	# The new unit is the last added to active_player_monsters by spawn_unit
+	var new_unit = active_player_monsters.pop_back()
+	
+	# Place new unit in the correct index to maintain formation (Vanguard/Flank)
+	if index != -1:
+		active_player_monsters[index] = new_unit
+	else:
+		active_player_monsters.append(new_unit)
+	
 	new_unit.atb_value = 0 # Start fresh
+	
+	# Refresh HUD visuals (Sprites/Names) and restore Bars
+	if battle_hud:
+		var player_data_list = []
+		for unit in active_player_monsters:
+			player_data_list.append(unit.data)
+		var enemy_data_list = []
+		for unit in active_enemy_monsters:
+			enemy_data_list.append(unit.data)
+			
+		battle_hud.setup_ui(player_data_list, enemy_data_list)
+		
+		# Restore HP/ATB values on HUD since setup_ui resets them to max/zero
+		for i in range(active_player_monsters.size()):
+			var u = active_player_monsters[i]
+			battle_hud.update_hp(true, i, u.current_hp, u.max_hp)
+			battle_hud.update_speed_bar(true, i, u.atb_value)
+			
+		for i in range(active_enemy_monsters.size()):
+			var u = active_enemy_monsters[i]
+			battle_hud.update_hp(false, i, u.current_hp, u.max_hp)
+			battle_hud.update_speed_bar(false, i, u.atb_value)
 	
 	await get_tree().create_timer(1.0).timeout
 	end_turn()
@@ -514,6 +574,10 @@ func end_battle(player_won: bool):
 		if PlayerData:
 			PlayerData.add_resource("experience", total_xp)
 
+	# Notify CampaignManager (if it exists as an Autoload)
+	if CampaignManager:
+		CampaignManager.on_battle_ended(player_won)
+
 	if battle_hud:
 		battle_hud.show_result(player_won, rewards)
 
@@ -530,7 +594,7 @@ func check_win_condition():
 		if not m.is_dead:
 			player_team_defeated = false
 			break
-	if player_team_defeated:
+	if player_team_defeated and benched_player_monsters.is_empty():
 		end_battle(false)
 
 	var enemy_team_defeated = true

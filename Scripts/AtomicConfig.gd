@@ -14,23 +14,28 @@ enum Group {
 	ACTINIDE,
 	LANTHANIDE,
 	UNKNOWN,
-	VOID
+	_VOID_RESERVED, # Kept to preserve enum indices for existing resources
+	NULL_GRUNT,
+	NULL_TANK,
+	NULL_COMMANDER
 }
 
 # Group Colors for UI
 const GROUP_COLORS = {
 	Group.ALKALI_METAL: Color("#ff4d4d"), # Red
 	Group.ALKALINE_EARTH: Color("#ff9360"), # Orange
-	Group.TRANSITION_METAL: Color("#ffd700"), # Gold
+	Group.TRANSITION_METAL: Color("#ffe600"), # Gold
 	Group.POST_TRANSITION: Color("#a0a0a0"), # Grey/Silver
 	Group.METALLOID: Color("#ff69b4"), # Pink
 	Group.NONMETAL: Color("#60fafc"), # Cyan
-	Group.HALOGEN: Color("#bf40bf"), # Purple
+	Group.HALOGEN: Color("#802680"), # Purple
 	Group.NOBLE_GAS: Color("#1e90ff"), # Blue
-	Group.ACTINIDE: Color("#ccff00"), # Radioactive Green
-	Group.LANTHANIDE: Color("#228b22"), # Dark Green
+	Group.ACTINIDE: Color("#6dc000"), # Radioactive Green
+	Group.LANTHANIDE: Color("#175e17"), # Dark Green
 	Group.UNKNOWN: Color("#333333"),
-	Group.VOID: Color("#000000")
+	Group.NULL_GRUNT: Color("#4a4a4a"), # Dark Grey
+	Group.NULL_TANK: Color("#2c3e50"), # Dark Blue-Grey
+	Group.NULL_COMMANDER: Color("#8b0000") # Dark Red
 }
 
 # Baseline Stats (Scale 1-10) from the Design Document
@@ -46,7 +51,9 @@ const BASELINES = {
 	Group.ACTINIDE:        { "hp": 8, "atk": 10,"def": 5, "spd": 2 }, # The Nukes
 	Group.LANTHANIDE:      { "hp": 7, "atk": 9, "def": 5, "spd": 3 }, # Rare Earths (Similar to Actinides)
 	Group.UNKNOWN:         { "hp": 5, "atk": 5, "def": 5, "spd": 5 },
-	Group.VOID:            { "hp": 4, "atk": 7, "def": 3, "spd": 6 }  # Null Walkers: Aggressive but fragile
+	Group.NULL_GRUNT:      { "hp": 4, "atk": 5, "def": 3, "spd": 5 }, # Weak but balanced
+	Group.NULL_TANK:       { "hp": 8, "atk": 3, "def": 8, "spd": 2 }, # Tough but slow
+	Group.NULL_COMMANDER:  { "hp": 7, "atk": 8, "def": 6, "spd": 6 }  # Strong all-rounder
 }
 
 # Default Movesets based on Group
@@ -92,7 +99,17 @@ const GROUP_MOVES = {
 		{ "name": "Rare Resonance", "power": 60, "accuracy": 100, "type": "Special", "description": "Deals damage based on how many different element groups are on team." }
 	],
 	Group.UNKNOWN: [],
-	Group.VOID: []
+	Group.NULL_GRUNT: [
+		{ "name": "Void Scratch", "power": 30, "accuracy": 100, "type": "Physical", "description": "Basic void attack." }
+	],
+	Group.NULL_TANK: [
+		{ "name": "Void Harden", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Increases Defense." },
+		{ "name": "Heavy Slam", "power": 50, "accuracy": 90, "type": "Physical", "description": "Heavy physical attack." }
+	],
+	Group.NULL_COMMANDER: [
+		{ "name": "Void Command", "power": 0, "accuracy": 100, "type": "Status_Friendly", "description": "Buffs ally attack." },
+		{ "name": "Obliterate", "power": 80, "accuracy": 85, "type": "Special", "description": "Powerful void blast." }
+	]
 }
 
 # Calculates final stats based on Group Baseline, Atomic Number (Z), and Level.

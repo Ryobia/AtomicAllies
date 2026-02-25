@@ -15,6 +15,9 @@ var _start_scroll_offset = Vector2.ZERO
 var _is_dragging = false
 var _drag_start_pos = Vector2.ZERO
 
+var _style_cache = {}
+var _owned_lookup = {}
+
 func _ready():
 	# $Background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -54,6 +57,12 @@ func _ready():
 	_setup_legend_ui()
 
 func _populate_table(grid: GridContainer):
+	# Optimization: Pre-calculate owned monsters lookup
+	_owned_lookup.clear()
+	for m in PlayerData.owned_monsters:
+		_owned_lookup[m.atomic_number] = m
+	_style_cache.clear()
+
 	# Clear existing
 	for child in grid.get_children():
 		child.queue_free()
@@ -62,6 +71,7 @@ func _populate_table(grid: GridContainer):
 	_add_card(grid, 1) # Hydrogen
 	_add_spacers(grid, 16) # Gap
 	_add_card(grid, 2) # Helium
+	await get_tree().process_frame
 	
 	# --- Row 2 ---
 	_add_card(grid, 3) # Lithium
@@ -69,24 +79,29 @@ func _populate_table(grid: GridContainer):
 	_add_spacers(grid, 10) # Gap (Transition Metals skipped in row 2)
 	for z in range(5, 11): # Boron (5) through Neon (10)
 		_add_card(grid, z)
+	await get_tree().process_frame
 		
 	# --- Row 3 ---
 	_add_card(grid, 11) # Sodium
 	_add_card(grid, 12) # Magnesium
 	_add_spacers(grid, 10)
 	for z in range(13, 19): _add_card(grid, z) # Al - Ar
+	await get_tree().process_frame
 	
 	# --- Row 4 ---
 	for z in range(19, 37): _add_card(grid, z) # K - Kr
+	await get_tree().process_frame
 	
 	# --- Row 5 ---
 	for z in range(37, 55): _add_card(grid, z) # Rb - Xe
+	await get_tree().process_frame
 	
 	# --- Row 6 ---
 	_add_card(grid, 55) # Cs
 	_add_card(grid, 56) # Ba
 	_add_spacers(grid, 1) # Lanthanide placeholder gap
 	for z in range(72, 87): _add_card(grid, z) # Hf - Rn
+	await get_tree().process_frame
 	
 	# --- Row 7 ---
 	_add_card(grid, 87) # Fr
@@ -96,14 +111,19 @@ func _populate_table(grid: GridContainer):
 	
 	# --- Spacing Row (Vertical Gap) ---
 	_add_spacers(grid, 18)
+	await get_tree().process_frame
 	
 	# --- Lanthanides (Row 8) ---
 	_add_spacers(grid, 3) # Indent to align with Group 3
 	for z in range(57, 72): _add_card(grid, z) # La - Lu
+	await get_tree().process_frame
 	
 	# --- Actinides (Row 9) ---
 	_add_spacers(grid, 3) # Indent
 	for z in range(89, 104): _add_card(grid, z) # Ac - Lr
+	
+	# Clear lookup to free memory
+	_owned_lookup.clear()
 
 func _add_card(grid: Container, z: int):
 	if not monster_card_scene: return
@@ -115,28 +135,27 @@ func _add_card(grid: Container, z: int):
 	card.custom_minimum_size = Vector2(100, 120) 
 	
 	var monster = _find_monster_by_z(z)
+	var is_owned = false
+	if monster:
+		is_owned = PlayerData.is_monster_owned(monster.monster_name)
 	
 	# --- Custom Styling ---
-	var style = StyleBoxFlat.new()
-	var card_color = Color("#010813")
-	if monster and "group" in monster:
-		card_color = AtomicConfig.GROUP_COLORS.get(monster.group, card_color)
-	
-	style.bg_color = card_color
-	style.bg_color.a = 0.5 # Much less opaque
-	style.set_corner_radius_all(8)
+	var style = _get_cached_style(monster, is_owned)
 	card.add_theme_stylebox_override("panel", style)
 	
 	var labels = [card.find_child("NameLabel", true, false), card.find_child("NumberLabel", true, false)]
 	for lbl in labels:
 		if lbl:
-			lbl.add_theme_color_override("font_color", Color("#60fafc"))
+			if not is_owned and monster:
+				lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+			else:
+				lbl.add_theme_color_override("font_color", Color("#60fafc"))
 			lbl.add_theme_font_size_override("font_size", lbl.get_theme_font_size("font_size") + 4)
 	
 	if monster:
 		card.set_monster(monster)
 		
-		if PlayerData.is_monster_owned(monster.monster_name):
+		if is_owned:
 			card.modulate = Color(1, 1, 1, 1) # Full Color
 			card.mouse_filter = Control.MOUSE_FILTER_STOP
 			card.gui_input.connect(func(event):
@@ -174,19 +193,36 @@ func _add_spacers(grid: Container, count: int):
 		spacer.custom_minimum_size = Vector2(100, 120) # Match card size
 		grid.add_child(spacer)
 
+func _get_cached_style(monster: MonsterData, is_owned: bool) -> StyleBoxFlat:
+	var group = -1
+	if monster and "group" in monster:
+		group = monster.group
+		
+	var key = str(group) + "_" + str(is_owned)
+	if _style_cache.has(key):
+		return _style_cache[key]
+		
+	var style = StyleBoxFlat.new()
+	var card_color = Color("#010813")
+	if group != -1:
+		card_color = AtomicConfig.GROUP_COLORS.get(group, card_color)
+		if not is_owned:
+			card_color = card_color.darkened(0.7)
+	
+	style.bg_color = card_color
+	style.bg_color.a = 0.5
+	style.set_corner_radius_all(8)
+	
+	_style_cache[key] = style
+	return style
+
 func _find_monster_by_z(z: int) -> MonsterData:
 	# 1. Check if player owns it (return the specific instance with stats)
-	for m in PlayerData.owned_monsters:
-		if m.atomic_number == z:
-			return m
+	if _owned_lookup.has(z):
+		return _owned_lookup[z]
 			
 	# 2. Fallback to base resource
-	for path in PlayerData.starter_monster_paths:
-		if ResourceLoader.exists(path):
-			var m = load(path)
-			if m and m.atomic_number == z:
-				return m
-	return null
+	return MonsterManifest.get_monster(z)
 
 func _on_monster_clicked(monster: MonsterData):
 	PlayerData.selected_monster = monster
@@ -330,7 +366,7 @@ func _setup_legend_ui():
 	vbox.add_child(grid)
 	
 	for group in AtomicConfig.GROUP_COLORS:
-		if group == AtomicConfig.Group.UNKNOWN or group == AtomicConfig.Group.VOID: continue
+		if group == AtomicConfig.Group.UNKNOWN: continue
 		
 		var rect = ColorRect.new()
 		rect.custom_minimum_size = Vector2(30, 30)

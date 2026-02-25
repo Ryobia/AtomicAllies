@@ -35,7 +35,12 @@ func _ready():
 	if clear_btn:
 		clear_btn.pressed.connect(_on_clear_team_pressed)
 		
-	var enemies = _generate_preview_enemies()
+	var enemies = []
+	if not PlayerData.pending_enemy_team.is_empty():
+		enemies = PlayerData.pending_enemy_team
+	else:
+		enemies = _generate_preview_enemies()
+		
 	PlayerData.pending_enemy_team = enemies
 	_update_enemy_preview(enemies)
 	
@@ -49,11 +54,15 @@ func _ready():
 	_populate_legend()
 
 func _generate_preview_enemies() -> Array[MonsterData]:
+	if CampaignManager:
+		return CampaignManager.generate_level_encounter(PlayerData.current_campaign_level)
+	
 	var enemies: Array[MonsterData] = []
-	var base_enemy = load("res://data/Enemies/NullWalker.tres")
+	var base_enemy = load("res://data/Enemies/NullGrunt.tres")
 	
 	for i in range(3):
 		var enemy = base_enemy.duplicate()
+		enemy.level = 1
 		enemies.append(enemy)
 	return enemies
 
@@ -64,18 +73,57 @@ func _update_enemy_preview(enemies: Array[MonsterData]):
 		child.queue_free()
 		
 	for enemy in enemies:
-		var icon = TextureRect.new()
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.custom_minimum_size = Vector2(100, 100)
-		if enemy.icon:
+		var vbox = VBoxContainer.new()
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		enemy_container.add_child(vbox)
+		
+		var icon_container = Control.new()
+		icon_container.custom_minimum_size = Vector2(100, 100)
+		vbox.add_child(icon_container)
+		
+		var anim_frames = _get_anim_frames(enemy.monster_name)
+		
+		if anim_frames:
+			var sprite = AnimatedSprite2D.new()
+			sprite.sprite_frames = anim_frames
+			
+			var anim_to_play = "idle"
+			if not anim_frames.has_animation(anim_to_play):
+				if anim_frames.has_animation("default"):
+					anim_to_play = "default"
+				else:
+					var anims = anim_frames.get_animation_names()
+					if anims.size() > 0:
+						anim_to_play = anims[0]
+			
+			sprite.play(anim_to_play)
+			sprite.position = icon_container.custom_minimum_size / 2
+			sprite.flip_h = true # Enemies face left
+			
+			var tex = sprite.sprite_frames.get_frame_texture(anim_to_play, 0)
+			if tex:
+				var s = 100.0 / float(tex.get_height())
+				sprite.scale = Vector2(s, s)
+			icon_container.add_child(sprite)
+		elif enemy.icon:
+			var icon = TextureRect.new()
+			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 			icon.texture = enemy.icon
+			icon_container.add_child(icon)
 		else:
 			var color = ColorRect.new()
 			color.color = Color.PURPLE
 			color.set_anchors_preset(Control.PRESET_FULL_RECT)
-			icon.add_child(color)
-		enemy_container.add_child(icon)
+			icon_container.add_child(color)
+		
+		var lvl_lbl = Label.new()
+		lvl_lbl.text = "Lv." + str(enemy.level)
+		lvl_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lvl_lbl.add_theme_font_size_override("font_size", 24)
+		lvl_lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
+		vbox.add_child(lvl_lbl)
 
 func _update_team_display():
 	if not team_container: return
@@ -143,7 +191,7 @@ func _populate_legend():
 	}
 	
 	for group in AtomicConfig.GROUP_COLORS:
-		if group == AtomicConfig.Group.UNKNOWN or group == AtomicConfig.Group.VOID: continue
+		if group == AtomicConfig.Group.UNKNOWN: continue
 		
 		var item = legend_item_scene.instantiate()
 		legend_container.add_child(item)
@@ -191,6 +239,11 @@ func _show_collection_selector():
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	
+	# Make scrollbar chunky for mobile
+	var v_scroll = scroll.get_v_scroll_bar()
+	v_scroll.custom_minimum_size.x = 40
+	
 	main_vbox.add_child(scroll)
 	
 	var grid = GridContainer.new()
@@ -201,15 +254,22 @@ func _show_collection_selector():
 	grid.add_theme_constant_override("v_separation", 15)
 	scroll.add_child(grid)
 	
+	# Reset button states when scrolling starts (fixes stuck press states)
+	scroll.scroll_started.connect(func():
+		for child in grid.get_children():
+			child.modulate = Color.WHITE
+	)
+	
 	# Populate Grid
 	for monster in PlayerData.owned_monsters:
 		# Skip if already in team (unless it's the one we are replacing, but simpler to just hide all active)
 		if monster in PlayerData.active_team:
 			continue
 			
-		var btn = Button.new()
+		var btn = PanelContainer.new()
 		btn.custom_minimum_size = Vector2(0, 220)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.mouse_filter = Control.MOUSE_FILTER_PASS # Allow scrolling to pass through
 		
 		# Custom Layout for Mobile Friendly Icon
 		var btn_margin = MarginContainer.new()
@@ -243,21 +303,41 @@ func _show_collection_selector():
 		var lbl = Label.new()
 		lbl.text = monster.monster_name + "\nLv." + str(monster.level)
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.add_theme_font_size_override("font_size", 24)
+		lbl.add_theme_color_override("font_color", Color("#010813"))
+		lbl.add_theme_font_size_override("font_size", 44)
+		lbl.add_theme_color_override("font_outline_color", Color("#60fafc").darkened(0.5))
+		lbl.add_theme_constant_override("outline_size", 5)
 		btn_vbox.add_child(lbl)
 			
 		# Style
-		var style = StyleBoxFlat.new()
 		var bg_color = Color(0.1, 0.1, 0.1, 1)
 		if "group" in monster:
 			bg_color = AtomicConfig.GROUP_COLORS.get(monster.group, bg_color)
-		style.bg_color = bg_color.darkened(0.6)
-		style.set_corner_radius_all(8)
-		btn.add_theme_stylebox_override("normal", style)
-		btn.add_theme_stylebox_override("hover", style)
-		btn.add_theme_stylebox_override("pressed", style)
+			
+		var gradient = Gradient.new()
+		gradient.set_color(0, bg_color)
+		gradient.set_color(1, bg_color.darkened(0.5))
 		
-		btn.pressed.connect(func(): _show_mini_detail(monster))
+		var grad_tex = GradientTexture2D.new()
+		grad_tex.gradient = gradient
+		grad_tex.fill_from = Vector2(0, 0)
+		grad_tex.fill_to = Vector2(0, 1)
+		
+		var style = StyleBoxTexture.new()
+		style.texture = grad_tex
+		btn.add_theme_stylebox_override("panel", style)
+		
+		# Manual Input Handling for better scroll feel
+		btn.gui_input.connect(func(event):
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+				if event.pressed:
+					btn.modulate = Color(0.7, 0.7, 0.7)
+				else:
+					btn.modulate = Color.WHITE
+					if Rect2(Vector2.ZERO, btn.size).has_point(event.position):
+						_show_mini_detail(monster)
+		)
+		
 		grid.add_child(btn)
 		
 	# Footer Buttons
@@ -387,14 +467,11 @@ func _show_mini_detail(monster: MonsterData):
 	moves_lbl.add_theme_color_override("font_color", Color("#60fafc"))
 	vbox.add_child(moves_lbl)
 	
-	var scroll = ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(scroll)
-	
 	var moves_vbox = VBoxContainer.new()
 	moves_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	moves_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	moves_vbox.add_theme_constant_override("separation", 15)
-	scroll.add_child(moves_vbox)
+	vbox.add_child(moves_vbox)
 	
 	var moves_list = monster.moves
 	if moves_list.is_empty() and "group" in monster:
@@ -529,6 +606,10 @@ func _on_clear_team_pressed():
 func _on_start_pressed():
 	if start_btn.disabled:
 		return
+		
+	if CampaignManager:
+		CampaignManager.is_active_campaign_battle = true
+		
 	GlobalManager.switch_scene("battle")
 
 func _on_back_pressed():

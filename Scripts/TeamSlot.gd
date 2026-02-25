@@ -19,12 +19,22 @@ func setup(monster: MonsterData, team_idx: int, is_selection_mode: bool, anim_fr
 		labels_container.visible = true
 		
 		# Background Style based on Group
-		var style = StyleBoxFlat.new()
 		var bg_color = Color(0.1, 0.1, 0.1, 1)
 		if "group" in monster:
 			bg_color = AtomicConfig.GROUP_COLORS.get(monster.group, bg_color)
-		style.bg_color = bg_color.darkened(0.6)
-		style.set_corner_radius_all(8)
+		
+		var gradient = Gradient.new()
+		gradient.set_color(0, bg_color)
+		gradient.set_color(1, bg_color.darkened(0.5))
+		
+		var grad_tex = GradientTexture2D.new()
+		grad_tex.gradient = gradient
+		grad_tex.fill_from = Vector2(0, 0)
+		grad_tex.fill_to = Vector2(0, 1)
+		
+		var style = StyleBoxTexture.new()
+		style.texture = grad_tex
+		
 		add_theme_stylebox_override("normal", style)
 		add_theme_stylebox_override("hover", style)
 		add_theme_stylebox_override("pressed", style)
@@ -34,6 +44,8 @@ func setup(monster: MonsterData, team_idx: int, is_selection_mode: bool, anim_fr
 		
 		# Name Label
 		name_label.text = monster.monster_name
+		name_label.add_theme_color_override("font_outline_color", Color.BLACK)
+		name_label.add_theme_constant_override("outline_size", 6)
 		
 		# Sprite / Animation
 		if anim_frames:
@@ -74,6 +86,8 @@ func _setup_role_label(team_idx: int):
 	var role_style = StyleBoxFlat.new()
 	role_style.bg_color = Color(0, 0, 0, 0.5)
 	role_label.add_theme_stylebox_override("normal", role_style)
+	role_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	role_label.add_theme_constant_override("outline_size", 4)
 	
 	if team_idx == 0: 
 		role_label.text = "VANGUARD"

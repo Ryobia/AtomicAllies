@@ -145,3 +145,11 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 		"Reactive Vapor":
 			result.effects.append({ "target": defender, "status": "corrosion", "damage": 15, "duration": 3 })
 			result.messages.append("%s is surrounded by vapor!" % defender.data.monster_name)
+			
+		"Void Harden":
+			result.effects.append({ "target": attacker, "stat": "defense", "amount": 10, "duration": 3 })
+			result.messages.append("%s hardens its shell!" % attacker.data.monster_name)
+			
+		"Void Command":
+			result.effects.append({ "target": attacker, "stat": "attack", "amount": 10, "duration": 3 })
+			result.messages.append("%s commands the void!" % attacker.data.monster_name)

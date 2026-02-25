@@ -72,10 +72,10 @@ func setup(monster_data: MonsterData, player_team: bool):
 	current_hp = max_hp
 
 func update_atb(delta: float, tuning_factor: float = 0.5) -> float:
-	if is_dead: return 0.0
+	# Dead units can still charge ATB to trigger a replacement turn
 	
 	# Stun check
-	if has_status("stun"): return atb_value
+	if not is_dead and has_status("stun"): return atb_value
 	
 	var speed = stats.get("speed", 10)
 	atb_value += speed * delta * tuning_factor

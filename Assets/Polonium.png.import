@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://5ga0nvvhbbc1"
-path="res://.godot/imported/NullWalker.png-2ce58d6f08f07968ec13feb14c972971.ctex"
+uid="uid://c4levv5pk6mn4"
+path="res://.godot/imported/Polonium.png-05b34db76d3df2f725511bec2e8f7e70.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/NullWalker.png"
-dest_files=["res://.godot/imported/NullWalker.png-2ce58d6f08f07968ec13feb14c972971.ctex"]
+source_file="res://Assets/Polonium.png"
+dest_files=["res://.godot/imported/Polonium.png-05b34db76d3df2f725511bec2e8f7e70.ctex"]
 
 [params]
 

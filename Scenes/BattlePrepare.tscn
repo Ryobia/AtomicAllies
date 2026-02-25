@@ -8,6 +8,9 @@
 [ext_resource type="Texture2D" uid="uid://brdd8al3jw0ab" path="res://Assets/Status_Hostile.tres" id="4_ybltu"]
 [ext_resource type="Texture2D" uid="uid://ci5ufhq38b3a5" path="res://Assets/Status_Friendly.tres" id="5_81dwr"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pge3j"]
+bg_color = Color(0.08627451, 0.1764706, 0.26666668, 0.7529412)
+
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_gs6tb"]
 color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 thickness = 10
@@ -70,7 +73,8 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_pge3j")
 text = "ENEMY INTEL"
 horizontal_alignment = 1
 
@@ -88,12 +92,14 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_pge3j")
 text = "ACTIVE SQUAD (MAX 6)"
 horizontal_alignment = 1
 
 [node name="TeamContainer" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=278603429]
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/h_separation = 15
 theme_override_constants/v_separation = 30
 columns = 3
@@ -102,15 +108,6 @@ columns = 3
 layout_mode = 2
 theme_override_styles/separator = SubResource("StyleBoxLine_gs6tb")
 
-[node name="Label2" type="Label" parent="MarginContainer/VBoxContainer" unique_id=137134099]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_constants/outline_size = 10
-theme_override_font_sizes/font_size = 40
-text = "LEGEND"
-horizontal_alignment = 1
-
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=464732082]
 layout_mode = 2
 size_flags_vertical = 3
@@ -118,7 +115,7 @@ size_flags_vertical = 3
 [node name="LegendContainer" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=1376741378]
 layout_mode = 2
 size_flags_horizontal = 3
-columns = 5
+columns = 2
 
 [node name="FooterButtons" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1427586155]
 layout_mode = 2
