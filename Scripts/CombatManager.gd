@@ -65,13 +65,22 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	var effective_attack = attacker.stats.attack
 	var effective_defense = defender.stats.defense
 
-	# Class Buff: Alkali Metals ignore defense based on collection (1% per element)
+	# Class Buff: Alkali Metals ignore 5% defense per element owned
 	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
 		var alkali_count = 0
 		if PlayerData:
 			alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
-		var penetration = 0.05 + (alkali_count * 0.01)
+		var penetration = alkali_count * 0.05
 		effective_defense = int(effective_defense * (1.0 - penetration))
+
+	# Transition Metal Passive: Consecutive attacks deal 5% more damage
+	if attacker.data.group == AtomicConfig.Group.TRANSITION_METAL:
+		var consec = attacker.get_meta("consecutive_attacks", 0)
+		if consec > 0:
+			effective_attack = int(effective_attack * (1.0 + (consec * 0.05)))
+		attacker.set_meta("consecutive_attacks", consec + 1)
+	else:
+		attacker.set_meta("consecutive_attacks", 0)
 
 	# Formula: (Base Attack + Move Power) * Mitigation
 	# Formula: (Base Attack + Move Power) * Mitigation
@@ -84,13 +93,67 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	var mitigation = (100.0 / (100.0 + effective_defense))
 	var final_damage = raw_power * mitigation
 	
+	# Actinide Passive: Deal bonus 10% max health damage
+	if attacker.data.group == AtomicConfig.Group.ACTINIDE:
+		final_damage += (attacker.max_hp * 0.1)
+	
 	# Variance +/- 10%
 	final_damage *= randf_range(0.9, 1.1)
-
+	
 	result.damage = int(final_damage)
 	result.messages.append("It dealt %d damage!" % result.damage)
 
 func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, move: MoveData, result: Dictionary):
+	
+	# --- Class On-Hit Effects ---
+	
+	# Halogen: Poison
+	if attacker.data.group == AtomicConfig.Group.HALOGEN:
+		var count = PlayerData.class_resonance.get(AtomicConfig.Group.HALOGEN, 0)
+		var bonus_dmg = 1.0 + (count * 0.01) # +1% damage per element
+		var duration = 3
+		
+		var poison_dmg = int((defender.max_hp * 0.10) * bonus_dmg)
+		result.effects.append({ "target": defender, "status": "poison", "damage": poison_dmg, "duration": duration })
+		
+	# Metalloid: Stun
+	if attacker.data.group == AtomicConfig.Group.METALLOID:
+		if randf() < 0.10:
+			result.effects.append({ "target": defender, "status": "stun", "duration": 1 })
+			
+	# Transition Metal: Double Hit
+	if attacker.data.group == AtomicConfig.Group.TRANSITION_METAL:
+		var count = PlayerData.class_resonance.get(AtomicConfig.Group.TRANSITION_METAL, 0)
+		var chance = 0.02 * count # +2% chance per element
+		
+		if randf() < chance:
+			result.damage = int(result.damage * 1.5) # 50% extra damage
+			result.messages.append("Double Hit!")
+			
+	# Nonmetal: Chain Reaction
+	if attacker.data.group == AtomicConfig.Group.NONMETAL:
+		var count = PlayerData.class_resonance.get(AtomicConfig.Group.NONMETAL, 0)
+		var chance = 0.05 * count # +5% chance per element
+			
+		if randf() < chance:
+			result.effects.append({ "effect": "chain_reaction", "amount": result.damage })
+
+	# Metalloid: +5% Debuff Effectiveness (Increase stat drop amount)
+	if attacker.data.group == AtomicConfig.Group.METALLOID:
+		var count = PlayerData.class_resonance.get(AtomicConfig.Group.METALLOID, 0)
+		var multiplier = 1.0 + (count * 0.05)
+		for effect in result.effects:
+			if effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
+				effect.amount = int(effect.amount * multiplier)
+
+	# Post-Transition: +5% Buff Effectiveness (Increase stat buff amount)
+	if attacker.data.group == AtomicConfig.Group.POST_TRANSITION:
+		var count = PlayerData.class_resonance.get(AtomicConfig.Group.POST_TRANSITION, 0)
+		var multiplier = 1.0 + (count * 0.05)
+		for effect in result.effects:
+			if effect.get("type") == "stat_mod" and effect.get("amount", 0) > 0:
+				effect.amount = int(effect.amount * multiplier)
+
 	match move.name:
 		"Electron Jettison":
 			# Reduces Defense to zero (simulated by a massive debuff)

@@ -118,11 +118,30 @@ static func calculate_stats(group: Group, atomic_number: int, stability: int = 0
 	
 	var final_stats = {}
 	
-	# 1. Resonance Bonus: +1% stats per unique element of this group discovered
+	# 1. Resonance Bonus (Set Bonus): Scales based on total owned elements of this group
 	var resonance_count = 0
 	if PlayerData:
 		resonance_count = PlayerData.class_resonance.get(group, 0)
-	var resonance_multiplier = 1.0 + (resonance_count * 0.01)
+	
+	# Default Multipliers
+	var hp_mult = 1.0
+	var atk_mult = 1.0
+	var def_mult = 1.0
+	var spd_mult = 1.0
+	
+	match group:
+		Group.ALKALINE_EARTH:
+			def_mult += (resonance_count * 0.05) # +5% Def per element
+		Group.NOBLE_GAS:
+			hp_mult += (resonance_count * 0.05) # +5% HP per element
+		Group.ACTINIDE:
+			spd_mult += (resonance_count * 0.01) # +1% Speed per element
+		Group.LANTHANIDE:
+			var bonus = resonance_count * 0.01 # +1% All Stats per element
+			hp_mult += bonus
+			atk_mult += bonus
+			def_mult += bonus
+			spd_mult += bonus
 	
 	# 2. Stability Bonus: Scales stats up to +50% at 100 stability
 	var stability_multiplier = 1.0 + (float(stability) / 200.0)
@@ -131,18 +150,16 @@ static func calculate_stats(group: Group, atomic_number: int, stability: int = 0
 	if stability >= 100:
 		stability_multiplier += 0.1
 		
-	var total_multiplier = resonance_multiplier * stability_multiplier
-	
 	# Simplified Linear Scaling
 	# HP: Base (1-10)
 	# Example: Base 5 -> 50 HP
-	final_stats["max_hp"] = int((base.hp * 10.0) * total_multiplier)
+	final_stats["max_hp"] = int((base.hp * 10.0) * stability_multiplier * hp_mult)
 	
 	# Stats: Base (1-10)
 	# Example: Base 5 -> 10 Stat
-	final_stats["attack"] = int((base.atk * 2.0) * total_multiplier)
-	final_stats["defense"] = int((base.def * 2.0) * total_multiplier)
-	final_stats["speed"] = int((base.spd * 2.0) * total_multiplier)
+	final_stats["attack"] = int((base.atk * 2.0) * stability_multiplier * atk_mult)
+	final_stats["defense"] = int((base.def * 2.0) * stability_multiplier * def_mult)
+	final_stats["speed"] = int((base.spd * 2.0) * stability_multiplier * spd_mult)
 	
 	return final_stats
 

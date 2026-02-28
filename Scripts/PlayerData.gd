@@ -21,6 +21,8 @@ func _ready():
 		if h: owned_monsters.append(h.duplicate())
 		if he: owned_monsters.append(he.duplicate())
 		save_game()
+	
+	recalculate_class_resonance()
 
 signal resource_updated(resource_type, amount)
 
@@ -104,12 +106,8 @@ func remove_capsule(capsule_id: String):
 func unlock_blueprint(z: int):
 	if z not in unlocked_blueprints:
 		unlocked_blueprints.append(z)
-		# Update Class Resonance
-		var monster = MonsterManifest.get_monster(z)
-		if monster:
-			if not class_resonance.has(monster.group): class_resonance[monster.group] = 0
-			class_resonance[monster.group] += 1
 		save_game()
+		recalculate_class_resonance()
 
 func get_max_unlocked_z() -> int:
 	var max_z = 0
@@ -120,6 +118,24 @@ func get_max_unlocked_z() -> int:
 		if z > max_z:
 			max_z = z
 	return max_z
+
+func recalculate_class_resonance():
+	class_resonance.clear()
+	var unique_z = {}
+	
+	# Count from owned monsters
+	for m in owned_monsters:
+		unique_z[m.atomic_number] = true
+		
+	# Count from blueprints
+	for z in unlocked_blueprints:
+		unique_z[z] = true
+		
+	for z in unique_z:
+		var monster = MonsterManifest.get_monster(z)
+		if monster:
+			if not class_resonance.has(monster.group): class_resonance[monster.group] = 0
+			class_resonance[monster.group] += 1
 
 # --- Save & Load System ---
 
@@ -266,6 +282,7 @@ func reset_save():
 	
 	# 4. Save (creates fresh file)
 	save_game()
+	recalculate_class_resonance()
 	
 	print("PlayerData: Save reset. Reloading scene...")
 	get_tree().reload_current_scene()

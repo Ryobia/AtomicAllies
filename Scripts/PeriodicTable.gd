@@ -21,6 +21,7 @@ var _current_max_z = 0
 # Run UI
 var _run_popup: Control
 var _selected_run_z: int = 0
+var _ui_layer: CanvasLayer
 
 func _ready():
 	# $Background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -30,7 +31,6 @@ func _ready():
 		grid.columns = 18 # Standard Periodic Table width
 		grid.add_theme_constant_override("h_separation", 8)
 		grid.add_theme_constant_override("v_separation", 8)
-		grid.draw.connect(_on_grid_draw)
 		grid.sort_children.connect(func(): grid.queue_redraw())
 		_populate_table(grid)
 		
@@ -139,6 +139,7 @@ func _populate_table(grid: GridContainer):
 	_add_spacers(grid, 3) # Indent
 	for z in range(89, 104): _add_card(grid, z) # Ac - Lr
 	
+	_add_scene_legend(grid)
 	grid.queue_redraw()
 	# Clear lookup to free memory
 	_owned_lookup.clear()
@@ -248,6 +249,18 @@ func _add_card(grid: Container, z: int):
 		particles.color = Color("#ffd700") # Gold
 		card.add_child(particles)
 		
+		# Add Pulse Animation & Border for the current target
+		card.pivot_offset = card.custom_minimum_size / 2
+		var tween = create_tween()
+		tween.set_loops()
+		tween.tween_property(card, "scale", Vector2(1.05, 1.05), 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(card, "scale", Vector2.ONE, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		
+		var active_style = style.duplicate()
+		active_style.border_color = Color("#ffd700")
+		active_style.set_border_width_all(2)
+		card.add_theme_stylebox_override("panel", active_style)
+		
 	card.set_meta("status", status)
 
 func _add_spacers(grid: Container, count: int):
@@ -255,6 +268,77 @@ func _add_spacers(grid: Container, count: int):
 		var spacer = Control.new()
 		spacer.custom_minimum_size = Vector2(100, 120) # Match card size
 		grid.add_child(spacer)
+
+func _add_scene_legend(grid: Control):
+	# Create a Node2D holder so GridContainer layout ignores it, 
+	# but it still moves/scales with the grid.
+	var holder = Node2D.new()
+	holder.name = "LegendHolder"
+	
+	# Position calculation:
+	# Col width = 100 + 8 = 108. Row height = 120 + 8 = 128.
+	# Gap starts after Col 2 (x = 216) and Row 1 (y = 128).
+	holder.position = Vector2(216, 128)
+	grid.add_child(holder)
+	
+	var panel = PanelContainer.new()
+	# Gap size: 10 columns wide (1072px), 2 rows high (248px)
+	panel.custom_minimum_size = Vector2(1040, 248)
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.3) # Subtle background
+	style.border_color = Color("#60fafc")
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.set_corner_radius_all(8)
+	panel.add_theme_stylebox_override("panel", style)
+	
+	holder.add_child(panel)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_top", 15)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_bottom", 15)
+	panel.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "Atomic Classes"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color("#60fafc"))
+	vbox.add_child(title)
+	
+	var legend_grid = GridContainer.new()
+	legend_grid.columns = 5
+	legend_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	legend_grid.add_theme_constant_override("h_separation", 17)
+	legend_grid.add_theme_constant_override("v_separation", 20)
+	vbox.add_child(legend_grid)
+	
+	for group in AtomicConfig.GROUP_COLORS:
+		if group >= AtomicConfig.Group.UNKNOWN: continue
+		
+		var hbox = HBoxContainer.new()
+		hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hbox.add_theme_constant_override("separation", 12)
+		legend_grid.add_child(hbox)
+		
+		var rect = ColorRect.new()
+		rect.custom_minimum_size = Vector2(40, 40)
+		rect.color = AtomicConfig.GROUP_COLORS[group]
+		rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		hbox.add_child(rect)
+		
+		var lbl = Label.new()
+		lbl.text = AtomicConfig.Group.find_key(group).replace("_", " ").capitalize()
+		lbl.add_theme_font_size_override("font_size", 26)
+		hbox.add_child(lbl)
 
 func _get_cached_style(monster: MonsterData, is_owned: bool) -> StyleBoxFlat:
 	var group = -1
@@ -428,14 +512,10 @@ func _input(event):
 					_scroll_container.scroll_vertical = int(new_scroll_pos.y)
 
 func _setup_legend_ui():
-	var layer = CanvasLayer.new()
-	layer.layer = 10
-	add_child(layer)
+	_ui_layer = CanvasLayer.new()
+	_ui_layer.layer = 10
+	add_child(_ui_layer)
 
-	var btn = Button.new()
-	btn.text = "Legend"
-	btn.add_theme_font_size_override("font_size", 32)
-	
 	# Styling
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color("#60fafc")
@@ -445,121 +525,27 @@ func _setup_legend_ui():
 	var hover_style = style.duplicate()
 	hover_style.bg_color = style.bg_color.lightened(0.2)
 	
-	btn.add_theme_stylebox_override("normal", style)
-	btn.add_theme_stylebox_override("hover", hover_style)
-	btn.add_theme_stylebox_override("pressed", style)
-	btn.add_theme_color_override("font_color", Color("#010813"))
+	# --- Synergy Button ---
+	var syn_btn = Button.new()
+	syn_btn.text = "Synergies"
+	syn_btn.add_theme_font_size_override("font_size", 32)
+	syn_btn.add_theme_stylebox_override("normal", style)
+	syn_btn.add_theme_stylebox_override("hover", hover_style)
+	syn_btn.add_theme_stylebox_override("pressed", style)
+	syn_btn.add_theme_color_override("font_color", Color("#010813"))
 	
 	# Position top-left
-	btn.anchor_left = 0.0
-	btn.anchor_right = 0.0
-	btn.offset_left = 30
-	btn.offset_top = 30
-	btn.offset_right = 190
-	btn.offset_bottom = 100
-	layer.add_child(btn)
+	syn_btn.anchor_left = 0.0
+	syn_btn.anchor_right = 0.0
+	syn_btn.offset_left = 30
+	syn_btn.offset_top = 30
+	syn_btn.offset_right = 220
+	syn_btn.offset_bottom = 100
+	syn_btn.pressed.connect(_show_synergy_popup)
+	_ui_layer.add_child(syn_btn)
 	
-	var panel = PanelContainer.new()
-	panel.visible = false
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	layer.add_child(panel)
-	
-	# Panel Styling
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color("#010813")
-	panel_style.border_width_left = 2
-	panel_style.border_width_top = 2
-	panel_style.border_width_right = 2
-	panel_style.border_width_bottom = 2
-	panel_style.border_color = Color("#60fafc")
-	panel.add_theme_stylebox_override("panel", panel_style)
-	
-	btn.pressed.connect(func(): panel.visible = !panel.visible)
-	
-	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 20)
-	margin.add_theme_constant_override("margin_right", 20)
-	margin.add_theme_constant_override("margin_top", 20)
-	margin.add_theme_constant_override("margin_bottom", 20)
-	panel.add_child(margin)
-	
-	var vbox = VBoxContainer.new()
-	margin.add_child(vbox)
-	
-	var title = Label.new()
-	title.text = "Atomic Classes"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 24)
-	vbox.add_child(title)
-	
-	var grid = GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 15)
-	grid.add_theme_constant_override("v_separation", 5)
-	vbox.add_child(grid)
-	
-	for group in AtomicConfig.GROUP_COLORS:
-		if group == AtomicConfig.Group.UNKNOWN: continue
-		
-		var rect = ColorRect.new()
-		rect.custom_minimum_size = Vector2(30, 30)
-		rect.color = AtomicConfig.GROUP_COLORS[group]
-		grid.add_child(rect)
-		
-		var lbl = Label.new()
-		lbl.text = AtomicConfig.Group.find_key(group).replace("_", " ").capitalize()
-		grid.add_child(lbl)
-
-func _on_grid_draw():
-	var grid = find_child("GridContainer", true, false)
-	if not grid: return
-	
-	var draw_limit = min(_current_max_z, 117)
-	
-	for z in range(1, draw_limit + 1):
-		if _card_nodes.has(z) and _card_nodes.has(z + 1):
-			var node_a = _card_nodes[z]
-			var node_b = _card_nodes[z + 1]
-			
-			var start = node_a.position + node_a.size / 2
-			var end = node_b.position + node_b.size / 2
-			
-			var color = Color(0.2, 0.2, 0.2, 0.5) # Default locked path
-			var width = 2.0
-			
-			var status_a = node_a.get_meta("status", 0)
-			var status_b = node_b.get_meta("status", 0)
-			
-			if status_a == 2 and status_b == 2:
-				color = Color("#60fafc") # Cyan (Owned Path)
-				width = 4.0
-			elif status_a == 2 and status_b == 1:
-				color = Color("#ffd700") # Gold (Next Step)
-				width = 3.0
-			
-			_draw_curve(grid, start, end, color, width)
-
-func _draw_curve(canvas: CanvasItem, start: Vector2, end: Vector2, color: Color, width: float):
-	var dist = start.distance_to(end)
-	var handle_len = clamp(dist * 0.4, 40.0, 150.0)
-	
-	var cp1 = start + Vector2(handle_len, 0)
-	var cp2 = end - Vector2(handle_len, 0)
-	
-	var points = PackedVector2Array()
-	var segments = 24
-	
-	for i in range(segments + 1):
-		var t = i / float(segments)
-		var p = _cubic_bezier(start, cp1, cp2, end, t)
-		points.append(p)
-		
-	canvas.draw_polyline(points, color, width, true)
-
-func _cubic_bezier(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: float) -> Vector2:
-	var u = 1.0 - t
-	var t2 = t * t
-	var u2 = u * u
-	var u3 = u2 * u
-	var t3 = t2 * t
-	return (u3 * p0) + (3.0 * u2 * t * p1) + (3.0 * u * t2 * p2) + (t3 * p3)
+func _show_synergy_popup():
+	var scene = load("res://Scenes/SynergyView.tscn")
+	if scene:
+		var popup = scene.instantiate()
+		_ui_layer.add_child(popup)

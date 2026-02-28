@@ -68,7 +68,7 @@ func _ready():
 
 	help_icon = find_child("HelpIcon", true, false)
 	if help_icon:
-		help_icon.tooltip_text = "Stability depends on Parent Levels.\nLevel up your monsters to increase success rate!"
+		help_icon.tooltip_text = "Success depends on Parent Stability.\nFusions with high stability parents are more likely to succeed."
 		help_icon.theme = GlobalManager.tooltip_theme
 		# Mobile support: Make icon clickable to show tooltip
 		help_icon.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -440,12 +440,16 @@ func _update_slot_visuals(slot_idx: int, monster: MonsterData):
 	if slot_idx == 2 and is_instance_valid(atom_p2): atom_p2.queue_free()
 
 	if monster:
-		var atom = _create_atom(monster)
-		if atom:
-			icon_rect.add_child(atom)
-			atom.position = icon_rect.size / 2.0
-			if slot_idx == 1: atom_p1 = atom
-			else: atom_p2 = atom
+		var target_size = icon_rect.size
+		if target_size == Vector2.ZERO: target_size = icon_rect.custom_minimum_size
+		if target_size == Vector2.ZERO: target_size = Vector2(200, 200)
+		
+		var visual = _create_monster_visual(monster, target_size)
+		if visual:
+			icon_rect.add_child(visual)
+			visual.position = icon_rect.size / 2.0
+			if slot_idx == 1: atom_p1 = visual
+			else: atom_p2 = visual
 
 func _update_stability_preview():
 	if parent_1 and parent_2:
@@ -460,10 +464,10 @@ func _update_stability_preview():
 			_update_bar_color(chance)
 			
 		if stability_label:
-			stability_label.text = "Stability: %d%%" % int(chance)
+			stability_label.text = "Chance of Success: %d%%" % int(chance)
 	else:
 		if stability_bar: stability_bar.value = 0
-		if stability_label: stability_label.text = "Stability: --"
+		if stability_label: stability_label.text = "Chance of Success: --"
 
 func _update_bar_color(chance: float):
 	if not stability_bar: return
@@ -520,19 +524,46 @@ func _animate_button_press(btn: Control):
 	tween.tween_property(btn, "scale", Vector2(0.95, 0.95), 0.1)
 	tween.tween_property(btn, "scale", Vector2.ONE, 0.1)
 
-func _create_atom(monster: MonsterData) -> Node2D:
-	var atom_script = load("res://Scripts/DynamicAtom.gd")
-	var electron_tex = load("res://data/ElectronGlow.tres")
+func _create_monster_visual(monster: MonsterData, container_size: Vector2) -> Node2D:
+	var anim_path = "res://Assets/Animations/" + monster.monster_name.replace(" ", "") + ".tres"
 	
-	if not atom_script or not electron_tex:
-		return null
+	if ResourceLoader.exists(anim_path):
+		var sprite_frames = load(anim_path)
+		var sprite = AnimatedSprite2D.new()
+		sprite.sprite_frames = sprite_frames
 		
-	var atom = Node2D.new()
-	atom.set_script(atom_script)
-	atom.atomic_number = monster.atomic_number
-	atom.electron_texture = electron_tex
-	atom.rotation_speed = 20.0
-	return atom
+		var anim_to_play = "idle"
+		if not sprite_frames.has_animation(anim_to_play):
+			if sprite_frames.has_animation("default"):
+				anim_to_play = "default"
+			else:
+				var anims = sprite_frames.get_animation_names()
+				if anims.size() > 0:
+					anim_to_play = anims[0]
+		
+		sprite.play(anim_to_play)
+		
+		# Scale to fit container
+		var tex = sprite_frames.get_frame_texture(anim_to_play, 0)
+		if tex:
+			var target_h = container_size.y * 0.8
+			if target_h <= 0: target_h = 150.0
+			var s = target_h / float(tex.get_height())
+			sprite.scale = Vector2(s, s)
+			
+		return sprite
+	elif monster.icon:
+		var sprite = Sprite2D.new()
+		sprite.texture = monster.icon
+		
+		var target_h = container_size.y * 0.8
+		if target_h <= 0: target_h = 150.0
+		var s = target_h / float(monster.icon.get_height())
+		sprite.scale = Vector2(s, s)
+		
+		return sprite
+		
+	return null
 
 func _debug_add_starters():
 	print("DEBUG: Inventory empty. Adding starter atoms (H, H, He)...")

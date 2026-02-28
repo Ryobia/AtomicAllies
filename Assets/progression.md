@@ -42,21 +42,22 @@ This prevents power creep by making early elements permanently viable through cl
 
 ### Class Buff Overview
 
-| Class | Primary Buff | Feel |
+| Class | Primary Buff | Feel | Full-Set-Bonus | Passive buff
 |-------|-------------|------------------|------|
-| **Alkali Metals** | Ignore 1% defense per element | Glass Cannon |
-| **Alkaline Earths** | +5% Armor per element  | Unstoppable Wall |
-| **Transition Metals** | Increase attack by 1% per element | Engine of team |
-| **Halogens** | Poison damage increased by 1% per element | Damage Over Time |
-| **Noble Gases** | Increase health by 5% per element | Status Immunity |
-| **Lanthanides** | +2% Global Buff multiplier per element  | Buff for your Buffs |
-| **Nonmetals** | +5% Chain Reaction chance per element  | Multi-target control |
-| **Post-Transition** | +4% Max HP per element  | Raw survivability |
-| **Actinides** | Passive Aura radius + tick damage  | Passive pressure |
+| **Alkali Metals** | Ignore 5% defense per element | Glass Cannon | First attack in combat crits for 2x damage | ignore 5% defense
+| **Alkaline Earths** | +5% Defense per element  | Unstoppable Wall | Immune to first instance of damage | +5% defense every turn
+| **Transition Metals** | +2% chance attacks trigger a second hit at 50% power | Engine of team | +15% chance to attack twice | consecutive attacks deal 5% more damage
+| **Halogens** | Poison damage increased by 1% per element | Damage Over Time | poison effects last an additional turn | all attacks apply poison effect that deals 10% max health per turn
+| **Noble Gases** | Increase health by 5% per element | Status Immunity | Immune to debuffs | Restore 5% health per turn
+| **Lanthanides** | +1% Global stat increase per element  | Buff for your Buffs | additional 10% increase to all elements basic stats (Hp, Spd, Atk, Def) | Absorb 10% of stats of fallen enemies
+| **Nonmetals** | +5% Chain Reaction (attack spreads to additional enemy) chance per element  | Multi-target control | Guarenteed chain reaction | Allies gain 5% attack per Nonmetal in party
+| **Metalloids** | +5% debuff effectiveness per element | Crowd Control | all debuffs last an additional turn | 10% chance to stun enemy
+| **Post-Transition** | +5% friendly buff effectiveness per element | Raw survivability | all buffs last an additional turn | gain 1% of each basic stat each turn
+| **Actinides** | Increase speed by 1% per element | mounting pressure | Increase speed by 3% every turn | Loses 10% health per turn in exchange for dealing bonus 10% max health damage on attack
 
 ### The Dopamine Loop
 When synthesis completes:
-> "Moscovium synthesized! All Actinides gain +5% Radiation Aura. Uranium's damage increased by 12%!"
+> "Curium synthesized! All Actinides gain +1% speed!"
 
 ---
 

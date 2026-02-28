@@ -21,6 +21,7 @@ var icon_texture
 var moves_container
 var class_label
 var class_help_icon
+var class_bonus_label
 var view_toggle
 var prev_button
 var next_button
@@ -42,6 +43,7 @@ func _ready():
 	moves_container = find_child("MovesContainer", true, false)
 	class_label = find_child("ClassLabel", true, false)
 	class_help_icon = find_child("HelpIcon", true, false)
+	class_bonus_label = find_child("ClassBonus", true, false)
 	view_toggle = find_child("ViewToggle", true, false)
 	prev_button = find_child("PrevButton", true, false)
 	next_button = find_child("NextButton", true, false)
@@ -58,6 +60,11 @@ func _ready():
 		class_help_icon.mouse_filter = Control.MOUSE_FILTER_STOP
 		if not class_help_icon.gui_input.is_connected(_on_help_icon_input):
 			class_help_icon.gui_input.connect(_on_help_icon_input)
+
+	if class_bonus_label:
+		class_bonus_label.mouse_filter = Control.MOUSE_FILTER_STOP
+		if not class_bonus_label.gui_input.is_connected(_on_class_bonus_input):
+			class_bonus_label.gui_input.connect(_on_class_bonus_input)
 
 	if stability_bar:
 		stability_bar.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -136,6 +143,17 @@ func update_ui():
 			
 			if class_help_icon:
 				class_help_icon.tooltip_text = _get_class_description(current_monster.group)
+
+	if class_bonus_label and "group" in current_monster:
+		var group = current_monster.group
+		var owned = PlayerData.class_resonance.get(group, 0)
+		var total = 0
+		for m in MonsterManifest.all_monsters:
+			if m.group == group:
+				total += 1
+		
+		class_bonus_label.text = "Synergy: %d/%d Collected" % [owned, total]
+		class_bonus_label.tooltip_text = _get_synergy_desc(group, owned)
 
 	if moves_container: moves_container.modulate = content_modulate
 	if moves_container:
@@ -430,6 +448,10 @@ func _on_help_icon_input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_show_tooltip_popup(class_help_icon.tooltip_text)
 
+func _on_class_bonus_input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_show_tooltip_popup(class_bonus_label.tooltip_text)
+
 func _on_stability_bar_input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var bonus = 0.0
@@ -619,3 +641,37 @@ func _start_pulse(bar: ProgressBar, style: StyleBoxFlat):
 	tween.tween_property(style, "bg_color", Color("#fff5cc"), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(style, "bg_color", Color("#ffd700"), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	bar.set_meta("pulse_tween", tween)
+
+func _get_synergy_desc(group: int, count: int) -> String:
+	match group:
+		AtomicConfig.Group.ALKALI_METAL:
+			var val = count * 5
+			return "Current Bonus: Ignore %d%% Defense.\nPassive: +5%% Defense Penetration per element." % val
+		AtomicConfig.Group.ALKALINE_EARTH:
+			var val = count * 5
+			return "Current Bonus: +%d%% Defense.\nPassive: +5%% Defense per element." % val
+		AtomicConfig.Group.TRANSITION_METAL:
+			var val = count * 2
+			return "Current Bonus: %d%% Double Hit Chance.\nPassive: +2%% Double Hit Chance per element." % val
+		AtomicConfig.Group.HALOGEN:
+			var val = count * 1
+			return "Current Bonus: +%d%% Poison Damage.\nPassive: +1%% Poison Damage per element." % val
+		AtomicConfig.Group.NOBLE_GAS:
+			var val = count * 5
+			return "Current Bonus: +%d%% Max HP.\nPassive: +5%% Max HP per element." % val
+		AtomicConfig.Group.LANTHANIDE:
+			var val = count * 1
+			return "Current Bonus: +%d%% All Stats.\nPassive: +1%% All Stats per element." % val
+		AtomicConfig.Group.NONMETAL:
+			var val = count * 5
+			return "Current Bonus: %d%% Chain Reaction Chance.\nPassive: +5%% Chain Reaction Chance per element." % val
+		AtomicConfig.Group.METALLOID:
+			var val = count * 5
+			return "Current Bonus: +%d%% Debuff Effectiveness.\nPassive: +5%% Debuff Effectiveness per element." % val
+		AtomicConfig.Group.POST_TRANSITION:
+			var val = count * 5
+			return "Current Bonus: +%d%% Buff Effectiveness.\nPassive: +5%% Buff Effectiveness per element." % val
+		AtomicConfig.Group.ACTINIDE:
+			var val = count * 1
+			return "Current Bonus: +%d%% Speed.\nPassive: +1%% Speed per element." % val
+	return "Unknown Synergy."

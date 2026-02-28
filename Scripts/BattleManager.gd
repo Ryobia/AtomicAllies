@@ -115,6 +115,7 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	current_state = BattleState.SETUP
 	clear_battlefield()
 	roster_hp_cache.clear()
+	_update_team_passives()
 	
 	# Load initial state from CampaignManager if rogue run
 	if CampaignManager and CampaignManager.is_rogue_run:
@@ -162,6 +163,7 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 		
 	var player_count = active_player_monsters.size()
 	print("BattleManager: Battle started with %d vs %d units." % [player_count, enemy_count])
+	_update_team_passives()
 	
 	# Setup the HUD with the monster data
 	if battle_hud:
@@ -300,6 +302,7 @@ func start_turn():
 			return
 
 	current_acting_unit.on_turn_start()
+	_apply_turn_start_passives(current_acting_unit)
 	
 	# Check if unit died from start-of-turn effects (like Corrosion)
 	if current_acting_unit.is_dead:
@@ -571,6 +574,8 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	new_unit.atb_value = 0 # Start fresh
 	new_unit.play_move() # Play enter animation
 	
+	_update_team_passives()
+	
 	# Refresh HUD visuals (Sprites/Names) and restore Bars
 	if battle_hud:
 		var player_data_list = []
@@ -629,6 +634,16 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 			if target_unit and is_instance_valid(target_unit):
 				target_unit.apply_effect(effect)
 				_refresh_unit_status(target_unit)
+				
+		# Handle Chain Reaction (Nonmetal Passive)
+		for effect in result.effects:
+			if effect.get("effect") == "chain_reaction":
+				var enemies = active_enemy_monsters if attacker.is_player else active_player_monsters
+				var living = enemies.filter(func(m): return not m.is_dead and m != defender)
+				if not living.is_empty():
+					var secondary = living.pick_random()
+					secondary.take_damage(int(effect.amount * 0.5)) # 50% damage to secondary
+					log_event.emit("Chain Reaction hits %s!" % secondary.data.monster_name)
 	
 	# Wait for animation/text
 	await get_tree().create_timer(1.0).timeout
@@ -742,3 +757,48 @@ func _refresh_unit_status(unit: BattleMonster):
 		# Assuming BattleMonster has 'active_effects' property
 		if "active_effects" in unit:
 			hud_update_status.emit(unit.is_player, index, unit.active_effects)
+
+func _update_team_passives():
+	# Apply Team Auras (Passives)
+	var nonmetal_count_p = 0
+	for u in active_player_monsters:
+		if not u.is_dead:
+			if u.data.group == AtomicConfig.Group.NONMETAL: nonmetal_count_p += 1
+			
+	for u in active_player_monsters:
+		# Nonmetal Aura: Allies gain 5% attack per Nonmetal
+		if nonmetal_count_p > 0:
+			u.apply_effect({ "target": u, "stat": "attack", "amount": int(u.stats.attack * (0.05 * nonmetal_count_p)), "duration": 99 })
+
+	var nonmetal_count_e = 0
+	for u in active_enemy_monsters:
+		if not u.is_dead:
+			if u.data.group == AtomicConfig.Group.NONMETAL: nonmetal_count_e += 1
+			
+	for u in active_enemy_monsters:
+		if nonmetal_count_e > 0:
+			u.apply_effect({ "target": u, "stat": "attack", "amount": int(u.stats.attack * (0.05 * nonmetal_count_e)), "duration": 99 })
+
+func _apply_turn_start_passives(unit: BattleMonster):
+	var group = unit.data.group
+	
+	match group:
+		AtomicConfig.Group.ALKALINE_EARTH:
+			# Passive: +5% Def every turn
+			unit.apply_effect({ "target": unit, "stat": "defense", "amount": int(unit.stats.defense * 0.05), "duration": 3 })
+			
+		AtomicConfig.Group.NOBLE_GAS:
+			# Passive: Restore 5% HP
+			unit.apply_effect({ "target": unit, "effect": "heal", "amount": int(unit.max_hp * 0.05) })
+			
+		AtomicConfig.Group.POST_TRANSITION:
+			# Passive: Gain 1% stats each turn
+			unit.apply_effect({ "target": unit, "stat": "attack", "amount": int(unit.stats.attack * 0.01), "duration": 99 })
+			unit.apply_effect({ "target": unit, "stat": "defense", "amount": int(unit.stats.defense * 0.01), "duration": 99 })
+			unit.apply_effect({ "target": unit, "stat": "speed", "amount": int(unit.stats.speed * 0.01), "duration": 99 })
+			
+		AtomicConfig.Group.ACTINIDE:
+			# Passive: Lose 10% HP
+			var loss = int(unit.max_hp * 0.1)
+			unit.take_damage(loss)
+			log_event.emit("%s decays!" % unit.data.monster_name)
