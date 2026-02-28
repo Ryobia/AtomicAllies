@@ -1,6 +1,7 @@
 extends Node
 
 const SAVE_PATH = "user://savegame.json"
+const REVIVE_COST = 1
 
 func _ready():
 	load_game()
@@ -34,11 +35,12 @@ var selected_monster: MonsterData = null
 var active_team: Array[MonsterData] = []
 var pending_enemy_team: Array[MonsterData] = []
 var current_campaign_level: int = 1
+var unlocked_blueprints: Array = [] # Array of Atomic Numbers (int)
+var class_resonance: Dictionary = {} # Group (int) -> Resonance Level (int)
 
 # Resources
 var resources = {
 	"neutron_dust": 0,
-	"experience": 0,
 	"gems": 0,
 	"binding_energy": 0
 }
@@ -99,6 +101,26 @@ func remove_capsule(capsule_id: String):
 			save_game()
 			return
 
+func unlock_blueprint(z: int):
+	if z not in unlocked_blueprints:
+		unlocked_blueprints.append(z)
+		# Update Class Resonance
+		var monster = MonsterManifest.get_monster(z)
+		if monster:
+			if not class_resonance.has(monster.group): class_resonance[monster.group] = 0
+			class_resonance[monster.group] += 1
+		save_game()
+
+func get_max_unlocked_z() -> int:
+	var max_z = 0
+	for m in owned_monsters:
+		if m.atomic_number > max_z:
+			max_z = m.atomic_number
+	for z in unlocked_blueprints:
+		if z > max_z:
+			max_z = z
+	return max_z
+
 # --- Save & Load System ---
 
 func save_game():
@@ -107,14 +129,16 @@ func save_game():
 		"monsters": [],
 		"capsules": capsules,
 		"synthesis_chambers": synthesis_chambers,
-		"current_campaign_level": current_campaign_level
+		"current_campaign_level": current_campaign_level,
+		"unlocked_blueprints": unlocked_blueprints,
+		"class_resonance": class_resonance
 	}
 	
 	# Serialize Monsters
 	for m in owned_monsters:
 		var m_data = {
 			"name": m.monster_name,
-			"level": m.level
+			"stability": m.stability
 		}
 		# Save infusion stats if they exist on the monster object
 		if "infusion_hp" in m: m_data["infusion_hp"] = m.infusion_hp
@@ -166,6 +190,18 @@ func load_game():
 		if "current_campaign_level" in save_data:
 			current_campaign_level = int(save_data["current_campaign_level"])
 
+		if "unlocked_blueprints" in save_data:
+			unlocked_blueprints = save_data["unlocked_blueprints"]
+			# Ensure ints
+			for i in range(unlocked_blueprints.size()):
+				unlocked_blueprints[i] = int(unlocked_blueprints[i])
+				
+		if "class_resonance" in save_data:
+			var raw_res = save_data["class_resonance"]
+			class_resonance.clear()
+			for k in raw_res:
+				class_resonance[int(k)] = int(raw_res[k])
+
 		if "monsters" in save_data:
 			owned_monsters.clear()
 			for m_data in save_data["monsters"]:
@@ -174,7 +210,11 @@ func load_game():
 				for m in MonsterManifest.all_monsters:
 					if m.monster_name == m_name:
 						var new_m = m.duplicate()
-						new_m.level = int(m_data["level"])
+						
+						if "stability" in m_data:
+							new_m.stability = int(m_data["stability"])
+						else:
+							new_m.stability = 50 # Default for legacy saves
 						
 						# Load infusion stats
 						if "infusion_hp" in m_data: new_m.infusion_hp = int(m_data["infusion_hp"])
@@ -198,9 +238,10 @@ func reset_save():
 	capsules.clear()
 	synthesis_chambers.clear()
 	current_campaign_level = 1
+	unlocked_blueprints.clear()
+	class_resonance.clear()
 	resources = {
 		"neutron_dust": 0,
-		"experience": 0,
 		"gems": 0,
 		"binding_energy": 0
 	}

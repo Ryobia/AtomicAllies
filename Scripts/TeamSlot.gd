@@ -43,7 +43,7 @@ func setup(monster: MonsterData, team_idx: int, is_selection_mode: bool, anim_fr
 		_setup_role_label(team_idx)
 		
 		# Name Label
-		name_label.text = "%s (Lv. %d)" % [monster.monster_name, monster.level]
+		name_label.text = "%s" % [monster.monster_name]
 		name_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		name_label.add_theme_constant_override("outline_size", 6)
 		

@@ -18,30 +18,67 @@ const WEIGHTS = {
 const MAX_ENEMY_SLOTS = 6
 const MAX_CAMPAIGN_LEVEL = 50
 
+# Rogue-lite State
 var is_active_campaign_battle: bool = false
+var is_rogue_run: bool = false
+var current_run_target_z: int = 0
+var current_run_energy: int = 0
+var current_run_wave: int = 0
+var max_run_waves: int = 3 # Standard run length
+var run_team_state: Dictionary = {} # MonsterData -> int (HP)
+var run_buffs: Dictionary = {} # Stat (String) -> Amount (int)
 
-func start_next_level():
-    var level = PlayerData.current_campaign_level
+# Starts a "Discovery Run" for a specific element node
+func start_node_run(target_z: int):
+    is_rogue_run = true
+    current_run_target_z = target_z
+    current_run_energy = 0
+    current_run_wave = 1
+    run_team_state.clear()
+    run_buffs.clear()
     
-    # Cap at 50 for now (or loop into endless later)
-    if level > MAX_CAMPAIGN_LEVEL:
-        print("Campaign Completed! You have conquered the Void.")
-        return
-    
-    is_active_campaign_battle = true
-    var enemies = generate_level_encounter(level)
+    # Difficulty scales with Atomic Number
+    var difficulty_level = max(1, target_z / 2)
+    var enemies = generate_level_encounter(difficulty_level)
     
     PlayerData.pending_enemy_team = enemies
-    GlobalManager.switch_scene("battle")
+    GlobalManager.switch_scene("battle_prepare")
 
-func on_battle_ended(player_won: bool):
-    if is_active_campaign_battle and player_won:
-        if PlayerData.current_campaign_level <= MAX_CAMPAIGN_LEVEL:
-            PlayerData.current_campaign_level += 1
-            PlayerData.save_game()
-            print("Campaign Progress: Level ", PlayerData.current_campaign_level)
+func on_battle_ended(player_won: bool, rewards: Dictionary = {}, final_team_state: Dictionary = {}):
+    if is_rogue_run:
+        if player_won:
+            # Stash the energy
+            if rewards.has("binding_energy"):
+                current_run_energy += rewards["binding_energy"]
+            
+            # Update HP state for next wave
+            for monster in final_team_state:
+                run_team_state[monster] = final_team_state[monster]
+            
+            if current_run_wave < max_run_waves:
+                # Continue Run
+                current_run_wave += 1
+                print("Wave Complete. Proceeding to Rest Site...")
+                GlobalManager.switch_scene("rest_site")
+            else:
+                # Run Complete!
+                print("Run Complete! Blueprint Unlocked: ", current_run_target_z)
+                PlayerData.add_resource("binding_energy", current_run_energy)
+                PlayerData.unlock_blueprint(current_run_target_z)
+                is_rogue_run = false
+        else:
+            # Run Failed - Lose Energy
+            print("Run Failed. Binding Energy Lost: ", current_run_energy)
+            current_run_energy = 0
+            is_rogue_run = false
     
     is_active_campaign_battle = false
+
+func start_next_wave():
+    var difficulty_level = max(1, current_run_target_z / 2) + (current_run_wave - 1)
+    var enemies = generate_level_encounter(difficulty_level)
+    PlayerData.pending_enemy_team = enemies
+    GlobalManager.switch_scene("battle")
 
 func generate_level_encounter(level: int) -> Array[MonsterData]:
     var enemies: Array[MonsterData] = []
@@ -97,7 +134,9 @@ func _create_enemy(type: String, level: int) -> MonsterData:
     if ResourceLoader.exists(path):
         var base = load(path)
         var enemy = base.duplicate()
-        # Scale level with some variance
-        enemy.level = max(1, level + randi_range(-1, 1))
+        
+        # Scale stability with difficulty level (Base 50 + Level)
+        # Level 1 -> 51%, Level 50 -> 100%
+        enemy.stability = clampi(50 + level, 50, 100)
         return enemy
     return null

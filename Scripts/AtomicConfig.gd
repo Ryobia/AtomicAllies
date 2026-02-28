@@ -60,7 +60,7 @@ const BASELINES = {
 const GROUP_MOVES = {
 	Group.ALKALI_METAL: [
 		{ "name": "Electron Jettison", "power": 80, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn." },
-		{ "name": "Reactive Spark", "power": 40, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Quick strike. Deals bonus damage if the enemy has recently moved or attacked." }
+		{ "name": "Reactive Spark", "power": 40, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Quick strike. Can hit any enemy." }
 	],
 	Group.ALKALINE_EARTH: [
 		{ "name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense and Stability for 3 turns. Slows attackers." },
@@ -80,10 +80,10 @@ const GROUP_MOVES = {
 	],
 	Group.NONMETAL: [
 		{ "name": "Covalent Link", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Marks enemy. Next attack from different element triggers triple damage." },
-		{ "name": "Electronegativity", "power": 20, "accuracy": 95, "type": "Special", "is_snipe": true, "description": "Pulls a distant enemy closer and reduces their movement range." }
+		{ "name": "Electronegativity", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Pulls a distant enemy closer and reduces their speed." }
 	],
 	Group.HALOGEN: [
-		{ "name": "Fluorine Acid", "power": 15, "accuracy": 90, "type": "Special", "is_snipe": true, "description": "Deals low initial damage but applies Corrosion debuff ignoring Defense." },
+		{ "name": "Fluorine Acid", "power": 0, "accuracy": 90, "type": "Special", "is_snipe": true, "description": "Applies a poison to entire enemy team" },
 		{ "name": "Reactive Vapor", "power": 40, "accuracy": 100, "type": "Special", "description": "Creates a cloud that deals damage to any enemy that passes through it." }
 	],
 	Group.NOBLE_GAS: [
@@ -100,7 +100,7 @@ const GROUP_MOVES = {
 	],
 	Group.UNKNOWN: [],
 	Group.NULL_GRUNT: [
-		{ "name": "Void Scratch", "power": 30, "accuracy": 100, "type": "Physical", "description": "Basic void attack." }
+		{ "name": "Void Scratch", "power": 20, "accuracy": 100, "type": "Physical", "description": "Basic void attack." }
 	],
 	Group.NULL_TANK: [
 		{ "name": "Void Harden", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense." },
@@ -112,34 +112,42 @@ const GROUP_MOVES = {
 	]
 }
 
-# Calculates final stats based on Group Baseline, Atomic Number (Z), and Level.
-static func calculate_stats(group: Group, atomic_number: int, level: int) -> Dictionary:
+# Calculates final stats based on Group Baseline, Atomic Number (Z), and Stability.
+static func calculate_stats(group: Group, atomic_number: int, stability: int = 0) -> Dictionary:
 	var base = BASELINES.get(group, BASELINES[Group.UNKNOWN])
 	
 	var final_stats = {}
 	
-	# Simplified Linear Scaling
-	# HP: Base (1-10) + Z (1-118) + Level (1-100)
-	# Example: Base 5, Z 10, Level 10 -> (50) + (20) + (50) = 120 HP
-	final_stats["max_hp"] = int((base.hp * 10.0) + (atomic_number * 2.0) + (level * 5.0))
+	# 1. Resonance Bonus: +1% stats per unique element of this group discovered
+	var resonance_count = 0
+	if PlayerData:
+		resonance_count = PlayerData.class_resonance.get(group, 0)
+	var resonance_multiplier = 1.0 + (resonance_count * 0.01)
 	
-	# Stats: Base (1-10) + Z (1-118) + Level (1-100)
-	# Example: Base 5, Z 10, Level 10 -> (10) + (5) + (10) = 25 Stat
-	final_stats["attack"] = int((base.atk * 2.0) + (atomic_number * 0.5) + (level * 1.0))
-	final_stats["defense"] = int((base.def * 2.0) + (atomic_number * 0.5) + (level * 1.0))
-	final_stats["speed"] = int((base.spd * 2.0) + (atomic_number * 0.2) + (level * 0.5))
+	# 2. Stability Bonus: Scales stats up to +50% at 100 stability
+	var stability_multiplier = 1.0 + (float(stability) / 200.0)
+	
+	# 3. Mastery Buff: At 100% Stability, unlock Class Potential (+10% extra stats)
+	if stability >= 100:
+		stability_multiplier += 0.1
+		
+	var total_multiplier = resonance_multiplier * stability_multiplier
+	
+	# Simplified Linear Scaling
+	# HP: Base (1-10)
+	# Example: Base 5 -> 50 HP
+	final_stats["max_hp"] = int((base.hp * 10.0) * total_multiplier)
+	
+	# Stats: Base (1-10)
+	# Example: Base 5 -> 10 Stat
+	final_stats["attack"] = int((base.atk * 2.0) * total_multiplier)
+	final_stats["defense"] = int((base.def * 2.0) * total_multiplier)
+	final_stats["speed"] = int((base.spd * 2.0) * total_multiplier)
 	
 	return final_stats
 
-# Calculates the XP required to go from current_level to current_level + 1
-static func calculate_xp_requirement(current_level: int) -> int:
-	# Simplified: Linear cost
-	# Level 1 -> 100 XP
-	# Level 10 -> 1000 XP
-	# Level 50 -> 5000 XP
-	return current_level * 100
-
 # Calculates the Binding Energy cost to fuse a new element
 static func calculate_fusion_cost(target_z: int) -> int:
-	# Cost scales with Atomic Number. Heavier elements require more energy.
-	return target_z * 10
+	# Cost scales exponentially/polynomially with Atomic Number.
+	# Using quadratic scaling: 50 * Z^2. This ensures 1 Run ~= 1 Fusion.
+	return int(50 * pow(target_z, 2))

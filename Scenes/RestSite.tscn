@@ -1,0 +1,137 @@
+[gd_scene format=3 uid="uid://b4kki5bcwln8t"]
+
+[ext_resource type="Script" uid="uid://be1b71if15wq" path="res://Scripts/RestSite.gd" id="1_ya7uk"]
+[ext_resource type="Texture2D" uid="uid://d2k7e2ncjlh50" path="res://Assets/Gem.tres" id="2_ep4c3"]
+[ext_resource type="Texture2D" uid="uid://drgfc0ec2wubq" path="res://Assets/BE.tres" id="3_eufrv"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ya7uk"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eufrv"]
+content_margin_left = 30.0
+content_margin_top = 20.0
+content_margin_right = 30.0
+content_margin_bottom = 20.0
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ep4c3"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="RestSite" type="Control" unique_id=2143110194]
+layout_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ya7uk")
+icon_gem = ExtResource("2_ep4c3")
+icon_energy = ExtResource("3_eufrv")
+
+[node name="Panel" type="Panel" parent="." unique_id=1802053876]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ya7uk")
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=401710237]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 50
+
+[node name="MainContainer" type="VBoxContainer" parent="Panel/MarginContainer" unique_id=352857202]
+custom_minimum_size = Vector2(800, 1200)
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/MarginContainer/MainContainer" unique_id=686588612]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 90
+text = "Rest Site"
+horizontal_alignment = 1
+
+[node name="LootLabel" type="Label" parent="Panel/MarginContainer/MainContainer" unique_id=467605051]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 40
+text = "Loot:
+"
+horizontal_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer/MainContainer" unique_id=138203628]
+layout_mode = 2
+size_flags_vertical = 6
+alignment = 1
+
+[node name="FullHealButton" type="Button" parent="Panel/MarginContainer/MainContainer/VBoxContainer" unique_id=1933771650]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 70
+theme_override_styles/normal = SubResource("StyleBoxFlat_eufrv")
+text = "Full Heal Team"
+
+[node name="MonsterGrid" type="GridContainer" parent="Panel/MarginContainer/MainContainer/VBoxContainer" unique_id=810833]
+layout_mode = 2
+size_flags_vertical = 6
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 50
+columns = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/MainContainer" unique_id=1815155004]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="RetreatButton" type="Button" parent="Panel/MarginContainer/MainContainer/HBoxContainer" unique_id=1831687254]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_ep4c3")
+text = "RETREAT"
+
+[node name="ContinueButton" type="Button" parent="Panel/MarginContainer/MainContainer/HBoxContainer" unique_id=592343890]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_ep4c3")
+text = "CONTINUE"

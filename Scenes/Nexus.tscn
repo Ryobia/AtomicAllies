@@ -10,15 +10,15 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n15nf"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_hoak4"]
+atlas = ExtResource("8_26528")
+region = Rect2(598.9166, 59.840717, 211.87073, 244.17729)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3h3en"]
 bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7ece5"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.9019608)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_hoak4"]
-atlas = ExtResource("8_26528")
-region = Rect2(598.9166, 59.840717, 211.87073, 244.17729)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h8wke"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -90,6 +90,7 @@ size_flags_horizontal = 2
 size_flags_vertical = 3
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
+visible = false
 z_index = 10
 layout_mode = 1
 anchors_preset = 8
@@ -146,6 +147,35 @@ offset_bottom = -0.00012207031
 grow_horizontal = 2
 grow_vertical = 0
 
+[node name="VBoxContainer" type="VBoxContainer" parent="VboxContainer" unique_id=1394945458]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+
+[node name="HelpIcon" type="TextureRect" parent="VboxContainer/VBoxContainer" unique_id=1787347281]
+custom_minimum_size = Vector2(66, 66)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_hoak4")
+expand_mode = 5
+stretch_mode = 4
+
+[node name="StabilityLabel" type="Label" parent="VboxContainer/VBoxContainer" unique_id=1425843288]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="StabilityBar" type="ProgressBar" parent="VboxContainer/VBoxContainer" unique_id=1065992710]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 32
+value = 100.0
+
 [node name="StatusLabel" type="Label" parent="VboxContainer" unique_id=1683976128]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -186,46 +216,6 @@ text = "Fusion Guide"
 
 [node name="ErrorPopup" type="AcceptDialog" parent="." unique_id=1400983032]
 oversampling_override = 1.0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1394945458]
-custom_minimum_size = Vector2(140, 0)
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.093
-anchor_top = 0.234
-anchor_right = 0.093
-anchor_bottom = 0.533
-offset_top = -35.5
-offset_right = 66.0
-offset_bottom = 35.5
-grow_vertical = 2
-
-[node name="HelpIcon" type="TextureRect" parent="VBoxContainer" unique_id=1787347281]
-custom_minimum_size = Vector2(66, 66)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-texture = SubResource("AtlasTexture_hoak4")
-expand_mode = 5
-stretch_mode = 4
-
-[node name="StabilityBar" type="ProgressBar" parent="VBoxContainer" unique_id=1065992710]
-custom_minimum_size = Vector2(66, 0)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_constants/outline_size = 3
-theme_override_font_sizes/font_size = 32
-value = 100.0
-fill_mode = 3
-
-[node name="StabilityLabel" type="Label" parent="VBoxContainer" unique_id=1425843288]
-layout_mode = 2
-theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_constants/outline_size = 3
-theme_override_font_sizes/font_size = 24
 
 [node name="FusionConfirmPopup" type="PanelContainer" parent="." unique_id=1747203823]
 custom_minimum_size = Vector2(350, 250)

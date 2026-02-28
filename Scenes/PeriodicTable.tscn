@@ -3,41 +3,29 @@
 [ext_resource type="Script" uid="uid://boco7djaefshy" path="res://Scripts/PeriodicTable.gd" id="1_mste3"]
 [ext_resource type="PackedScene" uid="uid://deeit4dexuhou" path="res://Scenes/monster_card.tscn" id="2_6e2n0"]
 [ext_resource type="Texture2D" uid="uid://csxsj3kexqdji" path="res://Images/table.png" id="3_7flee"]
-[ext_resource type="Script" uid="uid://c07a0wdfnrh3m" path="res://Scripts/ResearchNotesPopup.gd" id="4_6e2n0"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yqx8d"]
 content_margin_left = 50.0
 content_margin_right = 50.0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yqx8d"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mste3"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-border_width_left = 5
-border_width_top = 5
-border_width_right = 5
-border_width_bottom = 5
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
 border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-corner_radius_top_left = 15
-corner_radius_top_right = 15
-corner_radius_bottom_right = 15
-corner_radius_bottom_left = 15
-expand_margin_left = 10.0
-expand_margin_right = 10.0
-expand_margin_bottom = 10.0
-
-[sub_resource type="StyleBoxLine" id="StyleBoxLine_7flee"]
-color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-thickness = 2
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hcuv7"]
-content_margin_left = 10.0
-content_margin_top = 5.0
-content_margin_right = 10.0
-content_margin_bottom = 5.0
-bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6e2n0"]
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [node name="PeriodicTable" type="Control" unique_id=1304090810]
 layout_mode = 3
@@ -65,53 +53,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 18
 
-[node name="ResearchNotesPopup" type="PanelContainer" parent="." unique_id=885063713]
-custom_minimum_size = Vector2(550, 350)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_yqx8d")
-script = ExtResource("4_6e2n0")
-
-[node name="VBoxContainer" type="VBoxContainer" parent="ResearchNotesPopup" unique_id=477460701]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="TitleLabel" type="Label" parent="ResearchNotesPopup/VBoxContainer" unique_id=1511424445]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 35
-text = "	RESEARCH NOTES"
-horizontal_alignment = 1
-
-[node name="HSeparator" type="HSeparator" parent="ResearchNotesPopup/VBoxContainer" unique_id=898964704]
-layout_mode = 2
-theme_override_styles/separator = SubResource("StyleBoxLine_7flee")
-
-[node name="HintLabel" type="Label" parent="ResearchNotesPopup/VBoxContainer" unique_id=1150597033]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_font_sizes/font_size = 24
-autowrap_mode = 2
-
-[node name="CloseButton" type="Button" parent="ResearchNotesPopup/VBoxContainer" unique_id=525793343]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_font_sizes/font_size = 40
-theme_override_styles/normal = SubResource("StyleBoxFlat_hcuv7")
-text = "CLOSE
-"
-
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1648357713]
 layer = -1
 
@@ -124,3 +65,78 @@ grow_vertical = 2
 texture = ExtResource("3_7flee")
 expand_mode = 1
 stretch_mode = 6
+
+[node name="DiscoveryRunPopup" type="PanelContainer" parent="." unique_id=38568193]
+custom_minimum_size = Vector2(700, 500)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mste3")
+
+[node name="MarginContainer" type="MarginContainer" parent="DiscoveryRunPopup" unique_id=594556828]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="TitleLabel" type="Label" parent="DiscoveryRunPopup/MarginContainer" unique_id=1036357961]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 50
+horizontal_alignment = 1
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="DiscoveryRunPopup/MarginContainer" unique_id=2022710523]
+layout_mode = 2
+
+[node name="DescriptionLabel" type="Label" parent="DiscoveryRunPopup/MarginContainer/HBoxContainer2" unique_id=429110471]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+autowrap_mode = 3
+
+[node name="MonsterIcon" type="TextureRect" parent="DiscoveryRunPopup/MarginContainer/HBoxContainer2" unique_id=1340971696]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+expand_mode = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="DiscoveryRunPopup/MarginContainer" unique_id=2065134017]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_constants/separation = 20
+
+[node name="CancelButton" type="Button" parent="DiscoveryRunPopup/MarginContainer/HBoxContainer" unique_id=1450866817]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_6e2n0")
+text = "CANCEL
+"
+
+[node name="ConfirmButton" type="Button" parent="DiscoveryRunPopup/MarginContainer/HBoxContainer" unique_id=2071507781]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_6e2n0")
+text = "CONFIRM"
+
+[node name="Label" type="Label" parent="DiscoveryRunPopup/MarginContainer" unique_id=1888234421]
+layout_mode = 2

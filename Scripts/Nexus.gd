@@ -341,7 +341,7 @@ func _on_breed_pressed():
 	if fusion_confirm_popup:
 		var chance = 0.0
 		if SynthesisManager.has_method("calculate_stability"):
-			chance = SynthesisManager.calculate_stability(parent_1.level, parent_2.level, target_z)
+			chance = SynthesisManager.calculate_stability(parent_1.stability, parent_2.stability, target_z)
 			
 		if confirm_label:
 			confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nStability: %d%%\nCost: %d Binding Energy" % \
@@ -453,7 +453,7 @@ func _update_stability_preview():
 		var chance = 0.0
 		
 		if SynthesisManager.has_method("calculate_stability"):
-			chance = SynthesisManager.calculate_stability(parent_1.level, parent_2.level, target_z)
+			chance = SynthesisManager.calculate_stability(parent_1.stability, parent_2.stability, target_z)
 		
 		if stability_bar:
 			stability_bar.value = chance

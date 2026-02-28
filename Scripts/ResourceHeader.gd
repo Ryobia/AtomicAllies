@@ -1,33 +1,39 @@
 extends CanvasLayer
 
+var dust_label
+var binding_label
+var gems_label
+
 func _ready():
-	# Connect to global signal to update UI automatically
+	# Find the labels by their new names
+	dust_label = find_child("DustLabel", true, false)
+	binding_label = find_child("BindingLabel", true, false) # Renamed from XPLabel
+	gems_label = find_child("GemsLabel", true, false)
+	
 	if PlayerData:
-		if not PlayerData.resource_updated.is_connected(_on_resource_updated):
-			PlayerData.resource_updated.connect(_on_resource_updated)
-	
-	# Connect to GlobalManager to hide during battle
-	if GlobalManager:
-		GlobalManager.scene_changed.connect(_on_scene_changed)
-	
-	# Initial update
-	update_display()
+		# Connect to the global resource signal
+		PlayerData.resource_updated.connect(_on_resource_updated)
+		_update_display()
 
-func update_display():
-	var xp_lbl = find_child("XPLabel", true, false)
-	var dust_lbl = find_child("DustLabel", true, false)
-	var gem_lbl = find_child("GemLabel", true, false)
-	
-	if xp_lbl: xp_lbl.text = "%d" % PlayerData.resources.get("experience", 0)
-	if dust_lbl: dust_lbl.text = "%d" % PlayerData.resources.get("neutron_dust", 0)
-	if gem_lbl: gem_lbl.text = "%d" % PlayerData.resources.get("gems", 0)
+func _update_display():
+	if dust_label:
+		dust_label.text = str(PlayerData.resources.get("neutron_dust", 0))
+	if binding_label:
+		binding_label.text = str(PlayerData.resources.get("binding_energy", 0))
+	if gems_label:
+		gems_label.text = str(PlayerData.resources.get("gems", 0))
 
-func _on_resource_updated(_type, _amount):
-	update_display()
+func _on_resource_updated(type, amount):
+	if type == "neutron_dust" and dust_label:
+		dust_label.text = str(amount)
+	elif type == "binding_energy" and binding_label:
+		binding_label.text = str(amount)
+	elif type == "gems" and gems_label:
+		gems_label.text = str(amount)
 
 func _on_scene_changed(scene_key: String):
 	# Hide header in battle, show everywhere else
-	if scene_key == "battle":
+	if scene_key == "battle" or scene_key == "battle_prepare" or scene_key == "rest_site":
 		visible = false
 	else:
 		visible = true

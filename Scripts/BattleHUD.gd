@@ -156,24 +156,35 @@ func _build_ui_cache():
 		if i < player_slots.size() and player_slots[i]:
 			_ui_cache.player[i]["slot_speed"] = player_slots[i].find_child("SpeedBar", true, false)
 			var hp_bar = player_slots[i].find_child("HPBar", true, false)
-			if hp_bar: hp_bar.show_percentage = false
+			if hp_bar: 
+				hp_bar.show_percentage = false
+				hp_bar.custom_minimum_size.y = 20
+				hp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_ui_cache.player[i]["slot_hp"] = hp_bar
 			_ui_cache.player[i]["slot_hp_lbl"] = player_slots[i].find_child("HPLabel", true, false)
+			_ui_cache.player[i]["status_container"] = player_slots[i].find_child("StatusContainer", true, false)
 			
 		if i < stat_cards.size() and stat_cards[i]:
 			_ui_cache.player[i]["card_speed"] = stat_cards[i].find_child("SpeedBar", true, false)
 			var card_hp = stat_cards[i].find_child("HPBar", true, false)
-			if card_hp: card_hp.show_percentage = false
+			if card_hp: 
+				card_hp.show_percentage = false
+				card_hp.custom_minimum_size.y = 20
+				card_hp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_ui_cache.player[i]["card_hp"] = card_hp
 			_ui_cache.player[i]["card_hp_lbl"] = stat_cards[i].find_child("HPLabel", true, false)
 			
 		# Enemy Cache
 		if i < enemy_slots.size() and enemy_slots[i]:
 			var enemy_hp = enemy_slots[i].find_child("HPBar", true, false)
-			if enemy_hp: enemy_hp.show_percentage = false
+			if enemy_hp: 
+				enemy_hp.show_percentage = false
+				enemy_hp.custom_minimum_size.y = 20
+				enemy_hp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_ui_cache.enemy[i]["hp"] = enemy_hp
 			_ui_cache.enemy[i]["hp_lbl"] = enemy_slots[i].find_child("HPLabel", true, false)
 			_ui_cache.enemy[i]["speed"] = enemy_slots[i].find_child("SpeedBar", true, false)
+			_ui_cache.enemy[i]["status_container"] = enemy_slots[i].find_child("StatusContainer", true, false)
 
 func setup_ui(player_team: Array, enemy_team: Array):
 	# 1. Setup Enemies (Top Row)
@@ -209,6 +220,7 @@ func update_hp(is_player: bool, index: int, new_hp: float, max_hp: float):
 			if bar: 
 				bar.max_value = max_hp
 				bar.value = new_hp
+				_update_hp_bar_style(bar, new_hp, max_hp)
 			var lbl = _ui_cache.player[index].get("card_hp_lbl")
 			if lbl:
 				lbl.text = "%d/%d" % [int(new_hp), int(max_hp)]
@@ -218,6 +230,7 @@ func update_hp(is_player: bool, index: int, new_hp: float, max_hp: float):
 			if slot_bar:
 				slot_bar.max_value = max_hp
 				slot_bar.value = new_hp
+				_update_hp_bar_style(slot_bar, new_hp, max_hp)
 			var slot_lbl = _ui_cache.player[index].get("slot_hp_lbl")
 			if slot_lbl:
 				slot_lbl.text = "%d/%d" % [int(new_hp), int(max_hp)]
@@ -227,6 +240,7 @@ func update_hp(is_player: bool, index: int, new_hp: float, max_hp: float):
 			if bar:
 				bar.max_value = max_hp
 				bar.value = new_hp
+				_update_hp_bar_style(bar, new_hp, max_hp)
 			var lbl = _ui_cache.enemy[index].get("hp_lbl")
 			if lbl:
 				lbl.text = "%d/%d" % [int(new_hp), int(max_hp)]
@@ -255,6 +269,46 @@ func update_speed_bar(is_player: bool, index: int, value: float, max_value: floa
 			var bar = _ui_cache.enemy[index].get("speed")
 			if bar:
 				_update_single_bar(bar, value, max_value, is_full)
+
+func update_status_effects(is_player: bool, index: int, effects: Array):
+	var cache = _ui_cache.player if is_player else _ui_cache.enemy
+	if index >= cache.size(): return
+	
+	var container = cache[index].get("status_container")
+	if not container: return
+	
+	for child in container.get_children():
+		child.queue_free()
+		
+	for effect in effects:
+		var icon = _create_status_icon(effect)
+		container.add_child(icon)
+
+func _create_status_icon(effect: Dictionary) -> Control:
+	var panel = PanelContainer.new()
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	
+	var style = StyleBoxFlat.new()
+	style.set_corner_radius_all(4)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	
+	var lbl = Label.new()
+	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_color_override("font_color", Color.BLACK)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	if effect.type == "stat_mod":
+		style.bg_color = Color("#2ecc71") if effect.amount > 0 else Color("#ff4d4d")
+		var stat_short = effect.stat.substr(0, 3).to_upper()
+		lbl.text = stat_short
+	elif effect.type == "status":
+		style.bg_color = Color("#f1c40f")
+		lbl.text = effect.name.substr(0, 3).to_upper()
+		
+	panel.add_theme_stylebox_override("panel", style)
+	panel.add_child(lbl)
+	return panel
 
 func _update_single_bar(bar: ProgressBar, value: float, max_val: float, is_full: bool):
 	bar.max_value = max_val
@@ -300,6 +354,34 @@ func _start_pulse_tween(bar: ProgressBar, style: StyleBoxFlat):
 	tween.tween_property(style, "bg_color", Color("#fff5cc"), 0.5).from(Color("#ffd700"))
 	tween.tween_property(style, "bg_color", Color("#ffd700"), 0.5)
 	bar.set_meta("pulse_tween", tween)
+
+func _update_hp_bar_style(bar: ProgressBar, current: float, max_val: float):
+	var percent = 1.0
+	if max_val > 0:
+		percent = current / max_val
+	
+	var style = bar.get_theme_stylebox("fill")
+	
+	# Ensure unique stylebox
+	if not bar.has_meta("hp_style_unique"):
+		if style is StyleBoxFlat:
+			style = style.duplicate()
+		else:
+			style = StyleBoxFlat.new()
+			style.bg_color = Color("#2ecc71") # Default
+		bar.add_theme_stylebox_override("fill", style)
+		bar.set_meta("hp_style_unique", true)
+	
+	style = bar.get_theme_stylebox("fill")
+	if not style is StyleBoxFlat: return
+
+	# Color Transition
+	if percent <= 0.25:
+		style.bg_color = Color("#ff4d4d") # Red
+	elif percent <= 0.5:
+		style.bg_color = Color("#ffd700") # Gold
+	else:
+		style.bg_color = Color("#2ecc71") # Green
 
 func highlight_active_unit(is_player: bool, index: int):
 	var target_slots = player_slots if is_player else enemy_slots
@@ -466,6 +548,7 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 	if hp_bar:
 		hp_bar.max_value = stats.max_hp
 		hp_bar.value = stats.max_hp
+		_update_hp_bar_style(hp_bar, stats.max_hp, stats.max_hp)
 	var hp_lbl = slot.find_child("HPLabel", true, false)
 	if hp_lbl:
 		hp_lbl.text = "%d/%d" % [int(stats.max_hp), int(stats.max_hp)]
@@ -499,6 +582,7 @@ func _set_stat_card(card: Control, monster: MonsterData):
 	if hp_bar:
 		hp_bar.max_value = stats.max_hp
 		hp_bar.value = stats.max_hp
+		_update_hp_bar_style(hp_bar, stats.max_hp, stats.max_hp)
 	if hp_lbl:
 		hp_lbl.text = "%d/%d" % [int(stats.max_hp), int(stats.max_hp)]
 	if stab_bar:
@@ -619,7 +703,7 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		_load_monster_visual(icon_con, m)
 		
 		var lbl = Label.new()
-		lbl.text = "%s\nLv. %d" % [m.monster_name, m.level]
+		lbl.text = "%s" % [m.monster_name]
 		lbl.add_theme_font_size_override("font_size", 24)
 		lbl.add_theme_color_override("font_color", Color("#010813"))
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -727,19 +811,16 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 		reward_header.add_theme_color_override("font_color", Color("#60fafc"))
 		vbox.add_child(reward_header)
 		
-		if rewards.has("xp"):
-			var xp_lbl = Label.new()
-			xp_lbl.text = "+%d XP" % rewards["xp"]
-			xp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			xp_lbl.add_theme_font_size_override("font_size", 50)
-			vbox.add_child(xp_lbl)
-			
 		if rewards.has("binding_energy"):
+			var total_be = rewards["binding_energy"]
 			var be_lbl = Label.new()
-			be_lbl.text = "+%d Binding Energy" % rewards["binding_energy"]
+			be_lbl.text = "+0 Binding Energy"
 			be_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			be_lbl.add_theme_font_size_override("font_size", 40)
 			vbox.add_child(be_lbl)
+			
+			var tween = create_tween()
+			tween.tween_method(func(val): be_lbl.text = "+%d Binding Energy" % int(val), 0, total_be, 1.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	
 	var btn = Button.new()
 	btn.text = "Continue"

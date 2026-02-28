@@ -42,7 +42,13 @@ func _ready():
 		resource_header.visible = false
 		
 	if enemy_intel_label:
-		enemy_intel_label.text = "Enemy Intel (Level %d)" % PlayerData.current_campaign_level
+		var level_val = PlayerData.current_campaign_level
+		var suffix = ""
+		if CampaignManager and CampaignManager.is_rogue_run:
+			level_val = int(max(1, CampaignManager.current_run_target_z / 2)) + (CampaignManager.current_run_wave - 1)
+			suffix = " - Wave %d/%d" % [CampaignManager.current_run_wave, CampaignManager.max_run_waves]
+			
+		enemy_intel_label.text = "Enemy Intel (Stage %d)%s" % [level_val, suffix]
 		
 	var enemies = []
 	if not PlayerData.pending_enemy_team.is_empty():
@@ -71,7 +77,6 @@ func _generate_preview_enemies() -> Array[MonsterData]:
 	
 	for i in range(3):
 		var enemy = base_enemy.duplicate()
-		enemy.level = 1
 		enemies.append(enemy)
 	return enemies
 
@@ -127,12 +132,6 @@ func _update_enemy_preview(enemies: Array[MonsterData]):
 			color.set_anchors_preset(Control.PRESET_FULL_RECT)
 			icon_container.add_child(color)
 		
-		var lvl_lbl = Label.new()
-		lvl_lbl.text = "Lv." + str(enemy.level)
-		lvl_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lvl_lbl.add_theme_font_size_override("font_size", 24)
-		lvl_lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
-		vbox.add_child(lvl_lbl)
 
 func _update_team_display():
 	if not team_container: return
@@ -314,7 +313,7 @@ func _show_collection_selector():
 			btn_vbox.add_child(spacer)
 			
 		var lbl = Label.new()
-		lbl.text = monster.monster_name + "\nLv." + str(monster.level)
+		lbl.text = monster.monster_name
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.add_theme_color_override("font_color", Color("#010813"))
 		lbl.add_theme_font_size_override("font_size", 44)
@@ -423,7 +422,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	_selection_popup.add_child(margin)
 	
 	var title = Label.new()
-	title.text = monster.monster_name + " (Lv. " + str(monster.level) + ")"
+	title.text = monster.monster_name
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 48)
 	title.add_theme_color_override("font_color", Color("#60fafc"))

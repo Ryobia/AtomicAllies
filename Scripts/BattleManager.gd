@@ -25,12 +25,14 @@ var benched_player_monsters: Array[MonsterData] = []
 var turn_queue: Array = []
 var current_acting_unit: BattleMonster = null
 var selected_move: MoveData = null
+var roster_hp_cache: Dictionary = {} # MonsterData -> int (HP)
 
 # --- Signals for UI Decoupling ---
 signal log_event(text)
 signal hud_update_atb(is_player, index, value)
 signal hud_update_hp(is_player, index, new_hp, max_hp)
 signal hud_highlight_unit(is_player, index)
+signal hud_update_status(is_player, index, effects)
 
 func _ready():
 	if not battle_hud:
@@ -50,6 +52,7 @@ func _ready():
 		hud_update_atb.connect(battle_hud.update_speed_bar)
 		hud_update_hp.connect(battle_hud.update_hp)
 		hud_highlight_unit.connect(battle_hud.highlight_active_unit)
+		hud_update_status.connect(battle_hud.update_status_effects)
 	else:
 		push_warning("BattleManager: BattleHUD not found or assigned!")
 
@@ -111,6 +114,12 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	print("BattleManager: Initializing battle...")
 	current_state = BattleState.SETUP
 	clear_battlefield()
+	roster_hp_cache.clear()
+	
+	# Load initial state from CampaignManager if rogue run
+	if CampaignManager and CampaignManager.is_rogue_run:
+		for m in CampaignManager.run_team_state:
+			roster_hp_cache[m] = CampaignManager.run_team_state[m]
 	
 	# 1. Spawn Player Team
 	# Use active_team if set, otherwise fallback to owned_monsters
@@ -178,9 +187,28 @@ func spawn_unit(data: MonsterData, spawn_marker: Marker2D, is_player: bool):
 	# We assume the root script of monster_scene has a 'setup' function.
 	if unit.has_method("setup"):
 		unit.setup(data, is_player)
+		
+		if is_player:
+			# Apply cached HP if exists (Persistence)
+			if roster_hp_cache.has(data):
+				var cached_hp = roster_hp_cache[data]
+				unit.current_hp = cached_hp
+				if cached_hp <= 0:
+					unit.is_dead = true
+					# If unit spawns dead, BattleManager logic will handle forcing a swap/loss
+			else:
+				roster_hp_cache[data] = unit.max_hp
+			
+			# Apply Rogue Run Buffs
+			if CampaignManager and CampaignManager.is_rogue_run:
+				for stat in CampaignManager.run_buffs:
+					if unit.stats.has(stat):
+						unit.stats[stat] += CampaignManager.run_buffs[stat]
+		
 		unit.died.connect(_on_monster_death)
 		unit.hp_changed.connect(func(new_hp, max_hp): _on_unit_hp_changed(unit, new_hp, max_hp))
 		unit.log_action.connect(func(text): log_event.emit(text))
+		if unit.has_signal("effects_changed"): unit.effects_changed.connect(func(effects): _on_unit_effects_changed(unit, effects))
 	else:
 		push_warning("BattleManager: Spawned unit is missing 'setup' method.")
 	
@@ -215,13 +243,8 @@ func generate_random_enemies(count: int) -> Array[MonsterData]:
 		if res:
 			var enemy = res.duplicate()
 			
-			# Scale enemy level based on the player's strongest monster (or first)
-			var scaling_level = 1
-			if not PlayerData.owned_monsters.is_empty():
-				scaling_level = PlayerData.owned_monsters[0].level
-			
-			# Add some variance (-1 to +2 levels)
-			enemy.level = max(1, scaling_level + randi_range(-1, 2))
+			# Randomize stability for variety (40-70%)
+			enemy.stability = randi_range(40, 70)
 			
 			enemies.append(enemy)
 			
@@ -237,11 +260,6 @@ func generate_void_enemies(count: int) -> Array[MonsterData]:
 		"res://data/Enemies/NullCommander.tres"
 	]
 	
-	# Determine scaling level
-	var scaling_level = 1
-	if not PlayerData.owned_monsters.is_empty():
-		scaling_level = PlayerData.owned_monsters[0].level
-	
 	for i in range(count):
 		# Pick a random enemy type
 		var path = enemy_paths.pick_random()
@@ -249,8 +267,8 @@ func generate_void_enemies(count: int) -> Array[MonsterData]:
 			var base = load(path)
 			var enemy = base.duplicate()
 			
-			# Scale level with some variance
-			enemy.level = max(1, scaling_level + randi_range(-1, 1))
+			# Randomize stability for variety (40-70%)
+			enemy.stability = randi_range(40, 70)
 			
 			enemies.append(enemy)
 		else:
@@ -301,6 +319,7 @@ func start_turn():
 	
 	if current_acting_unit.is_player:
 		# Enable UI
+		_refresh_unit_status(current_acting_unit)
 		log_event.emit("It's %s's turn!" % current_acting_unit.data.monster_name)
 		if battle_hud:
 			battle_hud.show_actions()
@@ -313,24 +332,55 @@ func start_turn():
 		execute_ai_turn()
 
 func execute_ai_turn():
-	# Pick a random living player target
-	var targets = active_player_monsters.filter(func(m): return not m.is_dead)
+	# 1. Select a Move
+	var moves = CombatManager.get_active_moves(current_acting_unit.data)
+	var move = null
+	if not moves.is_empty():
+		move = moves.pick_random()
+	else:
+		# Fallback move
+		move = MoveData.new()
+		move.name = "Struggle"
+		move.power = 10
 	
-	# Check for Taunt
-	var taunt_targets = targets.filter(func(m): return m.has_status("taunt"))
-	if not taunt_targets.is_empty():
-		targets = taunt_targets
-		
-	if targets.is_empty():
+	# 2. Determine Valid Targets
+	# Handle Self/Ally targeting for AI
+	if move.target_type == MoveData.TargetType.SELF:
+		perform_move(current_acting_unit, current_acting_unit, move)
+		return
+	elif move.target_type == MoveData.TargetType.ALLY:
+		# AI heals/buffs random living ally
+		var allies = active_enemy_monsters.filter(func(m): return not m.is_dead)
+		if not allies.is_empty():
+			perform_move(current_acting_unit, allies.pick_random(), move)
+		return
+	
+	# Enemy Targeting (Player Team)
+	var potential_targets = active_player_monsters.filter(func(m): return not m.is_dead)
+	
+	if potential_targets.is_empty():
 		end_battle(false)
 		return
-		
-	var target = targets.pick_random()
+
+	var valid_targets = []
 	
-	# Create a dummy move for now (Basic Attack)
-	var move = MoveData.new()
-	move.name = "Tackle"
-	move.power = 20
+	# Check Taunt
+	var taunt_targets = potential_targets.filter(func(m): return m.has_status("taunt"))
+	if not taunt_targets.is_empty():
+		valid_targets = taunt_targets
+	else:
+		# Vanguard Logic: The monster at index 0 is the vanguard.
+		var vanguard = active_player_monsters[0]
+		var vanguard_alive = (vanguard and not vanguard.is_dead)
+		
+		if vanguard_alive and not move.is_snipe:
+			# Must attack the vanguard
+			valid_targets = [vanguard]
+		else:
+			# Can attack anyone (Vanguard dead OR Snipe move)
+			valid_targets = potential_targets
+	
+	var target = valid_targets.pick_random()
 	
 	perform_move(current_acting_unit, target, move)
 
@@ -536,11 +586,13 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 		for i in range(active_player_monsters.size()):
 			var u = active_player_monsters[i]
 			battle_hud.update_hp(true, i, u.current_hp, u.max_hp)
+			_refresh_unit_status(u)
 			battle_hud.update_speed_bar(true, i, u.atb_value)
 			
 		for i in range(active_enemy_monsters.size()):
 			var u = active_enemy_monsters[i]
 			battle_hud.update_hp(false, i, u.current_hp, u.max_hp)
+			_refresh_unit_status(u)
 			battle_hud.update_speed_bar(false, i, u.atb_value)
 	
 	await get_tree().create_timer(1.0).timeout
@@ -576,6 +628,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 			var target_unit = effect.target
 			if target_unit and is_instance_valid(target_unit):
 				target_unit.apply_effect(effect)
+				_refresh_unit_status(target_unit)
 	
 	# Wait for animation/text
 	await get_tree().create_timer(1.0).timeout
@@ -586,6 +639,7 @@ func end_turn():
 	if is_instance_valid(current_acting_unit):
 		current_acting_unit.on_turn_end()
 		current_acting_unit.atb_value = 0
+		_refresh_unit_status(current_acting_unit)
 		
 		# Reset HUD bar for this unit
 		var index = active_player_monsters.find(current_acting_unit) if current_acting_unit.is_player else active_enemy_monsters.find(current_acting_unit)
@@ -607,24 +661,38 @@ func end_battle(player_won: bool):
 	
 	var rewards = {}
 	if player_won:
-		var total_xp = 0
 		var total_be = 0
-		for unit in active_enemy_monsters:
-			# XP Calculation: Base 50 + (Level * 10)
-			total_xp += 50 + (unit.data.level * 10)
-			# Binding Energy: Base 10 + (Level * 2)
-			total_be += 10 + (unit.data.level * 2)
 		
-		rewards["xp"] = total_xp
+		if CampaignManager and CampaignManager.is_rogue_run:
+			var target_z = CampaignManager.current_run_target_z
+			var run_cost = AtomicConfig.calculate_fusion_cost(target_z)
+			# Estimate total enemies in a run (3 waves * ~4 enemies) to distribute reward
+			var estimated_enemies = CampaignManager.max_run_waves * 4
+			var be_per_enemy = float(run_cost) / float(estimated_enemies)
+			total_be = int(be_per_enemy * active_enemy_monsters.size())
+			if total_be < 1: total_be = 1
+		else:
+			for unit in active_enemy_monsters:
+				# Binding Energy: Base 10 + (Atomic Number * 2)
+				total_be += 10 + (unit.data.atomic_number * 2)
+
 		rewards["binding_energy"] = total_be
 		# Add to global pool
 		if PlayerData:
-			PlayerData.add_resource("experience", total_xp)
-			PlayerData.add_resource("binding_energy", total_be)
+			
+			# Only add Binding Energy immediately if NOT in a rogue run
+			# CampaignManager handles the "Stash" logic
+			if not CampaignManager or not CampaignManager.is_rogue_run:
+				PlayerData.add_resource("binding_energy", total_be)
 
 	# Notify CampaignManager (if it exists as an Autoload)
 	if CampaignManager:
-		CampaignManager.on_battle_ended(player_won)
+		# Pass rewards so CampaignManager can stash them
+		CampaignManager.on_battle_ended(player_won, rewards, roster_hp_cache)
+		
+		# If this was part of a run, show the total accumulated loot instead of just this battle's
+		if player_won and CampaignManager.current_run_energy > 0:
+			rewards["binding_energy"] = CampaignManager.current_run_energy
 
 	if battle_hud:
 		battle_hud.show_result(player_won, rewards)
@@ -661,3 +729,16 @@ func _on_unit_hp_changed(unit: BattleMonster, new_hp: int, max_hp: int):
 	
 	if index != -1:
 		hud_update_hp.emit(unit.is_player, index, new_hp, max_hp)
+		
+	if unit.is_player:
+		roster_hp_cache[unit.data] = new_hp
+
+func _on_unit_effects_changed(unit: BattleMonster, effects: Array):
+	_refresh_unit_status(unit)
+
+func _refresh_unit_status(unit: BattleMonster):
+	var index = active_player_monsters.find(unit) if unit.is_player else active_enemy_monsters.find(unit)
+	if index != -1:
+		# Assuming BattleMonster has 'active_effects' property
+		if "active_effects" in unit:
+			hud_update_status.emit(unit.is_player, index, unit.active_effects)

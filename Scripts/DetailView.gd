@@ -10,11 +10,9 @@ var current_monster: MonsterData
 
 # --- UI Node References ---
 var name_label
-var level_label
-var player_xp_label
-var cost_label
-var level_up_button
 var number_label
+var stability_label
+var stability_bar
 var hp_label
 var attack_label
 var defense_label
@@ -33,11 +31,9 @@ var _min_swipe_distance = 50
 func _ready():
 	# Find nodes dynamically to avoid path errors
 	name_label = find_child("NameLabel", true, false)
-	level_label = find_child("LevelLabel", true, false)
-	player_xp_label = find_child("PlayerXpLabel", true, false)
-	cost_label = find_child("CostLabel", true, false)
-	level_up_button = find_child("LevelUpButton", true, false)
 	number_label = find_child("NumberLabel", true, false)
+	stability_label = find_child("StabilityLabel", true, false)
+	stability_bar = find_child("StabilityBar", true, false)
 	hp_label = find_child("HPLabel", true, false)
 	attack_label = find_child("AttackLabel", true, false)
 	defense_label = find_child("DefenseLabel", true, false)
@@ -63,6 +59,11 @@ func _ready():
 		if not class_help_icon.gui_input.is_connected(_on_help_icon_input):
 			class_help_icon.gui_input.connect(_on_help_icon_input)
 
+	if stability_bar:
+		stability_bar.mouse_filter = Control.MOUSE_FILTER_STOP
+		if not stability_bar.gui_input.is_connected(_on_stability_bar_input):
+			stability_bar.gui_input.connect(_on_stability_bar_input)
+
 	# Fetch the selected monster from global state if not already set
 	if not current_monster:
 		current_monster = PlayerData.selected_monster
@@ -72,14 +73,8 @@ func _ready():
 	if is_instance_valid(current_monster):
 		update_ui()
 		_update_visuals()
+		_update_navigation_buttons()
 	
-	# Connect the button's "pressed" signal to our level-up function.
-	if level_up_button:
-		level_up_button.pressed.connect(_on_level_up_pressed)
-	
-	# Listen for global resource changes to keep the UI fresh.
-	PlayerData.resource_updated.connect(_on_player_resource_updated)
-
 func _input(event):
 	if event is InputEventScreenTouch:
 		if event.pressed:
@@ -91,9 +86,9 @@ func _input(event):
 					# Swipe Right (positive X) -> Go Previous
 					# Swipe Left (negative X) -> Go Next
 					if drag.x > 0:
-						_on_prev_pressed()
+						if prev_button and not prev_button.disabled: _on_prev_pressed()
 					else:
-						_on_next_pressed()
+						if next_button and not next_button.disabled: _on_next_pressed()
 
 func _on_prev_pressed():
 	_navigate_monster(-1)
@@ -110,11 +105,17 @@ func update_ui():
 	var content_modulate = Color.WHITE if is_owned else Color(1, 1, 1, 0.5)
 		
 	if name_label: name_label.text = current_monster.monster_name
-	if level_label: level_label.text = ("Level: " + str(current_monster.level)) if is_owned else "Not Acquired"
-	if player_xp_label: 
-		player_xp_label.text = "Player XP: " + str(PlayerData.resources.get("experience", 0))
-		player_xp_label.visible = is_owned
 	if number_label: number_label.text = "#" + str(current_monster.atomic_number)
+	
+	if stability_label:
+		stability_label.text = "Stability: %d%%" % current_monster.stability
+		if current_monster.stability >= 100:
+			stability_label.modulate = Color("#ffd700") # Gold for max
+		else:
+			stability_label.modulate = Color.WHITE
+			
+	if stability_bar:
+		_update_stability_bar(current_monster.stability)
 	
 	if current_monster.has_method("get_current_stats"):
 		var stats = current_monster.get_current_stats()
@@ -196,31 +197,6 @@ func update_ui():
 				sep.modulate = Color("#60fafc")
 				sep.modulate.a = 0.3
 				moves_container.add_child(sep)
-	
-	var cost = AtomicConfig.calculate_xp_requirement(current_monster.level)
-	if cost_label: 
-		cost_label.text = "Cost: " + str(cost) + " XP"
-		cost_label.visible = is_owned
-	
-	# Automatically disable the button if the player can't afford the upgrade.
-	if level_up_button:
-		level_up_button.visible = is_owned
-		var can_afford = (PlayerData.resources.get("experience", 0) >= cost)
-		level_up_button.disabled = not can_afford
-		_update_level_up_button_animation(can_afford and is_owned)
-
-
-func _on_level_up_pressed():
-	var cost = AtomicConfig.calculate_xp_requirement(current_monster.level)
-	
-	# Use our new centralized spend_resource function.
-	if PlayerData.spend_resource("experience", cost):
-		current_monster.level += 1
-		update_ui() # Refresh the screen to show the new level and cost.
-
-func _on_player_resource_updated(resource_type: String, _new_amount: int):
-	if resource_type == "experience":
-		update_ui()
 
 func _on_view_toggle_toggled(_toggled_on: bool):
 	_update_visuals()
@@ -228,13 +204,9 @@ func _on_view_toggle_toggled(_toggled_on: bool):
 func _navigate_monster(direction: int):
 	if not current_monster: return
 	
-	var max_z = 0
-	if not MonsterManifest.all_monsters.is_empty():
-		max_z = MonsterManifest.all_monsters.back().atomic_number
+	var max_z = PlayerData.get_max_unlocked_z()
 	var new_z = current_monster.atomic_number + direction
-	
-	if new_z < 1: new_z = max_z
-	if new_z > max_z: new_z = 1
+	if new_z < 1 or new_z > max_z: return
 	
 	var path = PlayerData.get_monster_path_by_z(new_z)
 	if path != "":
@@ -253,6 +225,7 @@ func _navigate_monster(direction: int):
 			update_ui()
 			# Update visuals immediately without icon animation (we animate the whole page)
 			_update_visuals(0, true)
+			_update_navigation_buttons()
 			
 			# 2. Create proxy of new state
 			var new_proxy = _create_visual_proxy()
@@ -457,6 +430,20 @@ func _on_help_icon_input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_show_tooltip_popup(class_help_icon.tooltip_text)
 
+func _on_stability_bar_input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var bonus = 0.0
+		if current_monster:
+			bonus = float(current_monster.stability) / 2.0
+			if current_monster.stability >= 100:
+				bonus += 10.0
+		
+		var text = "Stability amplifies stats.\n\n"
+		text += "Current Bonus: +%d%%\n\n" % int(bonus)
+		text += "Thresholds:\n• 50% Stability: +25% Stats\n• 100% Stability: +50% Stats\n\n"
+		text += "MASTERY:\nAt 100%, unlocks Class Potential for an extra +10%."
+		_show_tooltip_popup(text)
+
 func _show_tooltip_popup(text: String):
 	var popup = find_child("InfoPopup", true, false)
 	if not popup:
@@ -502,29 +489,6 @@ func _show_tooltip_popup(text: String):
 	
 	popup.dialog_text = text
 	popup.popup_centered()
-
-func _update_level_up_button_animation(should_animate: bool):
-	if not level_up_button: return
-	
-	# Ensure pivot is centered for scaling
-	level_up_button.pivot_offset = level_up_button.size / 2
-	
-	var current_tween = level_up_button.get_meta("pulse_tween") if level_up_button.has_meta("pulse_tween") else null
-	
-	if should_animate:
-		if current_tween and current_tween.is_valid():
-			return # Already animating
-			
-		var tween = create_tween()
-		tween.set_loops()
-		tween.tween_property(level_up_button, "scale", Vector2(1.05, 1.05), 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		tween.tween_property(level_up_button, "scale", Vector2.ONE, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		level_up_button.set_meta("pulse_tween", tween)
-	else:
-		if current_tween:
-			current_tween.kill()
-			level_up_button.set_meta("pulse_tween", null)
-		level_up_button.scale = Vector2.ONE
 
 func _create_move_type_badge(move_type: String) -> Control:
 	var icon_rect = TextureRect.new()
@@ -583,3 +547,75 @@ func _return_to_idle():
 					if anims.size() > 0:
 						anim_to_play = anims[0]
 			child.play(anim_to_play)
+
+func _update_stability_bar(value: int):
+	stability_bar.max_value = 100
+	stability_bar.value = value
+	
+	# Sci-Fi Background: Dark void with a metallic rim
+	var bg_style = StyleBoxFlat.new()
+	bg_style.bg_color = Color("#050508") # Deep void black
+	bg_style.border_width_left = 2
+	bg_style.border_width_top = 2
+	bg_style.border_width_right = 2
+	bg_style.border_width_bottom = 2
+	bg_style.border_color = Color("#404050") # Dark steel
+	bg_style.set_corner_radius_all(6)
+	stability_bar.add_theme_stylebox_override("background", bg_style)
+
+	var style = stability_bar.get_theme_stylebox("fill")
+	if not style is StyleBoxFlat or not stability_bar.has_meta("custom_style"):
+		style = StyleBoxFlat.new()
+		style.set_corner_radius_all(6)
+		# Add a top highlight for a "glass tube" effect
+		style.border_width_top = 2
+		style.border_blend = true
+		stability_bar.add_theme_stylebox_override("fill", style)
+		stability_bar.set_meta("custom_style", true)
+	
+	# Reset any active pulse
+	if stability_bar.has_meta("pulse_tween"):
+		var t = stability_bar.get_meta("pulse_tween")
+		if t and t.is_valid():
+			t.kill()
+		stability_bar.set_meta("pulse_tween", null)
+	
+	# Color coding based on stability - Neon/Plasma look
+	if value >= 100:
+		style.bg_color = Color("#ffd700") # Gold (Max)
+		style.border_color = Color("#ffffaa")
+		style.bg_color.a = 1.0
+		_start_pulse(stability_bar, style)
+	elif value >= 80:
+		style.bg_color = Color("#60fafc") # Cyan (High)
+		style.border_color = Color("#ccffff")
+		style.bg_color.a = 0.9
+	elif value >= 50:
+		style.bg_color = Color("#2ecc71") # Green (Stable)
+		style.border_color = Color("#aaffaa")
+		style.bg_color.a = 0.9
+	else:
+		style.bg_color = Color("#ff4d4d") # Red (Unstable)
+		style.border_color = Color("#ffaaaa")
+		style.bg_color.a = 0.9
+
+func _update_navigation_buttons():
+	if not current_monster: return
+	
+	var max_z = PlayerData.get_max_unlocked_z()
+	var current_z = current_monster.atomic_number
+	
+	if prev_button:
+		prev_button.disabled = (current_z <= 1)
+		prev_button.visible = not prev_button.disabled
+		
+	if next_button:
+		next_button.disabled = (current_z >= max_z)
+		next_button.visible = not next_button.disabled
+
+func _start_pulse(bar: ProgressBar, style: StyleBoxFlat):
+	var tween = create_tween()
+	tween.set_loops()
+	tween.tween_property(style, "bg_color", Color("#fff5cc"), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(style, "bg_color", Color("#ffd700"), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	bar.set_meta("pulse_tween", tween)

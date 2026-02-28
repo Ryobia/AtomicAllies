@@ -14,6 +14,7 @@ var scenes = {
 	"nursery": "res://Scenes/Nursery.tscn",
 	"detail_view": "res://Scenes/DetailView.tscn",
 	"periodic_table": "res://Scenes/PeriodicTable.tscn",
+	"rest_site": "res://Scenes/RestSite.tscn",
 }
 
 var tooltip_theme: Theme

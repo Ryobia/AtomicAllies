@@ -21,6 +21,14 @@ static func calculate_damage(attacker: BattleMonster, defender: BattleMonster, m
 	var spd_atk = attacker.stats.get("speed", 10)
 	var spd_def = defender.stats.get("speed", 10)
 	
+	# Class Buff: Alkali Metals ignore defense based on collection (1% per element)
+	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
+		var alkali_count = 0
+		if PlayerData:
+			alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
+		var penetration = 0.05 + (alkali_count * 0.01)
+		def = int(def * (1.0 - penetration))
+	
 	# 2. Base Damage Formula
 	# Using the Diminishing Returns formula: Damage = Attack * (100 / (100 + Defense))
 	# Scaled by Move Power. We normalize Move Power (e.g., 40 is standard)

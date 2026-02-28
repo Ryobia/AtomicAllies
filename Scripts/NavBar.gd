@@ -30,7 +30,7 @@ func _on_nav_pressed(scene_key: String):
 
 func _on_scene_changed(scene_key: String):
 	# Logic to hide the bar in specific scenes (like Battle)
-	if scene_key == "battle" or scene_key == "battle_prepare" or scene_key == "detail_view":
+	if scene_key == "battle" or scene_key == "battle_prepare" or scene_key == "detail_view" or scene_key == "rest_site":
 		visible = false
 	else:
 		visible = true

@@ -1,9 +1,13 @@
 [gd_scene format=3 uid="uid://2c6fujsuf5nu"]
 
 [ext_resource type="Script" uid="uid://cld3h0d5cobg5" path="res://Scripts/DetailView.gd" id="1_mhro5"]
+[ext_resource type="Texture2D" uid="uid://bx0ak5ilvn0q0" path="res://Assets/Icon_Physical.tres" id="2_1pg5u"]
 [ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="2_oxi4x"]
+[ext_resource type="Texture2D" uid="uid://cuy6lujwvqoo1" path="res://Assets/Icon_Special.tres" id="3_n7l37"]
 [ext_resource type="PackedScene" uid="uid://cv5jsdpjtuwms" path="res://Assets/BackButton.tscn" id="3_oxi4x"]
 [ext_resource type="Texture2D" uid="uid://23gn5h5l5hwm" path="res://Assets/leftrightsheet.png" id="4_drcdi"]
+[ext_resource type="Texture2D" uid="uid://brdd8al3jw0ab" path="res://Assets/Status_Hostile.tres" id="4_ih0hx"]
+[ext_resource type="Texture2D" uid="uid://ci5ufhq38b3a5" path="res://Assets/Status_Friendly.tres" id="5_fp55r"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mhro5"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -31,23 +35,6 @@ region = Rect2(600, 56.625, 211, 243)
 bg_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
 expand_margin_top = 20.0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2wvlh"]
-bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-border_blend = true
-expand_margin_left = 50.0
-expand_margin_top = 5.0
-expand_margin_right = 50.0
-expand_margin_bottom = 5.0
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_a75jg"]
-atlas = ExtResource("4_drcdi")
-region = Rect2(77, 219, 389, 148)
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_drcdi"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 
@@ -67,6 +54,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_mhro5")
+icon_physical = ExtResource("2_1pg5u")
+icon_special = ExtResource("3_n7l37")
+icon_hostile = ExtResource("4_ih0hx")
+icon_friendly = ExtResource("5_fp55r")
 
 [node name="Panel" type="Panel" parent="." unique_id=329396431]
 layout_mode = 1
@@ -154,40 +145,16 @@ theme_override_constants/margin_bottom = 20
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/Panel" unique_id=650672318]
 layout_mode = 1
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
-anchor_bottom = 0.656
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 50
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1927488199]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 2
-theme_override_constants/separation = 70
-alignment = 1
-
-[node name="LevelLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/HBoxContainer" unique_id=1785362234]
-z_index = 2
-layout_mode = 2
-theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_font_sizes/font_size = 40
-theme_override_styles/normal = SubResource("StyleBoxFlat_2wvlh")
-horizontal_alignment = 1
-
-[node name="LevelUpButton" type="TextureButton" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/HBoxContainer" unique_id=1555056659]
-custom_minimum_size = Vector2(200, 80)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-texture_normal = SubResource("AtlasTexture_a75jg")
-ignore_texture_size = true
-stretch_mode = 0
-
 [node name="GridStats" type="GridContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1856869019]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 2
 columns = 4
 
 [node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=204995007]
@@ -229,6 +196,19 @@ theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="StabilityLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=952489270]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 40
+text = "Element Stability"
+horizontal_alignment = 1
+
+[node name="StabilityBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1658889509]
+custom_minimum_size = Vector2(500, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+show_percentage = false
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=770951403]
 layout_mode = 2

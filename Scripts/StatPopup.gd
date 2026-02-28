@@ -1,12 +1,22 @@
 # c:\Users\ryobi\Projects\nexus\Scripts\StatPopup.gd
 extends PanelContainer
 
+const STATUS_DESCRIPTIONS = {
+	"taunt": "Forced to attack the taunter.",
+	"stun": "Cannot act this turn.",
+	"silence_special": "Cannot use Special moves.",
+	"marked_covalent": "Next cross-element hit deals 3x damage.",
+	"vulnerable": "Takes increased damage.",
+	"corrosion": "Taking damage over time (ignores DEF).",
+	"invulnerable": "Immune to all damage and status."
+}
+
 func setup(unit: BattleMonster):
     # --- Header ---
     # Try to find NameLabel if it exists (useful for context)
     var name_lbl = find_child("NameLabel", true, false)
     if name_lbl:
-        name_lbl.text = "%s (Lv. %d)" % [unit.data.monster_name, unit.data.level]
+        name_lbl.text = "%s" % [unit.data.monster_name]
         # Color code based on team
         name_lbl.modulate = Color("#60fafc") if unit.is_player else Color("#ff4d4d")
 
@@ -52,7 +62,10 @@ func setup(unit: BattleMonster):
                     text = "%s%d %s (%d turns)" % [sign_str, effect.amount, effect.stat.capitalize(), duration]
                     lbl.modulate = Color.GREEN if effect.amount > 0 else Color.RED
                 elif effect.type == "status":
+                    var status_key = effect.name.to_lower()
                     text = "%s (%d turns)" % [effect.name.capitalize(), duration]
+                    if STATUS_DESCRIPTIONS.has(status_key):
+                        text += "\n" + STATUS_DESCRIPTIONS[status_key]
                     lbl.modulate = Color.YELLOW
                 
                 lbl.text = text

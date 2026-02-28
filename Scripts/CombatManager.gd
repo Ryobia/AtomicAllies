@@ -65,6 +65,14 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	var effective_attack = attacker.stats.attack
 	var effective_defense = defender.stats.defense
 
+	# Class Buff: Alkali Metals ignore defense based on collection (1% per element)
+	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
+		var alkali_count = 0
+		if PlayerData:
+			alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
+		var penetration = 0.05 + (alkali_count * 0.01)
+		effective_defense = int(effective_defense * (1.0 - penetration))
+
 	# Formula: (Base Attack + Move Power) * Mitigation
 	# Formula: (Base Attack + Move Power) * Mitigation
 	# Mitigation: 100 / (100 + Defense) -> Standard diminishing returns

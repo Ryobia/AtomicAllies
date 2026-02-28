@@ -1,0 +1,7 @@
+[gd_resource type="AtlasTexture" format=3 uid="uid://drgfc0ec2wubq"]
+
+[ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="1_kdpil"]
+
+[resource]
+atlas = ExtResource("1_kdpil")
+region = Rect2(124.54565, 102.18175, 297.27277, 323.6364)
