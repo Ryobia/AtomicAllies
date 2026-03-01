@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+var _notify_timer: float = 0.0
+
 func _ready():
 	# Connect to GlobalManager to listen for scene changes
 	if GlobalManager:
@@ -15,6 +17,12 @@ func _ready():
 	# Try both names to ensure it works regardless of scene setup
 	_connect_btn("BattleButton", "battle_prepare")
 	_connect_btn("SynthesisButton", "nursery")
+
+func _process(delta):
+	_notify_timer += delta
+	if _notify_timer >= 1.0:
+		_notify_timer = 0.0
+		_update_notifications()
 
 func _connect_btn(btn_name: String, scene_key: String):
 	var btn = find_child(btn_name, true, false)
@@ -64,3 +72,35 @@ func _update_highlights(active_key: String):
 				btn.modulate = Color("#a360ff") 
 				btn.pivot_offset = btn.size / 2
 				btn.scale = Vector2(1.15, 1.15)
+
+func _update_notifications():
+	if not PlayerData: return
+	var has_ready = PlayerData.has_ready_chamber()
+	
+	# Try to find the button (could be named differently depending on setup)
+	var btn = find_child("SynthesisButton", true, false)
+	if not btn: btn = find_child("NurseryButton", true, false)
+	
+	if btn:
+		var badge = btn.find_child("NotificationBadge", true, false)
+		if has_ready:
+			if not badge:
+				badge = Panel.new()
+				badge.name = "NotificationBadge"
+				badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				
+				var style = StyleBoxFlat.new()
+				style.bg_color = Color("#ff4d4d") # Red
+				style.set_corner_radius_all(12)
+				badge.add_theme_stylebox_override("panel", style)
+				
+				badge.custom_minimum_size = Vector2(24, 24)
+				badge.size = Vector2(24, 24)
+				# Position top-right relative to button
+				badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+				badge.position = Vector2(-20, 0) 
+				
+				btn.add_child(badge)
+			badge.visible = true
+		else:
+			if badge: badge.visible = false

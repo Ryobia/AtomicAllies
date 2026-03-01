@@ -8,7 +8,10 @@ const STATUS_DESCRIPTIONS = {
 	"marked_covalent": "Next cross-element hit deals 3x damage.",
 	"vulnerable": "Takes increased damage.",
 	"corrosion": "Taking damage over time (ignores DEF).",
-	"invulnerable": "Immune to all damage and status."
+	"invulnerable": "Immune to all damage and status.",
+	"reactive_vapor": "Takes damage when attacking enemies.",
+	"radiation": "Taking increasing damage each turn.",
+	"refracted": "Accuracy reduced by 20%."
 }
 
 func setup(unit: BattleMonster):

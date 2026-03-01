@@ -38,7 +38,11 @@ func start_node_run(target_z: int):
     run_buffs.clear()
     
     # Difficulty scales with Atomic Number
-    var difficulty_level = max(1, target_z / 2)
+    # Z=3 (Lithium) stays easy (Level 1).
+    # Z=4+ ramps up immediately (Level = Z).
+    var difficulty_level = 1
+    if target_z > 3: difficulty_level = target_z
+    
     var enemies = generate_level_encounter(difficulty_level)
     
     PlayerData.pending_enemy_team = enemies
@@ -75,7 +79,10 @@ func on_battle_ended(player_won: bool, rewards: Dictionary = {}, final_team_stat
     is_active_campaign_battle = false
 
 func start_next_wave():
-    var difficulty_level = max(1, current_run_target_z / 2) + (current_run_wave - 1)
+    var base_level = 1
+    if current_run_target_z > 3: base_level = current_run_target_z
+    
+    var difficulty_level = base_level + (current_run_wave - 1)
     var enemies = generate_level_encounter(difficulty_level)
     PlayerData.pending_enemy_team = enemies
     GlobalManager.switch_scene("battle")
@@ -84,11 +91,11 @@ func generate_level_encounter(level: int) -> Array[MonsterData]:
     var enemies: Array[MonsterData] = []
     
     # 1. Calculate Chaos Budget (Slot Weight)
-    # Scales from 3 (Level 1) to 6 (Level 50)
+    # Ramped up progression: Level 4+ gets harder fast
     var budget = 3
-    if level > 10: budget = 4
-    if level > 25: budget = 5
-    if level > 40: budget = 6
+    if level >= 4: budget = 4
+    if level >= 8: budget = 5
+    if level >= 12: budget = 6
     
     # Boss Levels (Every 10th) get max budget immediately
     var is_boss = (level % 10 == 0)
@@ -96,8 +103,8 @@ func generate_level_encounter(level: int) -> Array[MonsterData]:
     
     # 2. Determine Available Enemy Types based on progression
     var pool = ["grunt"]
-    if level >= 5: pool.append("tank")
-    if level >= 15: pool.append("commander")
+    if level >= 4: pool.append("tank")
+    if level >= 10: pool.append("commander")
     
     # 3. Fill the Budget
     var current_weight = 0

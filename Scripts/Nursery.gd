@@ -49,8 +49,9 @@ func _process(_delta):
 		for i in range(PlayerData.synthesis_chambers.size()):
 			var chamber_data = PlayerData.synthesis_chambers[i]
 			if chamber_data.capsule:
-				var timer_id = "synthesis_chamber_%d" % i
-				var time_left = TimeManager.get_time_left(timer_id)
+				var finish_time = chamber_data.capsule.get("finish_time", 0)
+				var current_time = int(Time.get_unix_time_from_system())
+				var time_left = max(0, finish_time - current_time)
 				
 				# Find the label in the grid (assuming specific structure from update_ui)
 				# We can optimize this by caching nodes, but for MVP finding by index/name is okay
@@ -101,6 +102,11 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 	sprite.position = Vector2(0, -50)
 	pivot.add_child(sprite)
 	
+	var status_row = HBoxContainer.new()
+	status_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	status_row.add_theme_constant_override("separation", 15)
+	container.add_child(status_row)
+	
 	var label = Label.new()
 	label.name = "StatusLabel"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -114,7 +120,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 	label.add_theme_stylebox_override("normal", lbl_style)
 	label.add_theme_color_override("font_color", Color("#60fafc"))
 	label.add_theme_font_size_override("font_size", 32)
-	container.add_child(label)
+	status_row.add_child(label)
 	
 	var btn = Button.new()
 	btn.name = "ActionButton"
@@ -134,8 +140,9 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 		btn.visible = false
 	else:
 		# Busy or Ready
-		var timer_id = "synthesis_chamber_%d" % index
-		var time_left = TimeManager.get_time_left(timer_id)
+		var finish_time = data.capsule.get("finish_time", 0)
+		var current_time = int(Time.get_unix_time_from_system())
+		var time_left = max(0, finish_time - current_time)
 		if time_left > 0:
 			label.text = "Stabilizing... %ds" % time_left
 			btn.text = "Wait"
@@ -159,6 +166,23 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 			
 			visual.visible = true
 			_start_bobbing_tween(sprite)
+			
+			var speed_btn = Button.new()
+			speed_btn.text = "Speed Up (1 Gem)"
+			speed_btn.custom_minimum_size = Vector2(0, 40)
+			
+			var spd_style = StyleBoxFlat.new()
+			spd_style.bg_color = Color("#ffd700")
+			spd_style.bg_color.a = 0.9
+			var spd_hover = spd_style.duplicate()
+			spd_hover.bg_color = spd_style.bg_color.lightened(0.2)
+			
+			speed_btn.add_theme_stylebox_override("normal", spd_style)
+			speed_btn.add_theme_stylebox_override("hover", spd_hover)
+			speed_btn.add_theme_stylebox_override("pressed", spd_style)
+			speed_btn.add_theme_color_override("font_color", Color("#010813"))
+			speed_btn.pressed.connect(func(): _on_speed_up_pressed(index))
+			status_row.add_child(speed_btn)
 		else:
 			label.text = "Isotope Stable!"
 			btn.text = "Stabilize"
@@ -195,6 +219,14 @@ func _on_unlock_pressed(index):
 		# Optional: Show "Not enough dust" feedback
 		pass
 
+func _on_speed_up_pressed(index):
+	if PlayerData.spend_resource("gems", 1):
+		var chamber = PlayerData.synthesis_chambers[index]
+		if chamber.capsule:
+			chamber.capsule["finish_time"] = int(Time.get_unix_time_from_system())
+			PlayerData.save_game()
+			update_ui()
+
 func _on_stabilize_pressed(index):
 	var capsule = PlayerData.synthesis_chambers[index]["capsule"]
 	if not capsule: return
@@ -209,7 +241,6 @@ func _on_synthesis_completed(z_num, success, reward):
 	# Clear the chamber
 	if pending_stabilize_index != -1:
 		PlayerData.synthesis_chambers[pending_stabilize_index]["capsule"] = null
-		TimeManager.active_timers.erase("synthesis_chamber_%d" % pending_stabilize_index)
 		pending_stabilize_index = -1
 		PlayerData.save_game()
 	

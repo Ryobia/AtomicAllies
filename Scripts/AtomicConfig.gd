@@ -59,44 +59,44 @@ const BASELINES = {
 # Default Movesets based on Group
 const GROUP_MOVES = {
 	Group.ALKALI_METAL: [
-		{ "name": "Electron Jettison", "power": 80, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn." },
+		{ "name": "Electron Jettison", "power": 60, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn." },
 		{ "name": "Reactive Spark", "power": 40, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Quick strike. Can hit any enemy." }
 	],
 	Group.ALKALINE_EARTH: [
-		{ "name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense and Stability for 3 turns. Slows attackers." },
-		{ "name": "Magnesium Flash", "power": 50, "accuracy": 95, "type": "Physical", "description": "Shield bash. Chance to stun the enemy, forcing order onto chaotic movement." }
+		{ "name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense for 3 turns." },
+		{ "name": "Magnesium Flash", "power": 50, "accuracy": 95, "type": "Physical", "description": "Shield bash. Chance to stun the enemy. Guarenteed stun if unit is currently shielded" }
 	],
 	Group.TRANSITION_METAL: [
-		{ "name": "Metallic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Links HP with an ally. Shares damage taken, but both gain Attack boost." },
+		{ "name": "Metallic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Raises attack of self and target ally by 20 Percent for 1 turn" },
 		{ "name": "Heavy Impact", "power": 70, "accuracy": 90, "type": "Physical", "description": "Reliable, high-damage physical strike that scales with current HP." }
 	],
 	Group.POST_TRANSITION: [
-		{ "name": "Thermal Conduction", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Transfers a positive buff to an ally, or steals a debuff to dissipate it." },
-		{ "name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Heals an ally's Stability Gauge by reinforcing their atomic structure." }
+		{ "name": "Thermal Conduction", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Cleanses all debuffs from target ally." },
+		{ "name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Heals target ally, scales with attack. Excess healing becomes a shield." }
 	],
 	Group.METALLOID: [
-		{ "name": "Semiconductor Flip", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Inverts the target's highest and lowest stats for 2 turns." },
-		{ "name": "Signal Scramble", "power": 30, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Prevents the enemy from using their Special move on the next turn." }
+		{ "name": "Semiconductor Flip", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Swaps the target's Attack and Defense for 2 turns." },
+		{ "name": "Signal Scramble", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns." }
 	],
 	Group.NONMETAL: [
 		{ "name": "Covalent Link", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Marks enemy. Next attack from different element triggers triple damage." },
-		{ "name": "Electronegativity", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Pulls a distant enemy closer and reduces their speed." }
+		{ "name": "Electronegativity", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns." }
 	],
 	Group.HALOGEN: [
 		{ "name": "Fluorine Acid", "power": 0, "accuracy": 90, "type": "Special", "is_snipe": true, "description": "Applies a poison to entire enemy team" },
-		{ "name": "Reactive Vapor", "power": 40, "accuracy": 100, "type": "Special", "description": "Creates a cloud that deals damage to any enemy that passes through it." }
+		{ "name": "Reactive Vapor", "power": 40, "accuracy": 100, "type": "Special", "description": "Deals damage and creates a hazard that hurts attackers." }
 	],
 	Group.NOBLE_GAS: [
-		{ "name": "Full Octet", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Immune to all damage/status for 1 turn, but cannot act." },
-		{ "name": "Neon Glow", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Passive-style move that draws enemy aggro without moving." }
+		{ "name": "Full Octet", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Immune to all damage/status for 1 turn. But cannot act for 1 turn." },
+		{ "name": "Neon Glow", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Draws enemy aggro (Taunt) and raises Defense by 20%." }
 	],
 	Group.ACTINIDE: [
-		{ "name": "Supercritical Blast", "power": 120, "accuracy": 85, "type": "Special", "description": "Deals massive damage in a large area. High risk." },
-		{ "name": "Radioactive Decay", "power": 0, "accuracy": 0, "type": "Passive", "description": "20% chance after move to lose HP or revert to lower atomic number." }
+		{ "name": "Supercritical Blast", "power": 120, "accuracy": 85, "type": "Special", "description": "Deals massive damage but reduces HP by 10% after use." },
+		{ "name": "Radioactive Decay", "power": 0, "accuracy": 0, "type": "Passive", "description": "Lose 10% HP but apply radiation debuff to enemies." }
 	],
 	Group.LANTHANIDE: [
-		{ "name": "Paramagnetic Pull", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Moves all enemies toward a center point, setting up for AOE." },
-		{ "name": "Rare Resonance", "power": 60, "accuracy": 100, "type": "Special", "description": "Deals damage based on how many different element groups are on team." }
+		{ "name": "Optical Refraction", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Reduces enemy accuracy by 20% for 2 turns." },
+		{ "name": "Rare Resonance", "power": 20, "accuracy": 100, "type": "Special", "description": "Deals damage multiplied by the number of different element groups on the team." }
 	],
 	Group.UNKNOWN: [],
 	Group.NULL_GRUNT: [

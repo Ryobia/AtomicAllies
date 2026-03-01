@@ -98,26 +98,34 @@ theme_override_font_sizes/font_size = 50
 theme_override_styles/normal = SubResource("StyleBoxFlat_51vr3")
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=283469872]
+[node name="ClassContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=283469872]
 layout_mode = 2
 theme_override_constants/separation = 5
 alignment = 1
 
-[node name="ClassLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=864845258]
+[node name="ClassLabel" type="Label" parent="MarginContainer/VBoxContainer/ClassContainer" unique_id=864845258]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 40
 text = "CLASS ALKALINE METALS"
 horizontal_alignment = 1
 
-[node name="HelpIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1444427101]
+[node name="HelpIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/ClassContainer" unique_id=1444427101]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 texture = SubResource("AtlasTexture_drcdi")
 expand_mode = 5
 stretch_mode = 4
+
+[node name="ClassBonus" type="Label" parent="MarginContainer/VBoxContainer/ClassContainer" unique_id=662833036]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
 
 [node name="IconTexture" type="TextureRect" parent="MarginContainer/VBoxContainer" unique_id=1310145462]
 custom_minimum_size = Vector2(450, 450)
@@ -197,10 +205,6 @@ theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ClassBonus" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=662833036]
-layout_mode = 2
-horizontal_alignment = 1
-
 [node name="StabilityBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1658889509]
 custom_minimum_size = Vector2(500, 50)
 layout_mode = 2
@@ -211,7 +215,7 @@ show_percentage = false
 layout_mode = 2
 size_flags_vertical = 0
 theme_override_font_sizes/font_size = 40
-text = "Chance of Success:"
+text = "Stability:"
 horizontal_alignment = 1
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=770951403]

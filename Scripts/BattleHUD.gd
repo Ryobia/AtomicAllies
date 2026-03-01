@@ -248,6 +248,38 @@ func update_hp(is_player: bool, index: int, new_hp: float, max_hp: float):
 			if lbl:
 				lbl.text = "%d/%d" % [int(new_hp), int(max_hp)]
 
+func update_shield(is_player: bool, index: int, shield: float, max_hp: float):
+	var cache = _ui_cache.player if is_player else _ui_cache.enemy
+	if index < cache.size():
+		var hp_bar = cache[index].get("slot_hp") if is_player else cache[index].get("hp")
+		# Also handle stat card for player
+		var card_hp = cache[index].get("card_hp") if is_player else null
+		
+		if hp_bar: _update_single_shield_bar(hp_bar, shield, max_hp)
+		if card_hp: _update_single_shield_bar(card_hp, shield, max_hp)
+
+func _update_single_shield_bar(hp_bar: ProgressBar, shield: float, max_hp: float):
+	var shield_bar = hp_bar.get_node_or_null("ShieldBar")
+	if not shield_bar:
+		shield_bar = ProgressBar.new()
+		shield_bar.name = "ShieldBar"
+		shield_bar.show_percentage = false
+		shield_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
+		# Style: Cyan overlay
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color("#60fafc")
+		style.bg_color.a = 0.6
+		shield_bar.add_theme_stylebox_override("fill", style)
+		shield_bar.add_theme_stylebox_override("background", StyleBoxEmpty.new())
+		
+		hp_bar.add_child(shield_bar)
+		shield_bar.set_anchors_preset(Control.PRESET_FULL_RECT)
+	
+	shield_bar.max_value = max_hp
+	shield_bar.value = shield
+	shield_bar.visible = (shield > 0)
+
 func update_stability(is_player: bool, index: int, new_stability: float, max_stability: float = 100.0):
 	var slots = player_slots if is_player else enemy_slots
 	if index < slots.size():
@@ -301,14 +333,35 @@ func _create_status_icon(effect: Dictionary) -> Control:
 	lbl.add_theme_color_override("font_color", Color.BLACK)
 	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	
-	if effect.type == "stat_mod":
-		style.bg_color = Color("#2ecc71") if effect.amount > 0 else Color("#ff4d4d")
-		var stat_short = effect.stat.substr(0, 3).to_upper()
-		lbl.text = stat_short
-	elif effect.type == "status":
-		style.bg_color = Color("#f1c40f")
-		lbl.text = effect.name.substr(0, 3).to_upper()
+	var type = effect.get("type", "")
+	if type == "":
+		if effect.has("status"): type = "status"
+		elif effect.has("stat"): type = "stat_mod"
+	
+	var bg_color = Color("#2ecc71") # Default Green (Buff)
+	var text = "??"
+	
+	if type == "stat_mod":
+		if effect.get("amount", 0) < 0:
+			bg_color = Color("#ff4d4d") # Red (Debuff)
+		text = effect.get("stat", "").substr(0, 3).to_upper()
+	elif type == "status":
+		var s = effect.get("status", "")
+		# Known Debuffs
+		if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted"]:
+			bg_color = Color("#ff4d4d")
 		
+		if s == "marked_covalent": text = "COV"
+		elif s == "reactive_vapor": text = "VAP"
+		elif s == "radiation": text = "RAD"
+		else: text = s.substr(0, 3).to_upper()
+	elif type == "swap_stats":
+		bg_color = Color("#ff4d4d")
+		text = "SWP"
+		
+	style.bg_color = bg_color
+	lbl.text = text
+	
 	panel.add_theme_stylebox_override("panel", style)
 	panel.add_child(lbl)
 	return panel

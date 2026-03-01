@@ -20,6 +20,7 @@ var speed_label
 var icon_texture
 var moves_container
 var class_label
+var class_container
 var class_help_icon
 var class_bonus_label
 var fatigue_label
@@ -45,6 +46,7 @@ func _ready():
 	icon_texture = find_child("IconTexture", true, false)
 	moves_container = find_child("MovesContainer", true, false)
 	class_label = find_child("ClassLabel", true, false)
+	class_container = find_child("ClassContainer", true, false)
 	class_help_icon = find_child("HelpIcon", true, false)
 	class_bonus_label = find_child("ClassBonus", true, false)
 	fatigue_label = find_child("FatigueLabel", true, false)
@@ -159,6 +161,10 @@ func update_ui():
 	var is_owned = PlayerData.is_monster_owned(current_monster.monster_name)
 	var content_modulate = Color.WHITE if is_owned else Color(1, 1, 1, 0.5)
 		
+	var group_color = Color.WHITE
+	if "group" in current_monster:
+		group_color = AtomicConfig.GROUP_COLORS.get(current_monster.group, Color.WHITE)
+
 	if name_label: name_label.text = current_monster.monster_name
 	if number_label: number_label.text = "#" + str(current_monster.atomic_number)
 	
@@ -188,9 +194,13 @@ func update_ui():
 		var group_name = AtomicConfig.Group.find_key(current_monster.group)
 		if group_name:
 			class_label.text = "Class: " + group_name.replace("_", " ").capitalize()
+			class_label.add_theme_color_override("font_color", group_color)
+			class_label.add_theme_color_override("font_outline_color", Color.BLACK)
+			class_label.add_theme_constant_override("outline_size", 6)
 			
 			if class_help_icon:
 				class_help_icon.tooltip_text = _get_class_description(current_monster.group)
+				class_help_icon.modulate = group_color
 
 	if class_bonus_label and "group" in current_monster:
 		var group = current_monster.group
@@ -200,8 +210,11 @@ func update_ui():
 			if m.group == group:
 				total += 1
 		
-		class_bonus_label.text = "Synergy: %d/%d Collected" % [owned, total]
+		class_bonus_label.text = "%d/%d Collected" % [owned, total]
 		class_bonus_label.tooltip_text = _get_synergy_desc(group, owned)
+		class_bonus_label.add_theme_color_override("font_color", group_color)
+		class_bonus_label.add_theme_color_override("font_outline_color", Color.BLACK)
+		class_bonus_label.add_theme_constant_override("outline_size", 6)
 
 	if fatigue_label or fatigue_container:
 		var current_time = int(Time.get_unix_time_from_system())

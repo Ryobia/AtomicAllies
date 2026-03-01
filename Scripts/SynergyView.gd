@@ -129,34 +129,34 @@ func _get_synergy_text(group: int, count: int) -> String:
     match group:
         AtomicConfig.Group.ALKALI_METAL:
             var val = count * 5
-            return "[color=%s]Current Bonus:[/color] Ignore [color=%s]%d%%[/color] Defense.\n[color=%s]Passive:[/color] +5%% Defense Penetration per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] Ignore [color=%s]%d%%[/color] Defense (5%%/elem).\n[color=%s]Passive:[/color] High Defense Penetration." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.ALKALINE_EARTH:
             var val = count * 5
-            return "[color=%s]Current Bonus:[/color] [color=%s]+%d%%[/color] Defense.\n[color=%s]Passive:[/color] +5%% Defense per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Base Defense (5%%/elem).\n[color=%s]Passive:[/color] Gain +5%% Defense every turn." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.TRANSITION_METAL:
             var val = count * 2
-            return "[color=%s]Current Bonus:[/color] [color=%s]%d%%[/color] Double Hit Chance.\n[color=%s]Passive:[/color] +2%% Double Hit Chance per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]%d%%[/color] Double Hit Chance (2%%/elem).\n[color=%s]Passive:[/color] Consecutive attacks deal +5%% Damage." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.HALOGEN:
             var val = count * 1
-            return "[color=%s]Current Bonus:[/color] [color=%s]+%d%%[/color] Poison Damage.\n[color=%s]Passive:[/color] +1%% Poison Damage per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Poison Damage (1%%/elem).\n[color=%s]Passive:[/color] Attacks apply Poison (10%% HP/turn)." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.NOBLE_GAS:
             var val = count * 5
-            return "[color=%s]Current Bonus:[/color] [color=%s]+%d%%[/color] Max HP.\n[color=%s]Passive:[/color] +5%% Max HP per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Base HP (5%%/elem).\n[color=%s]Passive:[/color] Restore 5%% HP every turn." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.LANTHANIDE:
             var val = count * 1
-            return "[color=%s]Current Bonus:[/color] [color=%s]+%d%%[/color] All Stats.\n[color=%s]Passive:[/color] +1%% All Stats per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] All Stats (1%%/elem).\n[color=%s]Passive:[/color] Absorb 10%% of fallen enemy stats." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.NONMETAL:
             var val = count * 5
-            return "[color=%s]Current Bonus:[/color] [color=%s]%d%%[/color] Chain Reaction Chance.\n[color=%s]Passive:[/color] +5%% Chain Reaction Chance per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]%d%%[/color] Chain Reaction Chance (5%%/elem).\n[color=%s]Passive:[/color] Allies gain +5%% Attack per Nonmetal." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.METALLOID:
             var val = count * 5
-            return "[color=%s]Current Bonus:[/color] [color=%s]+%d%%[/color] Debuff Effectiveness.\n[color=%s]Passive:[/color] +5%% Debuff Effectiveness per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Debuff Effect (5%%/elem).\n[color=%s]Passive:[/color] 10%% Chance to Stun on hit." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.POST_TRANSITION:
             var val = count * 5
-            return "[color=%s]Current Bonus:[/color] [color=%s]+%d%%[/color] Buff Effectiveness.\n[color=%s]Passive:[/color] +5%% Buff Effectiveness per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Buff Effect (5%%/elem).\n[color=%s]Passive:[/color] Gain +1%% All Stats every turn." % [c_lbl, c_val, val, c_lbl]
         AtomicConfig.Group.ACTINIDE:
             var val = count * 1
-            return "[color=%s]Current Bonus:[/color] [color=%s]+%d%%[/color] Speed.\n[color=%s]Passive:[/color] +1%% Speed per element." % [c_lbl, c_val, val, c_lbl]
+            return "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Base Speed (1%%/elem).\n[color=%s]Passive:[/color] Lose 10%% HP to deal +10%% Max HP Dmg." % [c_lbl, c_val, val, c_lbl]
     return "Unknown Synergy."
 
 func _on_back_pressed():

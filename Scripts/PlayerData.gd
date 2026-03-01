@@ -131,6 +131,15 @@ func add_capsule_to_chamber(chamber_index: int, z: int, p1_z: int, p2_z: int, fi
 	save_game()
 	return capsule
 
+func has_ready_chamber() -> bool:
+	var current_time = int(Time.get_unix_time_from_system())
+	for chamber in synthesis_chambers:
+		if chamber.get("capsule"):
+			var finish_time = chamber.capsule.get("finish_time", 0)
+			if current_time >= finish_time:
+				return true
+	return false
+
 func unlock_blueprint(z: int):
 	if z not in unlocked_blueprints:
 		unlocked_blueprints.append(z)
@@ -292,7 +301,7 @@ func reset_save():
 	inventory.clear()
 	resources = {
 		"neutron_dust": 99999,
-		"gems": 0,
+		"gems": 999,
 		"binding_energy": 99999
 	}
 	

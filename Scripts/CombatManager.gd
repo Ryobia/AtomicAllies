@@ -8,7 +8,7 @@ extends Node
 const ITEM_DATA = {
 	"repair_nanites": { "name": "Repair Nanites", "target": "Ally", "effect": "heal_percent", "amount": 0.5 },
 	"adrenaline_shot": { "name": "Adrenaline Shot", "target": "Ally", "effect": "buff_stat", "stat": "attack", "amount": 20, "duration": 3 },
-	"emergency_shield": { "name": "Emergency Shield", "target": "Ally", "effect": "buff_stat", "stat": "defense", "amount": 50, "duration": 2 }
+	"emergency_shield": { "name": "Emergency Shield", "target": "Ally", "effect": "add_shield", "amount": 0.3 }
 }
 
 func get_item_data(item_id: String) -> Dictionary:
@@ -25,6 +25,10 @@ func apply_item_effect(target: BattleMonster, item_id: String):
 		"buff_stat":
 			var effect = { "target": target, "stat": data.stat, "amount": int(target.stats.get(data.stat, 10) * (data.amount / 100.0)), "duration": data.duration, "type": "stat_mod" }
 			target.apply_effect(effect)
+		"add_shield":
+			var amount = int(target.max_hp * data.amount)
+			var current = target.get_meta("shield", 0)
+			target.set_meta("shield", current + amount)
 
 # Retrieves moves for a monster, falling back to Group Defaults if necessary
 func get_active_moves(monster: MonsterData) -> Array:
@@ -66,7 +70,12 @@ func execute_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	}
 
 	# 1. Accuracy Check
-	if move.accuracy < 100 and randf() * 100 > move.accuracy:
+	var hit_chance = float(move.accuracy)
+	
+	if attacker.has_status("refracted"):
+		hit_chance -= 20.0
+	
+	if hit_chance < 100 and randf() * 100 > hit_chance:
 		result.success = false
 		result.messages.append("%s missed!" % attacker.data.monster_name)
 		return result
@@ -110,7 +119,9 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	var raw_power = effective_attack + move.power
 	
 	if move.name == "Heavy Impact":
-		raw_power += attacker.current_hp * 0.2
+		var hp_bonus = attacker.current_hp * 0.2
+		raw_power += hp_bonus
+		result.messages.append("Impact scaled by HP! (+%d)" % int(hp_bonus))
 		
 	var mitigation = (100.0 / (100.0 + effective_defense))
 	var final_damage = raw_power * mitigation
@@ -118,6 +129,12 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	# Actinide Passive: Deal bonus 10% max health damage
 	if attacker.data.group == AtomicConfig.Group.ACTINIDE:
 		final_damage += (attacker.max_hp * 0.1)
+	
+	# Covalent Link: Triple damage on cross-element hit
+	if defender.has_status("marked_covalent") and attacker.data.group != defender.data.group:
+		final_damage *= 3.0
+		result.messages.append("Covalent Reaction! Triple Damage!")
+		result.effects.append({ "target": defender, "effect": "remove_status", "status": "marked_covalent" })
 	
 	# Variance +/- 10%
 	final_damage *= randf_range(0.9, 1.1)
@@ -136,12 +153,12 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 		var duration = 3
 		
 		var poison_dmg = int((defender.max_hp * 0.10) * bonus_dmg)
-		result.effects.append({ "target": defender, "status": "poison", "damage": poison_dmg, "duration": duration })
+		result.effects.append({ "target": defender, "status": "poison", "damage": poison_dmg, "duration": duration, "type": "status" })
 		
 	# Metalloid: Stun
 	if attacker.data.group == AtomicConfig.Group.METALLOID:
 		if randf() < 0.10:
-			result.effects.append({ "target": defender, "status": "stun", "duration": 1 })
+			result.effects.append({ "target": defender, "status": "stun", "duration": 1, "type": "status" })
 			
 	# Transition Metal: Double Hit
 	if attacker.data.group == AtomicConfig.Group.TRANSITION_METAL:
@@ -168,28 +185,28 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			if effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
 				effect.amount = int(effect.amount * multiplier)
 
-	# Post-Transition: +5% Buff Effectiveness (Increase stat buff amount)
-	if attacker.data.group == AtomicConfig.Group.POST_TRANSITION:
-		var count = PlayerData.class_resonance.get(AtomicConfig.Group.POST_TRANSITION, 0)
-		var multiplier = 1.0 + (count * 0.05)
-		for effect in result.effects:
-			if effect.get("type") == "stat_mod" and effect.get("amount", 0) > 0:
-				effect.amount = int(effect.amount * multiplier)
-
 	match move.name:
 		"Electron Jettison":
-			# Reduces Defense to zero (simulated by a massive debuff)
-			result.effects.append({ "target": attacker, "stat": "defense", "amount": -999, "duration": 1 })
+			# Reduces Defense to zero
+			var current_def = attacker.stats.defense
+			result.effects.append({ "target": attacker, "stat": "defense", "amount": -current_def, "duration": 1, "type": "stat_mod" })
 			result.messages.append("%s becomes unstable!" % attacker.data.monster_name)
 			
 		"Oxidation Layer":
-			result.effects.append({ "target": attacker, "stat": "defense", "amount": 20, "duration": 3 })
+			var amount = int(attacker.stats.defense * 0.5)
+			result.effects.append({ "target": attacker, "stat": "defense", "amount": amount, "duration": 3, "type": "stat_mod" })
 			result.messages.append("%s fortified its structure!" % attacker.data.monster_name)
 			
 		"Metallic Bond":
 			# Buffs attack of the target (ally)
-			result.effects.append({ "target": defender, "stat": "attack", "amount": 15, "duration": 3 })
+			var amount = int(defender.stats.attack * 0.2)
+			result.effects.append({ "target": defender, "stat": "attack", "amount": amount, "duration": 1, "type": "stat_mod" })
 			result.messages.append("%s shares its strength!" % attacker.data.monster_name)
+			
+			# Also buffs self if targeting a different ally
+			if attacker != defender:
+				var self_amount = int(attacker.stats.attack * 0.2)
+				result.effects.append({ "target": attacker, "stat": "attack", "amount": self_amount, "duration": 1, "type": "stat_mod" })
 			
 		"Thermal Conduction":
 			# Cleanses status effects from target
@@ -198,58 +215,121 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			
 		"Alloy Reinforce":
 			# Heals the target
-			result.effects.append({ "target": defender, "effect": "heal", "amount": 50 })
+			var heal_amount = int(attacker.stats.attack * 1.5)
+			result.effects.append({ "target": defender, "effect": "heal_overflow_shield", "amount": heal_amount })
 			result.messages.append("%s repairs the structure!" % attacker.data.monster_name)
 			
 		"Semiconductor Flip":
 			result.effects.append({ "target": defender, "effect": "swap_stats", "stats": ["attack", "defense"], "duration": 2 })
-			result.messages.append("%s's stats were inverted!" % defender.data.monster_name)
+			result.messages.append("%s's Attack and Defense were swapped!" % defender.data.monster_name)
 			
 		"Signal Scramble":
-			result.effects.append({ "target": defender, "status": "silence_special", "duration": 1 })
+			var reduction = int(defender.stats.speed * 0.2)
+			# Safety clamp: Ensure speed doesn't drop below 1
+			if defender.stats.speed - reduction < 1:
+				reduction = max(0, defender.stats.speed - 1)
+			
+			result.effects.append({ "target": defender, "stat": "speed", "amount": -reduction, "duration": 2, "type": "stat_mod" })
 			result.messages.append("%s's signals are jammed!" % defender.data.monster_name)
 			
 		"Covalent Link":
-			result.effects.append({ "target": defender, "status": "marked_covalent", "duration": 3 })
+			result.effects.append({ "target": defender, "status": "marked_covalent", "duration": 3, "type": "status" })
 			result.messages.append("%s is marked for reaction!" % defender.data.monster_name)
 			
 		"Electronegativity":
-			result.effects.append({ "target": defender, "stat": "speed", "amount": -15, "duration": 2 })
+			var reduction = int(defender.stats.speed * 0.2)
+			# Safety clamp: Ensure speed doesn't drop below 1
+			if defender.stats.speed - reduction < 1:
+				reduction = max(0, defender.stats.speed - 1)
+				
+			result.effects.append({ "target": defender, "stat": "speed", "amount": -reduction, "duration": 2, "type": "stat_mod" })
 			result.messages.append("%s is being pulled in!" % defender.data.monster_name)
 			
 		"Paramagnetic Pull":
-			result.effects.append({ "target": defender, "status": "vulnerable", "duration": 2 })
+			result.effects.append({ "target": defender, "status": "vulnerable", "duration": 2, "type": "status" })
 			result.messages.append("%s is magnetized!" % defender.data.monster_name)
 			
 		"Magnesium Flash":
-			if randf() < 0.3:
-				result.effects.append({ "target": defender, "status": "stun", "duration": 1 })
+			var chance = 0.5
+			if attacker.get_meta("shield", 0) > 0:
+				chance = 1.0
+				
+			if randf() < chance:
+				result.effects.append({ "target": defender, "status": "stun", "duration": 1, "type": "status" })
 				result.messages.append("%s was blinded!" % defender.data.monster_name)
 		
 		"Full Octet":
-			result.effects.append({ "target": attacker, "status": "invulnerable", "duration": 1 })
+			result.effects.append({ "target": attacker, "status": "stun", "duration": 2, "type": "status" })
+			result.effects.append({ "target": attacker, "status": "invulnerable", "duration": 2, "type": "status" })
 			result.messages.append("%s becomes completely inert!" % attacker.data.monster_name)
 			
 		"Neon Glow":
-			result.effects.append({ "target": attacker, "status": "taunt", "duration": 2 })
+			result.effects.append({ "target": attacker, "status": "taunt", "duration": 2, "type": "status" })
+			var amount = int(attacker.stats.defense * 0.2)
+			result.effects.append({ "target": attacker, "stat": "defense", "amount": amount, "duration": 2, "type": "stat_mod" })
 			result.messages.append("%s shines brightly!" % attacker.data.monster_name)
 			
 		"Fluorine Acid":
-			result.effects.append({ "target": defender, "status": "corrosion", "damage": 10, "duration": 3 })
-			result.messages.append("%s is corroding!" % defender.data.monster_name)
+			result.effects.append({ "effect": "team_status", "status": "poison", "damage_percent": 0.1, "duration": 3, "type": "status" })
+			result.messages.append("%s releases a toxic cloud!" % attacker.data.monster_name)
 			
 		"Supercritical Blast":
-			result.effects.append({ "target": attacker, "effect": "recoil", "amount": int(attacker.max_hp * 0.2) })
+			result.effects.append({ "target": attacker, "effect": "recoil", "amount": int(attacker.max_hp * 0.1) })
 			result.messages.append("%s takes recoil damage!" % attacker.data.monster_name)
 			
 		"Reactive Vapor":
-			result.effects.append({ "target": defender, "status": "corrosion", "damage": 15, "duration": 3 })
-			result.messages.append("%s is surrounded by vapor!" % defender.data.monster_name)
+			result.effects.append({ "effect": "team_status", "status": "reactive_vapor", "duration": 3, "type": "status" })
+			result.messages.append("%s fills the area with reactive vapor!" % attacker.data.monster_name)
 			
 		"Void Harden":
-			result.effects.append({ "target": attacker, "stat": "defense", "amount": 10, "duration": 3 })
+			var amount = int(attacker.stats.defense * 0.2)
+			result.effects.append({ "target": attacker, "stat": "defense", "amount": amount, "duration": 3, "type": "stat_mod" })
 			result.messages.append("%s hardens its shell!" % attacker.data.monster_name)
 			
 		"Void Command":
-			result.effects.append({ "target": attacker, "stat": "attack", "amount": 10, "duration": 3 })
+			var atk_amount = int(defender.stats.attack * 0.2)
+			result.effects.append({ "target": defender, "stat": "attack", "amount": atk_amount, "duration": 3, "type": "stat_mod" })
+			
+			var spd_amount = int(defender.stats.speed * 0.2)
+			result.effects.append({ "target": defender, "stat": "speed", "amount": spd_amount, "duration": 3, "type": "stat_mod" })
 			result.messages.append("%s commands the void!" % attacker.data.monster_name)
+			
+		"Optical Refraction":
+			result.effects.append({ "target": defender, "status": "refracted", "duration": 2, "type": "status" })
+			result.messages.append("%s's vision is distorted!" % defender.data.monster_name)
+			
+		"Rare Resonance":
+			var unique_groups = {}
+			var team_list = []
+			
+			if attacker.is_player:
+				team_list = PlayerData.active_team
+				if team_list.is_empty(): # Fallback for testing if active_team is not set
+					team_list = PlayerData.owned_monsters
+			else:
+				team_list = PlayerData.pending_enemy_team
+				
+			for member in team_list:
+				if member and "group" in member:
+					unique_groups[member.group] = true
+			
+			var multiplier = clampi(unique_groups.size(), 1, 6)
+			result.damage *= multiplier
+			result.messages.append("Resonance! %dx Damage!" % multiplier)
+			
+		"Obliterate":
+			result.messages.append("%s unleashes void energy!" % attacker.data.monster_name)
+			
+		"Void Scratch":
+			result.messages.append("%s claws with void energy!" % attacker.data.monster_name)
+			
+		"Heavy Slam":
+			result.messages.append("%s slams with heavy force!" % attacker.data.monster_name)
+
+	# Post-Transition: +5% Buff Effectiveness (Increase stat buff amount)
+	if attacker.data.group == AtomicConfig.Group.POST_TRANSITION:
+		var count = PlayerData.class_resonance.get(AtomicConfig.Group.POST_TRANSITION, 0)
+		var multiplier = 1.0 + (count * 0.05)
+		for effect in result.effects:
+			if (effect.get("type") == "stat_mod" and effect.get("amount", 0) > 0) or effect.get("effect") in ["heal", "heal_overflow_shield"]:
+				effect.amount = int(effect.amount * multiplier)

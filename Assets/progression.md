@@ -50,7 +50,7 @@ This prevents power creep by making early elements permanently viable through cl
 | **Halogens** | Poison damage increased by 1% per element | Damage Over Time | poison effects last an additional turn | all attacks apply poison effect that deals 10% max health per turn
 | **Noble Gases** | Increase health by 5% per element | Status Immunity | Immune to debuffs | Restore 5% health per turn
 | **Lanthanides** | +1% Global stat increase per element  | Buff for your Buffs | additional 10% increase to all elements basic stats (Hp, Spd, Atk, Def) | Absorb 10% of stats of fallen enemies
-| **Nonmetals** | +5% Chain Reaction (attack spreads to additional enemy) chance per element  | Multi-target control | Guarenteed chain reaction | Allies gain 5% attack per Nonmetal in party
+| **Nonmetals** | +5% Chain Reaction (attack spreads to additional enemy) chance per element  | Combo-Primers | Guarenteed chain reaction | Allies gain 5% attack per Nonmetal in party
 | **Metalloids** | +5% debuff effectiveness per element | Crowd Control | all debuffs last an additional turn | 10% chance to stun enemy
 | **Post-Transition** | +5% friendly buff effectiveness per element | Raw survivability | all buffs last an additional turn | gain 1% of each basic stat each turn
 | **Actinides** | Increase speed by 1% per element | mounting pressure | Increase speed by 3% every turn | Loses 10% health per turn in exchange for dealing bonus 10% max health damage on attack

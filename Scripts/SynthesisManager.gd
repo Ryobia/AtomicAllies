@@ -179,4 +179,13 @@ func _calculate_result_stability(z: int) -> int:
 					current_val = owned.stability
 	
 	var min_val = clampi(current_val + 1, 1, 100)
-	return randi_range(min_val, 100)
+	
+	if min_val >= 100: return 100
+	
+	# Weighted random: Bias heavily towards min_val (current stability)
+	# Power of 4 makes high rolls much less likely
+	var range_size = 100 - min_val
+	var roll = pow(randf(), 4.0)
+	var added = int(roll * range_size)
+	
+	return min_val + added
