@@ -14,6 +14,9 @@ func _ready():
 		# Connect to the global resource signal
 		PlayerData.resource_updated.connect(_on_resource_updated)
 		_update_display()
+	
+	if GlobalManager:
+		GlobalManager.scene_changed.connect(_on_scene_changed)
 
 func _update_display():
 	if dust_label:

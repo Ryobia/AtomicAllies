@@ -56,9 +56,6 @@ expand_margin_top = 5.0
 expand_margin_right = 5.0
 expand_margin_bottom = 5.0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5km5i"]
-bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5odor"]
 content_margin_left = 10.0
 content_margin_top = 10.0
@@ -238,37 +235,6 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_36rvm")
 theme_override_styles/hover = SubResource("StyleBoxFlat_5jn0c")
 text = "CLAIM ALLY
 "
-
-[node name="CapsulePanelPopup" type="Panel" parent="." unique_id=1834142268]
-visible = false
-custom_minimum_size = Vector2(800, 500)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -250.0
-offset_right = 300.0
-offset_bottom = 250.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_5km5i")
-
-[node name="ScrollContainer" type="ScrollContainer" parent="CapsulePanelPopup" unique_id=1342263731]
-z_index = 2
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="CapsuleList" type="VBoxContainer" parent="CapsulePanelPopup/ScrollContainer" unique_id=1755734774]
-layout_mode = 2
-size_flags_horizontal = 3
-alignment = 1
 
 [node name="SynthesisChambers" type="Label" parent="." unique_id=1147488399]
 z_index = 1

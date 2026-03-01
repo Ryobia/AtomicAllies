@@ -173,7 +173,7 @@ func _on_capsule_created(capsule_data):
 	if parent_2_btn: parent_2_btn.text = "Select Parent 2"
 	
 	if status_label:
-		status_label.text = "Fusion Successful! Capsule created!"
+		status_label.text = "Fusion Successful! Sent to Synthesis Chamber."
 	
 	# Clear Visuals
 	if is_instance_valid(atom_p1): atom_p1.queue_free()
@@ -181,7 +181,8 @@ func _on_capsule_created(capsule_data):
 	atom_p1 = null
 	atom_p2 = null
 	
-	_update_stability_preview()
+	check_breeding_status()
+	_update_success_rate_preview()
 
 func _process(_delta):
 	# Update the timer label in real-time
@@ -198,6 +199,9 @@ func _process(_delta):
 func check_breeding_status():
 	if TimeManager.get_time_left("breeding") > 0:
 		status_label.text = "Fusion in progress..."
+		breed_btn.disabled = true
+	elif PlayerData.get_first_empty_chamber_index() == -1:
+		status_label.text = "No Synthesis Chambers available!"
 		breed_btn.disabled = true
 	else:
 		status_label.text = "Select two Elements to Fuse."
@@ -231,6 +235,9 @@ func _populate_selection_list():
 		if (selecting_slot == 1 and monster == parent_2) or (selecting_slot == 2 and monster == parent_1):
 			continue
 			
+		var current_time = int(Time.get_unix_time_from_system())
+		var is_fatigued = monster.fatigue_expiry > current_time
+		
 		if monster_card_scene:
 			print("Nexus: Using Monster Card Scene")
 			# Create a wrapper to hold the card and an invisible button
@@ -256,24 +263,43 @@ func _populate_selection_list():
 			btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			btn.mouse_filter = Control.MOUSE_FILTER_PASS
 			btn.focus_mode = Control.FOCUS_NONE
-			btn.pressed.connect(func(): _on_monster_selected(monster))
 			
-			# Hover effects: Grow and Light Up
-			btn.mouse_entered.connect(func():
-				card.pivot_offset = card.size / 2 # Scale from the center
-				wrapper.z_index = 1 # Bring to front so it overlaps neighbors nicely
-				var tween = create_tween()
-				tween.set_parallel(true)
-				tween.tween_property(card, "scale", Vector2(1.05, 1.05), 0.1)
-				tween.tween_property(card, "modulate", Color(1.1, 1.1, 1.1), 0.1)
-			)
-			btn.mouse_exited.connect(func():
-				wrapper.z_index = 0
-				var tween = create_tween()
-				tween.set_parallel(true)
-				tween.tween_property(card, "scale", Vector2.ONE, 0.1)
-				tween.tween_property(card, "modulate", Color.WHITE, 0.1)
-			)
+			if is_fatigued:
+				card.modulate = Color(0.5, 0.5, 0.5, 0.8)
+				var time_left = monster.fatigue_expiry - current_time
+				var mins = time_left / 60
+				var secs = time_left % 60
+				
+				var lbl = Label.new()
+				lbl.text = "Fatigued\n%02d:%02d" % [mins, secs]
+				lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
+				lbl.add_theme_font_size_override("font_size", 32)
+				lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+				wrapper.add_child(lbl)
+				
+				btn.disabled = true
+				btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			else:
+				btn.pressed.connect(func(): _on_monster_selected(monster))
+				
+				# Hover effects: Grow and Light Up
+				btn.mouse_entered.connect(func():
+					card.pivot_offset = card.size / 2 # Scale from the center
+					wrapper.z_index = 1 # Bring to front so it overlaps neighbors nicely
+					var tween = create_tween()
+					tween.set_parallel(true)
+					tween.tween_property(card, "scale", Vector2(1.05, 1.05), 0.1)
+					tween.tween_property(card, "modulate", Color(1.1, 1.1, 1.1), 0.1)
+				)
+				btn.mouse_exited.connect(func():
+					wrapper.z_index = 0
+					var tween = create_tween()
+					tween.set_parallel(true)
+					tween.tween_property(card, "scale", Vector2.ONE, 0.1)
+					tween.tween_property(card, "modulate", Color.WHITE, 0.1)
+				)
 			
 			wrapper.add_child(btn)
 		else:
@@ -285,7 +311,16 @@ func _populate_selection_list():
 			btn.add_theme_font_size_override("font_size", 56)
 			btn.mouse_filter = Control.MOUSE_FILTER_PASS
 			btn.focus_mode = Control.FOCUS_NONE
-			btn.pressed.connect(func(): _on_monster_selected(monster))
+			
+			if is_fatigued:
+				var time_left = monster.fatigue_expiry - current_time
+				var mins = time_left / 60
+				var secs = time_left % 60
+				btn.text += "\n(Fatigued %02d:%02d)" % [mins, secs]
+				btn.disabled = true
+			else:
+				btn.pressed.connect(func(): _on_monster_selected(monster))
+				
 			selection_container.add_child(btn)
 			
 		count += 1
@@ -315,7 +350,7 @@ func _on_monster_selected(monster: MonsterData):
 		_update_slot_visuals(2, monster)
 	
 	selection_panel.visible = false
-	_update_stability_preview()
+	_update_success_rate_preview()
 
 # --- Breeding Logic ---
 func _on_breed_pressed():
@@ -340,11 +375,11 @@ func _on_breed_pressed():
 	# Show confirmation popup instead of immediate fusion
 	if fusion_confirm_popup:
 		var chance = 0.0
-		if SynthesisManager.has_method("calculate_stability"):
-			chance = SynthesisManager.calculate_stability(parent_1.stability, parent_2.stability, target_z)
+		if SynthesisManager.has_method("calculate_success_rate"):
+			chance = SynthesisManager.calculate_success_rate(parent_1.stability, parent_2.stability, target_z)
 			
 		if confirm_label:
-			confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nStability: %d%%\nCost: %d Binding Energy" % \
+			confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nSuccess Rate: %d%%\nCost: %d Binding Energy" % \
 				[parent_1.monster_name, parent_2.monster_name, target_z, int(chance), cost]
 			
 		fusion_confirm_popup.visible = true
@@ -451,13 +486,13 @@ func _update_slot_visuals(slot_idx: int, monster: MonsterData):
 			if slot_idx == 1: atom_p1 = visual
 			else: atom_p2 = visual
 
-func _update_stability_preview():
+func _update_success_rate_preview():
 	if parent_1 and parent_2:
 		var target_z = parent_1.atomic_number + parent_2.atomic_number
 		var chance = 0.0
 		
-		if SynthesisManager.has_method("calculate_stability"):
-			chance = SynthesisManager.calculate_stability(parent_1.stability, parent_2.stability, target_z)
+		if SynthesisManager.has_method("calculate_success_rate"):
+			chance = SynthesisManager.calculate_success_rate(parent_1.stability, parent_2.stability, target_z)
 		
 		if stability_bar:
 			stability_bar.value = chance
@@ -569,12 +604,14 @@ func _debug_add_starters():
 	print("DEBUG: Inventory empty. Adding starter atoms (H, H, He)...")
 	var h = _get_monster_by_atomic_number(1) # Hydrogen
 	var he = _get_monster_by_atomic_number(2) # Helium
+	var li = _get_monster_by_atomic_number(3) # Lithium (if implemented)
 	
 	if h: 
 		PlayerData.owned_monsters.append(h)
-		PlayerData.owned_monsters.append(h) # Need 2 to make Helium
 	if he:
 		PlayerData.owned_monsters.append(he)
+	if li:
+		PlayerData.owned_monsters.append(li)
 	
 	print("DEBUG: Starters added. You can now test breeding.")
 

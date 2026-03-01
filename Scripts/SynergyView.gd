@@ -48,6 +48,7 @@ func _create_synergy_card(group: int):
     var panel = PanelContainer.new()
     panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     panel.custom_minimum_size = Vector2(0, 160)
+    panel.mouse_filter = Control.MOUSE_FILTER_PASS
     
     # Style: Dark background with colored left border matching the group
     var style = StyleBoxFlat.new()
@@ -63,6 +64,7 @@ func _create_synergy_card(group: int):
     
     var vbox = VBoxContainer.new()
     vbox.add_theme_constant_override("separation", 8)
+    vbox.mouse_filter = Control.MOUSE_FILTER_PASS
     panel.add_child(vbox)
     
     # --- Header Row (Name + Count) ---
@@ -75,6 +77,7 @@ func _create_synergy_card(group: int):
     name_lbl.add_theme_font_size_override("font_size", 36)
     name_lbl.add_theme_color_override("font_color", style.border_color)
     name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
     header.add_child(name_lbl)
     
     var owned = PlayerData.class_resonance.get(group, 0)
@@ -84,6 +87,7 @@ func _create_synergy_card(group: int):
     count_lbl.text = "%d / %d Collected" % [owned, total]
     count_lbl.add_theme_font_size_override("font_size", 24)
     count_lbl.add_theme_color_override("font_color", Color("#a0a0a0"))
+    count_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
     header.add_child(count_lbl)
     
     # --- Progress Bar ---
@@ -92,6 +96,7 @@ func _create_synergy_card(group: int):
     bar.value = owned
     bar.show_percentage = false
     bar.custom_minimum_size.y = 8
+    bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
     
     var fill = StyleBoxFlat.new()
     fill.bg_color = style.border_color
@@ -112,6 +117,7 @@ func _create_synergy_card(group: int):
     desc.fit_content = true
     desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
     desc.add_theme_font_size_override("normal_font_size", 24)
+    desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
     vbox.add_child(desc)
     
     grid.add_child(panel)

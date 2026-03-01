@@ -18,6 +18,8 @@ func _ready():
 	if owned_monsters.is_empty():
 		var he = load("res://data/Monsters/Helium.tres")
 		var h = load("res://data/Monsters/Hydrogen.tres")
+		var li = load("res://data/Monsters/Lithium.tres")
+		if li: owned_monsters.append(li.duplicate())
 		if h: owned_monsters.append(h.duplicate())
 		if he: owned_monsters.append(he.duplicate())
 		save_game()
@@ -28,7 +30,6 @@ signal resource_updated(resource_type, amount)
 
 # Inventory
 var owned_monsters: Array[MonsterData] = []
-var capsules: Array = [] # Array of Dictionaries { "id": String, "z": int }
 var synthesis_chambers: Array = [] # Array of { "is_unlocked": bool, "capsule": Dictionary/null }
 var pending_egg: MonsterData = null
 var selected_monster: MonsterData = null
@@ -39,6 +40,7 @@ var pending_enemy_team: Array[MonsterData] = []
 var current_campaign_level: int = 1
 var unlocked_blueprints: Array = [] # Array of Atomic Numbers (int)
 var class_resonance: Dictionary = {} # Group (int) -> Resonance Level (int)
+var inventory: Dictionary = {} # Item ID (String) -> Count (int)
 
 # Resources
 var resources = {
@@ -68,12 +70,14 @@ func add_resource(type: String, amount: int):
 	print("PlayerData: Emitting resource_updated for '", type, "'")
 	resource_updated.emit(type, resources[type])
 	print("Added %d %s. Total: %d" % [amount, type, resources[type]])
+	save_game()
 
 func spend_resource(type: String, amount: int) -> bool:
 	if resources.get(type, 0) >= amount:
 		resources[type] -= amount
 		resource_updated.emit(type, resources[type])
 		print("Spent %d %s. Total: %d" % [amount, type, resources[type]])
+		save_game()
 		return true
 	return false
 
@@ -81,27 +85,51 @@ func add_essence(group: int, amount: int):
 	# Simplified: All essence is now Neutron Dust
 	add_resource("neutron_dust", amount)
 
+func add_item(item_id: String, amount: int = 1):
+	if not inventory.has(item_id):
+		inventory[item_id] = 0
+	inventory[item_id] += amount
+	save_game()
+	print("Added %d %s. Total: %d" % [amount, item_id, inventory[item_id]])
+
+func get_item_count(item_id: String) -> int:
+	return inventory.get(item_id, 0)
+
+func consume_item(item_id: String, amount: int = 1) -> bool:
+	if get_item_count(item_id) >= amount:
+		inventory[item_id] -= amount
+		if inventory[item_id] <= 0:
+			inventory.erase(item_id)
+		save_game()
+		return true
+	return false
+
 func get_monster_path_by_z(z: int) -> String:
 	var m = MonsterManifest.get_monster(z)
 	if m: return m.resource_path
 	return ""
 
-func add_capsule(z: int, p1_z: int = 0, p2_z: int = 0) -> Dictionary:
+func get_first_empty_chamber_index() -> int:
+	for i in range(synthesis_chambers.size()):
+		var chamber = synthesis_chambers[i]
+		if chamber["is_unlocked"] and chamber["capsule"] == null:
+			return i
+	return -1
+
+func add_capsule_to_chamber(chamber_index: int, z: int, p1_z: int, p2_z: int, finish_time: int = 0, stability: int = 50) -> Dictionary:
+	if chamber_index < 0 or chamber_index >= synthesis_chambers.size():
+		return {}
+		
 	var capsule = {
 		"id": str(Time.get_unix_time_from_system()) + "_" + str(randi()),
 		"z": z,
-		"parents": [p1_z, p2_z]
+		"parents": [p1_z, p2_z],
+		"finish_time": finish_time,
+		"stability": stability
 	}
-	capsules.append(capsule)
+	synthesis_chambers[chamber_index]["capsule"] = capsule
 	save_game()
 	return capsule
-
-func remove_capsule(capsule_id: String):
-	for i in range(capsules.size()):
-		if capsules[i]["id"] == capsule_id:
-			capsules.remove_at(i)
-			save_game()
-			return
 
 func unlock_blueprint(z: int):
 	if z not in unlocked_blueprints:
@@ -143,18 +171,19 @@ func save_game():
 	var save_data = {
 		"resources": resources,
 		"monsters": [],
-		"capsules": capsules,
 		"synthesis_chambers": synthesis_chambers,
 		"current_campaign_level": current_campaign_level,
 		"unlocked_blueprints": unlocked_blueprints,
-		"class_resonance": class_resonance
+		"class_resonance": class_resonance,
+		"inventory": inventory
 	}
 	
 	# Serialize Monsters
 	for m in owned_monsters:
 		var m_data = {
 			"name": m.monster_name,
-			"stability": m.stability
+			"stability": m.stability,
+			"fatigue_expiry": m.fatigue_expiry
 		}
 		# Save infusion stats if they exist on the monster object
 		if "infusion_hp" in m: m_data["infusion_hp"] = m.infusion_hp
@@ -191,15 +220,14 @@ func load_game():
 	
 	if save_data:
 		if "resources" in save_data:
-			resources = save_data["resources"]
+			var loaded_res = save_data["resources"]
+			for key in loaded_res:
+				resources[key] = loaded_res[key]
 			
 			# Notify UI of loaded values
 			for key in resources:
 				resource_updated.emit(key, resources[key])
 				
-		if "capsules" in save_data:
-			capsules = save_data["capsules"]
-			
 		if "synthesis_chambers" in save_data:
 			synthesis_chambers = save_data["synthesis_chambers"]
 			
@@ -218,6 +246,9 @@ func load_game():
 			for k in raw_res:
 				class_resonance[int(k)] = int(raw_res[k])
 
+		if "inventory" in save_data:
+			inventory = save_data["inventory"]
+
 		if "monsters" in save_data:
 			owned_monsters.clear()
 			for m_data in save_data["monsters"]:
@@ -231,6 +262,9 @@ func load_game():
 							new_m.stability = int(m_data["stability"])
 						else:
 							new_m.stability = 50 # Default for legacy saves
+						
+						if "fatigue_expiry" in m_data:
+							new_m.fatigue_expiry = int(m_data["fatigue_expiry"])
 						
 						# Load infusion stats
 						if "infusion_hp" in m_data: new_m.infusion_hp = int(m_data["infusion_hp"])
@@ -251,15 +285,15 @@ func reset_save():
 	
 	# 1. Clear In-Memory Data
 	owned_monsters.clear()
-	capsules.clear()
 	synthesis_chambers.clear()
 	current_campaign_level = 1
 	unlocked_blueprints.clear()
 	class_resonance.clear()
+	inventory.clear()
 	resources = {
-		"neutron_dust": 0,
+		"neutron_dust": 99999,
 		"gems": 0,
-		"binding_energy": 0
+		"binding_energy": 99999
 	}
 	
 	# 2. Delete Save Files
@@ -277,6 +311,8 @@ func reset_save():
 		
 	var he = load("res://data/Monsters/Helium.tres")
 	var h = load("res://data/Monsters/Hydrogen.tres")
+	var li = load("res://data/Monsters/Lithium.tres")
+	if li: owned_monsters.append(li.duplicate())
 	if h: owned_monsters.append(h.duplicate())
 	if he: owned_monsters.append(he.duplicate())
 	

@@ -7,6 +7,7 @@ class_name MonsterData
 @export var icon: Texture2D
 @export var moves: Array[MoveData] = []
 @export var stability: int = 50 # Replaces level. 0-100%
+@export var fatigue_expiry: int = 0 # Unix timestamp when fatigue ends
 
 # Dynamic Stat Calculation
 # Call this whenever you need to display stats or start a battle

@@ -10,6 +10,7 @@ func _ready():
 	_connect_btn("HomeButton", "main_menu")
 	_connect_btn("CollectionButton", "periodic_table")
 	_connect_btn("NexusButton", "nexus")
+	_connect_btn("ShopButton", "item_shop") # If you have a shop scene
 	
 	# Try both names to ensure it works regardless of scene setup
 	_connect_btn("BattleButton", "battle_prepare")
@@ -44,7 +45,7 @@ func _update_highlights(active_key: String):
 		"periodic_table": ["CollectionButton"],
 		"nexus": ["NexusButton"],
 		"nursery": ["NurseryButton", "SynthesisButton"],
-        "battle_prepare": ["BattleButton"] # If you add a Battle button in the future
+        "item_shop": ["ShopButton"],
 	}
 	
 	# 1. Reset all buttons

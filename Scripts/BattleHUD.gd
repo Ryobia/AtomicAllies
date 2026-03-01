@@ -6,6 +6,7 @@ signal target_selected(index) # 0-2
 signal move_selected(move) # New signal for specific moves
 signal cancel_targeting
 signal inspect_unit(index, is_player) # New signal for long press
+signal item_selected(item_id)
 signal swap_selected(index)
 
 # --- UI References ---
@@ -34,7 +35,8 @@ signal swap_selected(index)
 @onready var action_buttons = [
 	find_child("AttackButton", true, false),
 	find_child("SwapButton", true, false),
-	find_child("SynthesizeButton", true, false)
+	find_child("SynthesizeButton", true, false),
+	find_child("ItemButton", true, false)
 ]
 
 @onready var move_container = find_child("MoveContainer", true, false)
@@ -63,6 +65,7 @@ func _ready():
 	_connect_btn("AttackButton", "attack")
 	_connect_btn("SwapButton", "swap")
 	_connect_btn("SynthesizeButton", "synthesize")
+	_connect_btn("ItemButton", "item")
 	
 	if back_btn:
 		if not back_btn.pressed.is_connected(_on_back_pressed):
@@ -641,6 +644,36 @@ func show_moves(moves: Array):
 		move_container.add_child(btn)
 		
 	# Cancel Button
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Back"
+	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_button(cancel_btn)
+	cancel_btn.pressed.connect(show_actions)
+	move_container.add_child(cancel_btn)
+
+func show_items(items: Dictionary):
+	# Hide main actions
+	for btn in action_buttons:
+		if btn: btn.visible = false
+	if back_btn: back_btn.visible = false
+
+	if not move_container: return
+	move_container.visible = true
+	
+	for child in move_container.get_children():
+		child.queue_free()
+		
+	for item_id in items:
+		var count = items[item_id]
+		var data = CombatManager.get_item_data(item_id)
+		var btn = Button.new()
+		btn.text = "%s (x%d)" % [data.name, count]
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		_style_button(btn)
+		btn.pressed.connect(func(): item_selected.emit(item_id))
+		move_container.add_child(btn)
+		
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Back"
 	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL

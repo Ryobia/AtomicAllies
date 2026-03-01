@@ -1,8 +1,6 @@
 extends Control
 
-var capsule_list # Container for inventory capsules
 var chambers_grid # Container for the 4 synthesis chambers
-var capsule_panel_popup
 
 var dissolve_popup
 var dissolve_label
@@ -10,15 +8,10 @@ var dissolve_ok_btn
 var fusion_result_popup
 var fusion_ok_btn
 
-var selected_chamber_index: int = -1
 var pending_stabilize_index: int = -1
 
 func _ready():
 	# Find nodes dynamically
-	capsule_panel_popup = find_child("CapsulePanelPopup", true, false)
-	capsule_list = find_child("CapsuleList", true, false) # Needs a VBoxContainer in scene
-	if not capsule_list: print("Nursery: CapsuleList node not found!")
-	
 	chambers_grid = find_child("ChambersGrid", true, false) # Needs a GridContainer/VBoxContainer
 	
 	dissolve_popup = find_child("DissolvePopup", true, false)
@@ -76,12 +69,6 @@ func _process(_delta):
 						update_ui()
 
 func update_ui():
-	# Clear capsule list
-	if capsule_list:
-		for child in capsule_list.get_children():
-			capsule_list.remove_child(child)
-			child.queue_free()
-			
 	# Rebuild Chambers Grid
 	if chambers_grid:
 		for child in chambers_grid.get_children():
@@ -92,15 +79,6 @@ func update_ui():
 			var chamber_data = PlayerData.synthesis_chambers[i]
 			var slot = _create_chamber_slot(i, chamber_data)
 			chambers_grid.add_child(slot)
-
-	# Show capsule list only if we are selecting for a chamber
-	var show_inventory = (selected_chamber_index != -1)
-	
-	if capsule_panel_popup:
-		capsule_panel_popup.visible = show_inventory
-	
-	if show_inventory and capsule_list:
-		_populate_capsule_list()
 
 func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 	var container = VBoxContainer.new()
@@ -153,8 +131,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 	elif data.capsule == null:
 		label.text = "Empty Chamber"
 		visual.visible = false
-		btn.text = "Insert Capsule"
-		btn.pressed.connect(func(): _on_insert_pressed(index))
+		btn.visible = false
 	else:
 		# Busy or Ready
 		var timer_id = "synthesis_chamber_%d" % index
@@ -208,66 +185,6 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 			
 	return container
 
-func _populate_capsule_list():
-	print("Populating inventory. Count: ", PlayerData.capsules.size())
-	
-	var close_btn = Button.new()
-	close_btn.text = "Close"
-	close_btn.custom_minimum_size = Vector2(0, 100)
-	close_btn.add_theme_font_size_override("font_size", 40)
-	close_btn.pressed.connect(func():
-		selected_chamber_index = -1
-		update_ui()
-	)
-	capsule_list.add_child(close_btn)
-	
-	if PlayerData.capsules.is_empty():
-		var lbl = Label.new()
-		lbl.text = "No Capsules in Inventory.\nFuse elements to create more!"
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		lbl.add_theme_color_override("font_color", Color("#60fafc"))
-		lbl.add_theme_font_size_override("font_size", 32)
-		capsule_list.add_child(lbl)
-		return
-
-	for capsule in PlayerData.capsules:
-		var btn = Button.new()
-		var parents = capsule.get("parents", [0, 0])
-		btn.text = "Capsule: Z%d + Z%d" % [parents[0], parents[1]]
-		btn.custom_minimum_size = Vector2(0, 120)
-		btn.add_theme_font_size_override("font_size", 40)
-		
-		# To add a sprite animation here, you can add a TextureRect as a child of the button
-		# or assign an AnimatedTexture to the button's icon.
-		# Example:
-		# btn.icon = load("res://path/to/animated_capsule.tres")
-		# btn.expand_icon = true
-		
-		btn.pressed.connect(func(): _on_capsule_selected(capsule))
-		capsule_list.add_child(btn)
-
-func _on_capsule_selected(capsule):
-	if selected_chamber_index == -1: return
-	
-	# Move from Inventory to Chamber
-	PlayerData.remove_capsule(capsule.id)
-	PlayerData.synthesis_chambers[selected_chamber_index]["capsule"] = capsule
-	
-	# Start Timer (Duration based on Atomic Number Z)
-	# Example: 10 seconds per Z. Z=1 (10s), Z=10 (100s)
-	var duration = capsule.z * 10
-	TimeManager.start_timer("synthesis_chamber_%d" % selected_chamber_index, duration)
-	
-	selected_chamber_index = -1 # Reset selection
-	update_ui()
-
-func _on_insert_pressed(index):
-	print("Insert button pressed for chamber: ", index)
-	selected_chamber_index = index
-	update_ui()
-
 func _on_unlock_pressed(index):
 	var cost = 500 # Fixed cost for now
 	if PlayerData.spend_resource("neutron_dust", cost):
@@ -285,7 +202,8 @@ func _on_stabilize_pressed(index):
 	pending_stabilize_index = index
 	# Call the manager to finish the process
 	# This will trigger the fusion_completed signal
-	SynthesisManager.complete_synthesis(capsule.z)
+	var stab = capsule.get("stability", 50)
+	SynthesisManager.complete_synthesis(capsule.z, stab)
 
 func _on_synthesis_completed(z_num, success, reward):
 	# Clear the chamber
@@ -298,10 +216,14 @@ func _on_synthesis_completed(z_num, success, reward):
 	if not success:
 		# Duplicate found (Dissolved)
 		if dissolve_label:
-			if z_num > SynthesisManager.MAX_Z:
-				dissolve_label.text = "Ship Capacity Exceeded!\nZ-%d is too unstable.\nDissolved into %d Neutron Dust." % [z_num, reward]
+			# If reward is a String, it's a pre-formatted message from the manager
+			if reward is String:
+				dissolve_label.text = reward
 			else:
-				dissolve_label.text = "Duplicate Z-%d found!\nDissolved into %d Neutron Dust." % [z_num, reward]
+				if z_num > SynthesisManager.MAX_Z:
+					dissolve_label.text = "Ship Capacity Exceeded!\nZ-%d is too unstable.\nDissolved into %d Neutron Dust." % [z_num, reward]
+				else:
+					dissolve_label.text = "Duplicate Z-%d found!\nDissolved into %d Neutron Dust." % [z_num, reward]
 		if dissolve_popup: dissolve_popup.visible = true
 	else:
 		# New Monster

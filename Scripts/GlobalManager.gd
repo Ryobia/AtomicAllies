@@ -16,6 +16,7 @@ var scenes = {
 	"periodic_table": "res://Scenes/PeriodicTable.tscn",
 	"rest_site": "res://Scenes/RestSite.tscn",
 	"synergy_view": "res://Scenes/SynergyView.tscn",
+	"item_shop": "res://Scenes/ItemShop.tscn",
 }
 
 var tooltip_theme: Theme

@@ -274,6 +274,9 @@ func _show_collection_selector():
 	
 	# Populate Grid
 	for monster in PlayerData.owned_monsters:
+		var current_time = int(Time.get_unix_time_from_system())
+		var is_fatigued = monster.fatigue_expiry > current_time
+		
 		# Skip if already in team (unless it's the one we are replacing, but simpler to just hide all active)
 		if monster in PlayerData.active_team:
 			continue
@@ -320,6 +323,17 @@ func _show_collection_selector():
 		lbl.add_theme_color_override("font_outline_color", Color("#60fafc").darkened(0.5))
 		lbl.add_theme_constant_override("outline_size", 5)
 		btn_vbox.add_child(lbl)
+		
+		if is_fatigued:
+			var time_left = monster.fatigue_expiry - current_time
+			var mins = time_left / 60
+			var secs = time_left % 60
+			var fatigue_lbl = Label.new()
+			fatigue_lbl.text = "Fatigued: %02d:%02d" % [mins, secs]
+			fatigue_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			fatigue_lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
+			fatigue_lbl.add_theme_font_size_override("font_size", 32)
+			btn_vbox.add_child(fatigue_lbl)
 			
 		# Style
 		var bg_color = Color(0.1, 0.1, 0.1, 1)
@@ -340,15 +354,18 @@ func _show_collection_selector():
 		btn.add_theme_stylebox_override("panel", style)
 		
 		# Manual Input Handling for better scroll feel
-		btn.gui_input.connect(func(event):
-			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-				if event.pressed:
-					btn.modulate = Color(0.7, 0.7, 0.7)
-				else:
-					btn.modulate = Color.WHITE
-					if Rect2(Vector2.ZERO, btn.size).has_point(event.position):
-						_confirm_assignment(monster)
-		)
+		if is_fatigued:
+			btn.modulate = Color(0.5, 0.5, 0.5, 0.8)
+		else:
+			btn.gui_input.connect(func(event):
+				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+					if event.pressed:
+						btn.modulate = Color(0.7, 0.7, 0.7)
+					else:
+						btn.modulate = Color.WHITE
+						if Rect2(Vector2.ZERO, btn.size).has_point(event.position):
+							_confirm_assignment(monster)
+			)
 		
 		grid.add_child(btn)
 		

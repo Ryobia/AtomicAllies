@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://bkvsxx0br8esr"]
+
+[ext_resource type="Script" uid="uid://b6sq3qp51xtq0" path="res://Scripts/ItemShop.gd" id="1_shop"]
+[ext_resource type="Texture2D" uid="uid://c52uw4kab01b3" path="res://Images/Shop.png" id="2_ykgfi"]
+
+[node name="ItemShop" type="Control" unique_id=341176545]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_shop")
+
+[node name="Background" type="TextureRect" parent="." unique_id=766608620]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_ykgfi")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1088123211]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.111
+anchor_right = 1.0
+anchor_bottom = 0.856
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=2061307429]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1207091092]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(0.376471, 0.980392, 0.988235, 1)
+theme_override_font_sizes/font_size = 70
+text = "Neutron Dust Shop"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer" unique_id=1769121269]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=1525711341]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ShopGrid" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=1717996939]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 30

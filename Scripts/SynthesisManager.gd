@@ -4,15 +4,15 @@ extends Node
 const LEVEL_WEIGHT = 5.0 
 const MIN_CHANCE = 15.0
 const MAX_CHANCE = 100.0
-const MAX_Z = 26 # Iron Limit
+const MAX_Z = 118 # Oganesson Limit
 
 # Signal to tell the UI what happened
 signal fusion_completed(result_z, success, reward)
 signal capsule_created(capsule_data)
 signal fusion_error(message)
 
-# This mimics the "Cheat Sheet" logic for base stability
-func get_base_stability(z: int) -> float:
+# This mimics the "Cheat Sheet" logic for base success rate
+func get_base_success_rate(z: int) -> float:
 	match z:
 		2: return 90.0 # Helium (Easy)
 		3: return 80.0 # Lithium
@@ -25,8 +25,8 @@ func get_base_stability(z: int) -> float:
 		10: return 30.0 # Neon (Hard)
 		_: return 20.0 # Default for heavier elements
 
-func calculate_stability(stability_a: int, stability_b: int, target_z: int) -> float:
-	var base = get_base_stability(target_z)
+func calculate_success_rate(stability_a: int, stability_b: int, target_z: int) -> float:
+	var base = get_base_success_rate(target_z)
 	
 	# Bonus: Each parent contributes up to 25% flat bonus at 100% stability
 	var bonus = (float(stability_a) / 100.0 * 25.0) + (float(stability_b) / 100.0 * 25.0)
@@ -46,20 +46,45 @@ func calculate_stability_gain(current: int) -> int:
 func attempt_fusion(parent_a: MonsterData, parent_b: MonsterData):
 	var initial_target_z = parent_a.atomic_number + parent_b.atomic_number
 	
+	# Check for empty chamber first
+	var chamber_idx = -1
+	if PlayerData:
+		chamber_idx = PlayerData.get_first_empty_chamber_index()
+		if chamber_idx == -1:
+			fusion_error.emit("No empty Synthesis Chambers available!")
+			return
+
+	# Check Blueprint Unlock
+	if PlayerData:
+		if initial_target_z > PlayerData.get_max_unlocked_z():
+			fusion_error.emit("Blueprint Required: Complete Discovery Run for Z-%d." % initial_target_z)
+			return
+
 	if initial_target_z > MAX_Z:
-		fusion_error.emit("Ship Upgrade Required: Cannot synthesize elements beyond Iron (26).")
+		fusion_error.emit("Ship Upgrade Required: Cannot synthesize elements beyond Oganesson (118).")
 		return
 
+	# Apply Fatigue to Parents
+	# Cooldown = 1 minute * Attempted Z
+	var cooldown_seconds = initial_target_z * 60
+	var expiry = int(Time.get_unix_time_from_system()) + cooldown_seconds
+	
+	parent_a.fatigue_expiry = expiry
+	parent_b.fatigue_expiry = expiry
+	if PlayerData: PlayerData.save_game()
+
 	var current_z = initial_target_z
+	var final_stability = 0.0
 	
 	# Decay Loop: Keep rolling until we succeed or hit Hydrogen (1)
 	while current_z > 1:
-		var chance = calculate_stability(parent_a.stability, parent_b.stability, current_z)
+		var chance = calculate_success_rate(parent_a.stability, parent_b.stability, current_z)
 		var roll = randf() * 100.0
 		
 		print("Rolling for Z%d (Chance: %.1f%%)... Rolled: %.1f" % [current_z, chance, roll])
 		
 		if roll <= chance:
+			final_stability = _calculate_result_stability(current_z)
 			break # Success! We stabilized at current_z
 		
 		# Failure: Decay and try again
@@ -69,14 +94,20 @@ func attempt_fusion(parent_a: MonsterData, parent_b: MonsterData):
 	# If we reach 1, it is guaranteed (Hydrogen is the baseline)
 	if current_z == 1:
 		print("Stabilized at Hydrogen (Z=1).")
+		final_stability = _calculate_result_stability(1)
+	
+	# Calculate Synthesis Time based on Stability
+	# 100% Stability = 0 minutes, 0% Stability = 60 minutes (3600 seconds)
+	var duration = int(3600.0 * (1.0 - (clamp(final_stability, 0.0, 100.0) / 100.0)))
+	var finish_time = int(Time.get_unix_time_from_system()) + duration
 	
 	if PlayerData:
-		var capsule = PlayerData.add_capsule(current_z, parent_a.atomic_number, parent_b.atomic_number)
+		var capsule = PlayerData.add_capsule_to_chamber(chamber_idx, current_z, parent_a.atomic_number, parent_b.atomic_number, finish_time, int(final_stability))
 		capsule_created.emit(capsule)
-		print("Fusion complete. Capsule created: ", capsule)
+		print("Fusion complete. Capsule placed in Chamber %d. Time: %ds" % [chamber_idx, duration])
 
 # Renamed from _process_fusion_result to be called after the synthesis chamber step
-func complete_synthesis(z_num: int):
+func complete_synthesis(z_num: int, incoming_stability: int = 50):
 	# Safety check for cap (handles legacy capsules > 26)
 	if z_num > MAX_Z:
 		print("Synthesis failed: Z%d exceeds ship capacity." % z_num)
@@ -103,30 +134,29 @@ func complete_synthesis(z_num: int):
 	if PlayerData.is_monster_owned(monster_res.monster_name):
 		var existing = PlayerData.get_owned_monster(monster_res.monster_name)
 		
-		if existing.stability < 100:
-			# UPGRADE STABILITY
-			var gain = calculate_stability_gain(existing.stability)
-			existing.stability += gain
-			if existing.stability > 100: existing.stability = 100
-			PlayerData.save_game()
+		# Always award dust for duplicates
+		var dust_amount = z_num * 10
+		if PlayerData:
+			PlayerData.add_resource("neutron_dust", dust_amount)
 			
-			print("Stability Improved for Z%d! New Stability: %d%%" % [z_num, existing.stability])
-			fusion_completed.emit(z_num, false, 0) # Success but no new monster/dust
+		var msg = "Duplicate Z-%d found!\nDissolved into %d Neutron Dust." % [z_num, dust_amount]
+		
+		# Check for stability upgrade
+		if incoming_stability > existing.stability:
+			existing.stability = incoming_stability
+			PlayerData.save_game()
+			msg += "\nStability increased to %d%%!" % incoming_stability
 		else:
-			# MAXED OUT -> DISSOLVE INTO DUST
-			var dust_amount = z_num * 10 
-			if PlayerData:
-				PlayerData.add_resource("neutron_dust", dust_amount)
-			print("Duplicate Z%d (Max Stability) found. Dissolved into %d Neutron Dust." % [z_num, dust_amount])
-			fusion_completed.emit(z_num, false, dust_amount)
+			msg += "\nCurrent Stability: %d%% (New: %d%%)" % [existing.stability, incoming_stability]
+		
+		fusion_completed.emit(z_num, false, msg)
 		
 	else:
 		# NEW DISCOVERY -> ADD TO COLLECTION
 		var new_monster = monster_res.duplicate()
 		
-		# Assign initial stability (Base 50 + weighted gain)
-		new_monster.stability = 50 + calculate_stability_gain(50)
-		if new_monster.stability > 100: new_monster.stability = 100
+		# Assign stability from the fusion result
+		new_monster.stability = incoming_stability
 		
 		if PlayerData:
 			PlayerData.owned_monsters.append(new_monster)
@@ -135,3 +165,18 @@ func complete_synthesis(z_num: int):
 			
 		print("New Monster Z%d added to collection! Stability: %d%%" % [z_num, new_monster.stability])
 		fusion_completed.emit(z_num, true, 0)
+
+func _calculate_result_stability(z: int) -> int:
+	var current_val = 0 # Base floor (so min result is 1% for new/low elements)
+	
+	if PlayerData:
+		var path = PlayerData.get_monster_path_by_z(z)
+		if path != "":
+			var res = load(path)
+			if res and PlayerData.is_monster_owned(res.monster_name):
+				var owned = PlayerData.get_owned_monster(res.monster_name)
+				if owned.stability > current_val:
+					current_val = owned.stability
+	
+	var min_val = clampi(current_val + 1, 1, 100)
+	return randi_range(min_val, 100)

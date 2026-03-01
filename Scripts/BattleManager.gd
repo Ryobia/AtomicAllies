@@ -25,6 +25,7 @@ var benched_player_monsters: Array[MonsterData] = []
 var turn_queue: Array = []
 var current_acting_unit: BattleMonster = null
 var selected_move: MoveData = null
+var selected_item_id: String = ""
 var roster_hp_cache: Dictionary = {} # MonsterData -> int (HP)
 
 # --- Signals for UI Decoupling ---
@@ -46,6 +47,7 @@ func _ready():
 		battle_hud.cancel_targeting.connect(_on_cancel_targeting)
 		battle_hud.swap_selected.connect(_on_swap_selected)
 		battle_hud.inspect_unit.connect(_on_inspect_unit)
+		battle_hud.item_selected.connect(_on_item_selected)
 		
 		# Connect Manager -> HUD signals
 		log_event.connect(battle_hud.log_message)
@@ -410,6 +412,19 @@ func _on_action_selected(action_type):
 		if battle_hud:
 			battle_hud.show_swap_options(benched_player_monsters)
 
+	elif action_type == "item":
+		var battle_items = {}
+		for item_id in PlayerData.inventory:
+			if CombatManager.get_item_data(item_id).has("target"): # Check if it's a battle item
+				battle_items[item_id] = PlayerData.inventory[item_id]
+		
+		if battle_items.is_empty():
+			log_event.emit("No battle items!")
+			return
+			
+		if battle_hud:
+			battle_hud.show_items(battle_items)
+
 func _on_move_selected(move: MoveData):
 	if current_state != BattleState.ACTION_SELECTION: return
 	
@@ -466,6 +481,27 @@ func _on_move_selected(move: MoveData):
 	battle_hud.set_targeting_mode(true, valid_targets, target_allies)
 	log_event.emit("Select a target for %s..." % move.name)
 
+func _on_item_selected(item_id: String):
+	if current_state != BattleState.ACTION_SELECTION: return
+	
+	selected_item_id = item_id
+	selected_move = null
+	current_state = BattleState.TARGET_SELECTION
+	
+	var data = CombatManager.get_item_data(item_id)
+	var target_allies = (data.get("target", "Ally") == "Ally")
+	var valid_targets = []
+	
+	# Items currently only target allies (healing/buffs)
+	if target_allies:
+		for i in range(active_player_monsters.size()):
+			if not active_player_monsters[i].is_dead:
+				valid_targets.append(i)
+	
+	battle_hud.move_container.visible = false
+	battle_hud.set_targeting_mode(true, valid_targets, target_allies)
+	log_event.emit("Select target for %s..." % data.name)
+
 func _on_cancel_targeting():
 	# This is triggered by right-click or Esc in the HUD.
 	# We only care about it if we are currently selecting a target.
@@ -474,6 +510,7 @@ func _on_cancel_targeting():
 	# Revert to the move selection screen
 	current_state = BattleState.ACTION_SELECTION
 	selected_move = null
+	selected_item_id = ""
 	
 	battle_hud.set_targeting_mode(false)
 	battle_hud.move_container.visible = true # Re-show the move list
@@ -481,6 +518,16 @@ func _on_cancel_targeting():
 
 func _on_target_selected(index: int):
 	if current_state != BattleState.TARGET_SELECTION: return
+	
+	if selected_item_id != "":
+		var data = CombatManager.get_item_data(selected_item_id)
+		var target_allies = (data.get("target", "Ally") == "Ally")
+		var target_unit = active_player_monsters[index] if target_allies else active_enemy_monsters[index]
+		
+		battle_hud.set_targeting_mode(false)
+		perform_item(current_acting_unit, target_unit, selected_item_id)
+		selected_item_id = ""
+		return
 	
 	var defender = null
 	if selected_move.target_type == MoveData.TargetType.ALLY:
@@ -648,6 +695,19 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	# Wait for animation/text
 	await get_tree().create_timer(1.0).timeout
 	
+	end_turn()
+
+func perform_item(user: BattleMonster, target: BattleMonster, item_id: String):
+	current_state = BattleState.EXECUTING
+	var item_name = CombatManager.get_item_data(item_id).get("name", "Item")
+	
+	log_event.emit("%s used %s!" % [user.data.monster_name, item_name])
+	await user.play_move() # Or specific item animation
+	
+	CombatManager.apply_item_effect(target, item_id)
+	PlayerData.consume_item(item_id, 1)
+	
+	await get_tree().create_timer(1.0).timeout
 	end_turn()
 
 func end_turn():

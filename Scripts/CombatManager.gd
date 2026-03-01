@@ -4,6 +4,28 @@ extends Node
 
 # PvE Combat Logic (No Type Chart, No Surge)
 
+# --- Battle Items ---
+const ITEM_DATA = {
+	"repair_nanites": { "name": "Repair Nanites", "target": "Ally", "effect": "heal_percent", "amount": 0.5 },
+	"adrenaline_shot": { "name": "Adrenaline Shot", "target": "Ally", "effect": "buff_stat", "stat": "attack", "amount": 20, "duration": 3 },
+	"emergency_shield": { "name": "Emergency Shield", "target": "Ally", "effect": "buff_stat", "stat": "defense", "amount": 50, "duration": 2 }
+}
+
+func get_item_data(item_id: String) -> Dictionary:
+	return ITEM_DATA.get(item_id, {})
+
+func apply_item_effect(target: BattleMonster, item_id: String):
+	var data = get_item_data(item_id)
+	if data.is_empty(): return
+	
+	match data.effect:
+		"heal_percent":
+			var amount = int(target.max_hp * data.amount)
+			target.heal(amount)
+		"buff_stat":
+			var effect = { "target": target, "stat": data.stat, "amount": int(target.stats.get(data.stat, 10) * (data.amount / 100.0)), "duration": data.duration, "type": "stat_mod" }
+			target.apply_effect(effect)
+
 # Retrieves moves for a monster, falling back to Group Defaults if necessary
 func get_active_moves(monster: MonsterData) -> Array:
 	if not monster.moves.is_empty():

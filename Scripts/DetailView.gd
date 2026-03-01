@@ -22,6 +22,9 @@ var moves_container
 var class_label
 var class_help_icon
 var class_bonus_label
+var fatigue_label
+var fatigue_container
+var coolant_btn
 var view_toggle
 var prev_button
 var next_button
@@ -44,6 +47,9 @@ func _ready():
 	class_label = find_child("ClassLabel", true, false)
 	class_help_icon = find_child("HelpIcon", true, false)
 	class_bonus_label = find_child("ClassBonus", true, false)
+	fatigue_label = find_child("FatigueLabel", true, false)
+	fatigue_container = find_child("FatigueContainer", true, false)
+	coolant_btn = find_child("CoolantButton", true, false)
 	view_toggle = find_child("ViewToggle", true, false)
 	prev_button = find_child("PrevButton", true, false)
 	next_button = find_child("NextButton", true, false)
@@ -66,6 +72,34 @@ func _ready():
 		if not class_bonus_label.gui_input.is_connected(_on_class_bonus_input):
 			class_bonus_label.gui_input.connect(_on_class_bonus_input)
 
+	if not fatigue_label and name_label:
+		# Create dynamically if not found in scene
+		fatigue_container = HBoxContainer.new()
+		fatigue_container.name = "FatigueContainer"
+		fatigue_container.alignment = BoxContainer.ALIGNMENT_CENTER
+		fatigue_container.add_theme_constant_override("separation", 20)
+		name_label.get_parent().add_child(fatigue_container)
+		name_label.get_parent().move_child(fatigue_container, name_label.get_index() + 1)
+
+		fatigue_label = Label.new()
+		fatigue_label.name = "FatigueLabel"
+		fatigue_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		fatigue_label.add_theme_color_override("font_color", Color("#ff4d4d"))
+		fatigue_label.add_theme_font_size_override("font_size", 48)
+		fatigue_container.add_child(fatigue_label)
+		
+		coolant_btn = Button.new()
+		coolant_btn.name = "CoolantButton"
+		coolant_btn.add_theme_font_size_override("font_size", 24)
+		coolant_btn.custom_minimum_size = Vector2(200, 60)
+		var btn_style = StyleBoxFlat.new()
+		btn_style.bg_color = Color("#60fafc")
+		btn_style.bg_color.a = 0.2
+		btn_style.set_corner_radius_all(8)
+		coolant_btn.add_theme_stylebox_override("normal", btn_style)
+		coolant_btn.pressed.connect(_on_coolant_pressed)
+		fatigue_container.add_child(coolant_btn)
+
 	if stability_bar:
 		stability_bar.mouse_filter = Control.MOUSE_FILTER_STOP
 		if not stability_bar.gui_input.is_connected(_on_stability_bar_input):
@@ -81,6 +115,20 @@ func _ready():
 		update_ui()
 		_update_visuals()
 		_update_navigation_buttons()
+
+func _process(_delta):
+	if is_instance_valid(current_monster):
+		var current_time = int(Time.get_unix_time_from_system())
+		var is_fatigued = current_monster.fatigue_expiry > current_time
+		
+		if fatigue_container:
+			fatigue_container.visible = is_fatigued
+			if is_fatigued: _update_fatigue_text()
+		elif fatigue_label and fatigue_label.visible:
+			if is_fatigued:
+				_update_fatigue_text()
+			else:
+				fatigue_label.visible = false
 	
 func _input(event):
 	if event is InputEventScreenTouch:
@@ -154,6 +202,17 @@ func update_ui():
 		
 		class_bonus_label.text = "Synergy: %d/%d Collected" % [owned, total]
 		class_bonus_label.tooltip_text = _get_synergy_desc(group, owned)
+
+	if fatigue_label or fatigue_container:
+		var current_time = int(Time.get_unix_time_from_system())
+		var is_fatigued = current_monster.fatigue_expiry > current_time
+		
+		if fatigue_container: fatigue_container.visible = is_fatigued
+		elif fatigue_label: fatigue_label.visible = is_fatigued
+		
+		if is_fatigued:
+			_update_fatigue_text()
+			_update_coolant_btn()
 
 	if moves_container: moves_container.modulate = content_modulate
 	if moves_container:
@@ -675,3 +734,21 @@ func _get_synergy_desc(group: int, count: int) -> String:
 			var val = count * 1
 			return "Current Bonus: +%d%% Speed.\nPassive: +1%% Speed per element." % val
 	return "Unknown Synergy."
+
+func _update_fatigue_text():
+	var time_left = current_monster.fatigue_expiry - int(Time.get_unix_time_from_system())
+	var mins = time_left / 60
+	var secs = time_left % 60
+	fatigue_label.text = "Fatigue: %02d:%02d" % [mins, secs]
+
+func _update_coolant_btn():
+	if not coolant_btn: return
+	var count = PlayerData.get_item_count("coolant_gel")
+	coolant_btn.text = "Use Coolant (%d)" % count
+	coolant_btn.disabled = (count <= 0)
+
+func _on_coolant_pressed():
+	if PlayerData.consume_item("coolant_gel", 1):
+		current_monster.fatigue_expiry = 0
+		PlayerData.save_game()
+		update_ui()
