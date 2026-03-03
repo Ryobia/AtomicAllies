@@ -67,7 +67,7 @@ const WEIGHTS = {
     "king": 5
 }
 
-const MAX_ENEMY_SLOTS = 6
+const MAX_ENEMY_SLOTS = 3
 const MAX_CAMPAIGN_LEVEL = 50
 
 # Rogue-lite State
@@ -99,10 +99,13 @@ func start_node_run(target_z: int):
     print("Starting run for Z%d. Enemy Race: %s" % [target_z, current_enemy_race])
     
     # Adjust run structure based on race
+    # Scale waves based on Atomic Number (Z). Z=1 -> 3 waves, Z=118 -> ~10 waves.
+    var base_waves = 3 + int(target_z / 16.0)
+    
     if current_enemy_race == "brood":
-        max_run_waves = 5 # Swarm: More waves
+        max_run_waves = base_waves + 2 # Swarm: More waves
     else:
-        max_run_waves = 3
+        max_run_waves = base_waves
     
     # Difficulty scales with Atomic Number
     # Z=3 (Lithium) stays easy (Level 1).

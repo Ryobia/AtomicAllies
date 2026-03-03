@@ -155,6 +155,16 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 			benched_player_monsters.append(unit_data)
 		
 	# 2. Spawn Enemy Team
+	# AI Smarts: Sort enemies so the tankiest is in the Vanguard (Index 0)
+	enemy_data_list.sort_custom(func(a, b):
+		var stats_a = a.get_current_stats()
+		var stats_b = b.get_current_stats()
+		# Tank Score = Max HP + (Defense * 2)
+		var score_a = stats_a.max_hp + (stats_a.defense * 2)
+		var score_b = stats_b.max_hp + (stats_b.defense * 2)
+		return score_a > score_b
+	)
+	
 	var enemy_count = min(enemy_data_list.size(), enemy_spawn_points.size())
 	
 	for i in range(enemy_count):
@@ -427,7 +437,15 @@ func execute_ai_turn():
 			# Can attack anyone (Vanguard dead OR Snipe move)
 			valid_targets = potential_targets
 	
-	var target = valid_targets.pick_random()
+	# AI Preference: Target weakest unit (Lowest HP + Def)
+	if valid_targets.size() > 1:
+		valid_targets.sort_custom(func(a, b):
+			var score_a = a.current_hp + a.stats.get("defense", 0)
+			var score_b = b.current_hp + b.stats.get("defense", 0)
+			return score_a < score_b
+		)
+	
+	var target = valid_targets[0]
 	
 	perform_move(current_acting_unit, target, move)
 

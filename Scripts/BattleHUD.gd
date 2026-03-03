@@ -161,7 +161,7 @@ func _build_ui_cache():
 			var hp_bar = player_slots[i].find_child("HPBar", true, false)
 			if hp_bar: 
 				hp_bar.show_percentage = false
-				hp_bar.custom_minimum_size.y = 20
+				hp_bar.custom_minimum_size.y = 50
 				hp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_ui_cache.player[i]["slot_hp"] = hp_bar
 			_ui_cache.player[i]["slot_hp_lbl"] = player_slots[i].find_child("HPLabel", true, false)
@@ -172,7 +172,7 @@ func _build_ui_cache():
 			var card_hp = stat_cards[i].find_child("HPBar", true, false)
 			if card_hp: 
 				card_hp.show_percentage = false
-				card_hp.custom_minimum_size.y = 20
+				card_hp.custom_minimum_size.y = 50
 				card_hp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_ui_cache.player[i]["card_hp"] = card_hp
 			_ui_cache.player[i]["card_hp_lbl"] = stat_cards[i].find_child("HPLabel", true, false)
@@ -183,7 +183,7 @@ func _build_ui_cache():
 			var enemy_hp = enemy_slots[i].find_child("HPBar", true, false)
 			if enemy_hp: 
 				enemy_hp.show_percentage = false
-				enemy_hp.custom_minimum_size.y = 20
+				enemy_hp.custom_minimum_size.y = 50
 				enemy_hp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_ui_cache.enemy[i]["hp"] = enemy_hp
 			_ui_cache.enemy[i]["hp_lbl"] = enemy_slots[i].find_child("HPLabel", true, false)
@@ -578,6 +578,15 @@ func set_targeting_mode(enabled: bool, valid_indices: Array = [], target_allies:
 func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = false):
 	var icon = slot.find_child("IconTexture", true, false)
 	
+	# Fix layout collapse when texture is null
+	if icon:
+		# Ensure it has a reasonable minimum size to push other elements down
+		if icon.custom_minimum_size.y < 150:
+			icon.custom_minimum_size = Vector2(max(icon.custom_minimum_size.x, 150), 150)
+		if icon is TextureRect:
+			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+
 	# 1. Cleanup existing animation if we are refreshing the slot
 	if icon:
 		for child in icon.get_children():
@@ -614,9 +623,15 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 					if anims.size() > 0:
 						anim_to_play = anims[0]
 			
+			# Use custom_minimum_size for layout calculation if the node hasn't resized yet
+			var display_size = icon.size
+			if display_size.y < icon.custom_minimum_size.y:
+				display_size = icon.custom_minimum_size
+			
+			sprite.z_index = 5 # Ensure sprite renders above health bars
 			sprite.play(anim_to_play)
-			sprite.position = icon.size / 2 # Center it
-			_scale_sprite_to_fit(sprite, icon.size.y)
+			sprite.position = display_size / 2 # Center it
+			_scale_sprite_to_fit(sprite, display_size.y)
 			icon.add_child(sprite)
 		elif monster.icon:
 			# Fallback to static icon

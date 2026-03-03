@@ -3,10 +3,8 @@
 [ext_resource type="Script" uid="uid://cha11yh01g6rk" path="res://Scripts/BattleManager.gd" id="1_mxkao"]
 [ext_resource type="Script" uid="uid://calnoc1q4lpgs" path="res://Scripts/BattleHUD.gd" id="2_272bk"]
 [ext_resource type="PackedScene" uid="uid://b2l1bfl8d5h0a" path="res://Scenes/BattleMonster.tscn" id="2_yygwm"]
-[ext_resource type="Texture2D" uid="uid://cv3kkuvrp4hqw" path="res://Images/icon.svg" id="3_jqbkq"]
 [ext_resource type="Texture2D" uid="uid://b21fv7oeh7gqt" path="res://Images/battleground.png" id="3_l362f"]
 [ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="4_272bk"]
-[ext_resource type="Texture2D" uid="uid://by40qmhlgrjag" path="res://icon.svg" id="5_l362f"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jqbkq"]
 atlas = ExtResource("4_272bk")
@@ -112,11 +110,10 @@ size_flags_horizontal = 3
 alignment = 1
 
 [node name="EnemySlot1" type="TextureRect" parent="BattleHUD/Theater/EnemyRow/Enemy1" unique_id=636770470]
-custom_minimum_size = Vector2(150, 150)
+custom_minimum_size = Vector2(150, 360)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-texture = ExtResource("5_l362f")
 expand_mode = 4
 stretch_mode = 6
 
@@ -152,6 +149,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy1" unique_id=735624617]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
@@ -189,10 +187,9 @@ size_flags_horizontal = 3
 alignment = 1
 
 [node name="EnemySlot2" type="TextureRect" parent="BattleHUD/Theater/EnemyRow/Enemy2" unique_id=965542925]
-custom_minimum_size = Vector2(150, 150)
+custom_minimum_size = Vector2(150, 360)
 layout_mode = 2
 size_flags_horizontal = 3
-texture = ExtResource("3_jqbkq")
 expand_mode = 4
 stretch_mode = 4
 
@@ -240,6 +237,7 @@ expand_mode = 1
 stretch_mode = 4
 
 [node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy2" unique_id=392888361]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
@@ -277,10 +275,9 @@ size_flags_horizontal = 3
 alignment = 1
 
 [node name="EnemySlot3" type="TextureRect" parent="BattleHUD/Theater/EnemyRow/Enemy3" unique_id=222150608]
-custom_minimum_size = Vector2(150, 150)
+custom_minimum_size = Vector2(150, 360)
 layout_mode = 2
 size_flags_horizontal = 3
-texture = ExtResource("3_jqbkq")
 expand_mode = 4
 stretch_mode = 4
 
@@ -316,6 +313,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/EnemyRow/Enemy3" unique_id=1879723035]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")

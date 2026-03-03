@@ -13,7 +13,7 @@ config_version=5
 config/name="Nexus"
 run/main_scene="uid://858qgy3euybd"
 config/features=PackedStringArray("4.6", "Mobile")
-config/icon="uid://by40qmhlgrjag"
+config/icon="uid://37kn8wmmas06"
 
 [autoload]
 
