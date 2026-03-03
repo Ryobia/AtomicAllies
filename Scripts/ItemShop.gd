@@ -1,13 +1,14 @@
 extends Control
 
 @onready var grid = find_child("ShopGrid", true, false)
+@onready var back_btn = find_child("BackButton", true, false)
 
 # Define the items available in the shop
 const SHOP_ITEMS = [
 	{
 		"id": "coolant_gel",
 		"name": "Coolant Gel",
-		"description": "Instantly removes fatigue from a monster.",
+		"description": "Instantly reduces fatigue timer by 10 minutes.",
 		"cost": 100,
 		"currency": "neutron_dust",
 		"category": "Fusion"
@@ -21,17 +22,9 @@ const SHOP_ITEMS = [
 		"category": "Fusion"
 	},
 	{
-		"id": "lead_vest",
-		"name": "Lead Vest",
-		"description": "Reduces fatigue duration by 50% on failed fusion.",
-		"cost": 150,
-		"currency": "neutron_dust",
-		"category": "Fusion"
-	},
-	{
-		"id": "isotope_scanner",
-		"name": "Isotope Scanner",
-		"description": "Reveals the exact result of a fusion before committing.",
+		"id": "quantum_catalyst",
+		"name": "Quantum Catalyst",
+		"description": "Increases fusion success rate by 25% for one reaction.",
 		"cost": 500,
 		"currency": "neutron_dust",
 		"category": "Fusion"
@@ -63,6 +56,8 @@ const SHOP_ITEMS = [
 ]
 
 func _ready():
+	if back_btn:
+		back_btn.pressed.connect(_on_back_pressed)
 	_populate_shop()
 
 func _populate_shop():
@@ -160,7 +155,11 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 	
 	# Buy Button
 	var btn = Button.new()
-	btn.text = "Buy (%d Dust)" % item.cost
+	var currency_label = "Dust"
+	if item.currency == "gems": currency_label = "Gems"
+	elif item.currency == "binding_energy": currency_label = "Energy"
+	
+	btn.text = "Buy (%d %s)" % [item.cost, currency_label]
 	btn.add_theme_font_size_override("font_size", 32)
 	btn.custom_minimum_size.y = 70
 	
@@ -201,3 +200,6 @@ func _on_buy_pressed(item: Dictionary, owned_lbl: Label):
 			owned_lbl.text = "Owned: %d" % PlayerData.get_item_count(item.id)
 			owned_lbl.add_theme_color_override("font_color", original_color)
 		)
+
+func _on_back_pressed():
+	GlobalManager.switch_scene("main_menu")

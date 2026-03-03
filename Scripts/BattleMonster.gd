@@ -31,7 +31,11 @@ func setup(monster_data: MonsterData, player_team: bool):
 	# 1. Setup Visuals
 	# Try to load specific animation first (e.g. "NullWalker.tres")
 	# Assumes naming convention: MonsterName.tres in Assets/Animations/
-	var anim_path = "res://Assets/Animations/" + data.monster_name.replace(" ", "") + ".tres"
+	var anim_name = data.monster_name.replace(" ", "")
+	if "animation_override" in data and data.animation_override != "":
+		anim_name = data.animation_override
+		
+	var anim_path = "res://Assets/Animations/" + anim_name + ".tres"
 	var loaded_frames = null
 	
 	if ResourceLoader.exists(anim_path):
@@ -289,7 +293,18 @@ func play_attack(is_physical: bool = false):
 		if has_anim:
 			# Wait for animation if it's not looping, otherwise wait for tween
 			if not sprite.sprite_frames.get_animation_loop("attack"):
-				await sprite.animation_finished
+				# SAFETY: Race animation against a timer to prevent soft-locks
+				var timer = get_tree().create_timer(1.5)
+				var finished = false
+				var _on_finish = func(): finished = true
+				
+				sprite.animation_finished.connect(_on_finish, CONNECT_ONE_SHOT)
+				
+				while not finished and timer.time_left > 0:
+					await get_tree().process_frame
+				
+				if not finished and sprite.animation_finished.is_connected(_on_finish):
+					sprite.animation_finished.disconnect(_on_finish)
 			else:
 				await tween.finished
 		else:
@@ -298,7 +313,18 @@ func play_attack(is_physical: bool = false):
 		# Special/Status attacks stay in place (or pulse)
 		if has_anim:
 			if not sprite.sprite_frames.get_animation_loop("attack"):
-				await sprite.animation_finished
+				# SAFETY: Race animation against a timer to prevent soft-locks
+				var timer = get_tree().create_timer(1.5)
+				var finished = false
+				var _on_finish = func(): finished = true
+				
+				sprite.animation_finished.connect(_on_finish, CONNECT_ONE_SHOT)
+				
+				while not finished and timer.time_left > 0:
+					await get_tree().process_frame
+				
+				if not finished and sprite.animation_finished.is_connected(_on_finish):
+					sprite.animation_finished.disconnect(_on_finish)
 			else:
 				await get_tree().create_timer(0.5).timeout
 		else:

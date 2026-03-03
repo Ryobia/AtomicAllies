@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://23gn5h5l5hwm" path="res://Assets/leftrightsheet.png" id="4_drcdi"]
 [ext_resource type="Texture2D" uid="uid://brdd8al3jw0ab" path="res://Assets/Status_Hostile.tres" id="4_ih0hx"]
 [ext_resource type="Texture2D" uid="uid://ci5ufhq38b3a5" path="res://Assets/Status_Friendly.tres" id="5_fp55r"]
+[ext_resource type="Texture2D" uid="uid://cotx186a0sk3n" path="res://Assets/battlebtn.png" id="7_n7l37"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mhro5"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -84,13 +85,22 @@ theme_override_constants/margin_bottom = 20
 layout_mode = 2
 theme_override_constants/separation = 15
 
-[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1804778207]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1392459185]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1569488434]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 20
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=1804778207]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_font_sizes/font_size = 90
 horizontal_alignment = 1
 
-[node name="NumberLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=736871060]
+[node name="NumberLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=736871060]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -98,12 +108,12 @@ theme_override_font_sizes/font_size = 50
 theme_override_styles/normal = SubResource("StyleBoxFlat_51vr3")
 horizontal_alignment = 1
 
-[node name="ClassContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=283469872]
+[node name="ClassContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=283469872]
 layout_mode = 2
 theme_override_constants/separation = 5
 alignment = 1
 
-[node name="ClassLabel" type="Label" parent="MarginContainer/VBoxContainer/ClassContainer" unique_id=864845258]
+[node name="ClassLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/ClassContainer" unique_id=864845258]
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
@@ -112,7 +122,7 @@ theme_override_font_sizes/font_size = 40
 text = "CLASS ALKALINE METALS"
 horizontal_alignment = 1
 
-[node name="HelpIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/ClassContainer" unique_id=1444427101]
+[node name="HelpIcon" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/ClassContainer" unique_id=1444427101]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -120,11 +130,29 @@ texture = SubResource("AtlasTexture_drcdi")
 expand_mode = 5
 stretch_mode = 4
 
-[node name="ClassBonus" type="Label" parent="MarginContainer/VBoxContainer/ClassContainer" unique_id=662833036]
+[node name="ClassBonus" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/ClassContainer" unique_id=662833036]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+
+[node name="ReplayContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=297172923]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="ReplayButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer" unique_id=1371387693]
+layout_mode = 2
+texture_normal = ExtResource("7_n7l37")
+
+[node name="ReplayLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer" unique_id=283337221]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 32
+text = "Replay
+Run"
 horizontal_alignment = 1
 
 [node name="IconTexture" type="TextureRect" parent="MarginContainer/VBoxContainer" unique_id=1310145462]

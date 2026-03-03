@@ -3,6 +3,11 @@
 [ext_resource type="Script" uid="uid://be1b71if15wq" path="res://Scripts/RestSite.gd" id="1_ya7uk"]
 [ext_resource type="Texture2D" uid="uid://d2k7e2ncjlh50" path="res://Assets/Gem.tres" id="2_ep4c3"]
 [ext_resource type="Texture2D" uid="uid://drgfc0ec2wubq" path="res://Assets/BE.tres" id="3_eufrv"]
+[ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="4_eufrv"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ulgok"]
+atlas = ExtResource("4_eufrv")
+region = Rect2(587, 64.255005, 326, 395)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ya7uk"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -37,6 +42,7 @@ corner_radius_bottom_left = 10
 
 [node name="RestSite" type="Control" unique_id=2143110194]
 layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -44,6 +50,7 @@ grow_vertical = 2
 script = ExtResource("1_ya7uk")
 icon_gem = ExtResource("2_ep4c3")
 icon_energy = ExtResource("3_eufrv")
+icon_dust = SubResource("AtlasTexture_ulgok")
 
 [node name="Panel" type="Panel" parent="." unique_id=1802053876]
 layout_mode = 1

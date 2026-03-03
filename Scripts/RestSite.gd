@@ -2,6 +2,7 @@ extends Control
 
 @export var icon_gem: Texture2D
 @export var icon_energy: Texture2D
+@export var icon_dust: Texture2D
 
 @onready var retreat_btn = find_child("RetreatButton", true, false)
 @onready var continue_btn = find_child("ContinueButton", true, false)
@@ -13,6 +14,7 @@ extends Control
 var monster_card_scene = preload("res://Scenes/TeamSlot.tscn") # Reusing TeamSlot for visuals
 var _anim_cache: Dictionary = {} # Cache loaded animations
 var _selected_swap_index: int = -1
+var _loot_container: HBoxContainer
 
 func _ready():
 	if retreat_btn: retreat_btn.pressed.connect(_on_retreat_pressed)
@@ -31,9 +33,13 @@ func _ready():
 func _on_retreat_pressed():
 	if CampaignManager:
 		# Bank rewards
-		PlayerData.add_resource("binding_energy", CampaignManager.current_run_energy)
+		if CampaignManager.current_run_energy > 0: PlayerData.add_resource("binding_energy", CampaignManager.current_run_energy)
+		if CampaignManager.current_run_dust > 0: PlayerData.add_resource("neutron_dust", CampaignManager.current_run_dust)
+		if CampaignManager.current_run_gems > 0: PlayerData.add_resource("gems", CampaignManager.current_run_gems)
 		CampaignManager.is_rogue_run = false
 		CampaignManager.current_run_energy = 0
+		CampaignManager.current_run_dust = 0
+		CampaignManager.current_run_gems = 0
 	GlobalManager.switch_scene("main_menu")
 
 func _on_continue_pressed():
@@ -152,11 +158,23 @@ func _populate_monster_grid(flashing_monsters: Array = []):
 		slot.custom_minimum_size = Vector2(0, 250)
 		container.add_child(slot)
 		
-		var anim_frames = _get_anim_frames(monster.monster_name)
+		var anim_frames = _get_anim_frames(monster)
 		
 		# Setup visual (reusing TeamSlot logic if available, or basic setup)
 		if slot.has_method("setup"):
 			slot.setup(monster, i, false, anim_frames)
+			
+		# Add gold border for 100% stability
+		if monster.stability >= 100:
+			var panel_style = slot.get_theme_stylebox("panel", "PanelContainer")
+			if panel_style:
+				var mastery_style = panel_style.duplicate()
+				mastery_style.border_width_left = 4
+				mastery_style.border_width_top = 4
+				mastery_style.border_width_right = 4
+				mastery_style.border_width_bottom = 4
+				mastery_style.border_color = Color("#ffd700") # Gold
+				slot.add_theme_stylebox_override("panel", mastery_style)
 		
 		# Allow clicking to swap
 		slot.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -180,6 +198,8 @@ func _populate_monster_grid(flashing_monsters: Array = []):
 		hp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		hp_lbl.add_theme_color_override("font_color", Color.GREEN if current_hp > 0 else Color.RED)
 		hp_lbl.add_theme_font_size_override("font_size", 40)
+		hp_lbl.add_theme_constant_override("outline_size", 4)
+		hp_lbl.add_theme_color_override("font_outline_color", Color.BLACK)
 		container.add_child(hp_lbl)
 		
 		if monster in flashing_monsters:
@@ -229,18 +249,83 @@ func _revive_monster(monster: MonsterData):
 		if title_label: title_label.text = "Not enough Gems!"
 
 func _update_loot_label():
-	if loot_label and CampaignManager:
-		loot_label.text = "Current Loot: %d Binding Energy" % CampaignManager.current_run_energy
-
-func _get_anim_frames(monster_name: String) -> SpriteFrames:
-	if _anim_cache.has(monster_name): return _anim_cache[monster_name]
+	if not loot_label or not CampaignManager: return
 	
-	var path = "res://Assets/Animations/" + monster_name.replace(" ", "") + ".tres"
+	loot_label.visible = false
+	
+	if not _loot_container:
+		_loot_container = HBoxContainer.new()
+		_loot_container.alignment = BoxContainer.ALIGNMENT_CENTER
+		_loot_container.add_theme_constant_override("separation", 20)
+		
+		var parent = loot_label.get_parent()
+		if parent:
+			parent.add_child(_loot_container)
+			if parent is Container:
+				parent.move_child(_loot_container, loot_label.get_index())
+			else:
+				# Copy positioning if not in a container
+				_loot_container.set_anchors_preset(Control.PRESET_CENTER_TOP)
+				_loot_container.position = loot_label.position
+				_loot_container.size = Vector2(loot_label.size.x, 50)
+				_loot_container.anchor_left = loot_label.anchor_left
+				_loot_container.anchor_right = loot_label.anchor_right
+				_loot_container.anchor_top = loot_label.anchor_top
+				_loot_container.anchor_bottom = loot_label.anchor_bottom
+				_loot_container.offset_left = loot_label.offset_left
+				_loot_container.offset_top = loot_label.offset_top
+				_loot_container.offset_right = loot_label.offset_right
+				_loot_container.offset_bottom = loot_label.offset_bottom
+	
+	for child in _loot_container.get_children():
+		child.queue_free()
+		
+	var title = Label.new()
+	title.text = "Current Loot:"
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color.WHITE)
+	_loot_container.add_child(title)
+	
+	_add_loot_item(_loot_container, CampaignManager.current_run_energy, icon_energy)
+	
+	if CampaignManager.current_run_dust > 0:
+		_add_loot_item(_loot_container, CampaignManager.current_run_dust, icon_dust)
+	if CampaignManager.current_run_gems > 0:
+		_add_loot_item(_loot_container, CampaignManager.current_run_gems, icon_gem)
+
+func _add_loot_item(container: Control, amount: int, icon: Texture2D):
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 5)
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	
+	if icon:
+		var tex = TextureRect.new()
+		tex.texture = icon
+		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex.custom_minimum_size = Vector2(60, 60)
+		hbox.add_child(tex)
+		
+	var lbl = Label.new()
+	lbl.text = str(amount)
+	lbl.add_theme_font_size_override("font_size", 56)
+	lbl.add_theme_color_override("font_color", Color("#60fafc"))
+	hbox.add_child(lbl)
+	container.add_child(hbox)
+
+func _get_anim_frames(monster: MonsterData) -> SpriteFrames:
+	if _anim_cache.has(monster.monster_name): return _anim_cache[monster.monster_name]
+	
+	var anim_name = monster.monster_name.replace(" ", "")
+	if "animation_override" in monster and monster.animation_override != "":
+		anim_name = monster.animation_override
+		
+	var path = "res://Assets/Animations/" + anim_name + ".tres"
 	var frames = null
 	if ResourceLoader.exists(path):
 		frames = load(path)
 	
-	_anim_cache[monster_name] = frames
+	_anim_cache[monster.monster_name] = frames
 	return frames
 
 func _flash_slot(slot: Control):

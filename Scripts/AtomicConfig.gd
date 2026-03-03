@@ -69,13 +69,13 @@ const GROUP_COLORS = {
 
 # Baseline Stats (Scale 1-10) from the Design Document
 const BASELINES = {
-	Group.ALKALI_METAL:    { "hp": 3, "atk": 8, "def": 2, "spd": 9 }, # Glass Cannons
+	Group.ALKALI_METAL:    { "hp": 2, "atk": 8, "def": 2, "spd": 8 }, # Glass Cannons
 	Group.ALKALINE_EARTH:  { "hp": 6, "atk": 4, "def": 7, "spd": 3 }, # Sturdy Tanks
-	Group.TRANSITION_METAL:{ "hp": 7, "atk": 6, "def": 6, "spd": 4 }, # Bruisers
+	Group.TRANSITION_METAL:{ "hp": 6, "atk": 5, "def": 5, "spd": 4 }, # Bruisers
 	Group.POST_TRANSITION: { "hp": 5, "atk": 5, "def": 5, "spd": 5 }, # Utility
-	Group.METALLOID:       { "hp": 4, "atk": 6, "def": 4, "spd": 7 }, # Disrupters
-	Group.NONMETAL:        { "hp": 3, "atk": 3, "def": 3, "spd": 6 }, # Combo Primers
-	Group.HALOGEN:         { "hp": 2, "atk": 7, "def": 2, "spd": 8 }, # DoT Assailants
+	Group.METALLOID:       { "hp": 4, "atk": 6, "def": 4, "spd": 6 }, # Disrupters
+	Group.NONMETAL:        { "hp": 4, "atk": 4, "def": 4, "spd": 7 }, # Combo Primers
+	Group.HALOGEN:         { "hp": 3, "atk": 5, "def": 3, "spd": 8 }, # DoT Assailants
 	Group.NOBLE_GAS:       { "hp": 5, "atk": 1, "def": 10,"spd": 4 }, # Pure Walls
 	Group.ACTINIDE:        { "hp": 8, "atk": 10,"def": 5, "spd": 2 }, # The Nukes
 	Group.LANTHANIDE:      { "hp": 7, "atk": 9, "def": 5, "spd": 3 }, # Rare Earths (Similar to Actinides)
@@ -116,6 +116,20 @@ const BASELINES = {
 	Group.BROOD_BRUTE:     { "hp": 10,"atk": 5, "def": 4, "spd": 3 },
 	Group.BROOD_COMMANDER: { "hp": 8, "atk": 6, "def": 5, "spd": 6 },
 	Group.BROOD_KING:      { "hp": 12,"atk": 8, "def": 6, "spd": 5 }
+}
+
+# Mastery Bonus Descriptions (100% Stability)
+const MASTERY_BONUSES = {
+	Group.ALKALI_METAL: "Mastery: Gain a free turn at the start of combat.",
+	Group.ALKALINE_EARTH: "Mastery: Begin combat with a shield equal to 25% of Max HP.",
+	Group.TRANSITION_METAL: "Mastery: The second hit from a double-attack deals full damage.",
+	Group.POST_TRANSITION: "Mastery: Healing an ally also deals that much damage to a random enemy.",
+	Group.METALLOID: "Mastery: Increases the chance to stun on-hit to 25%.",
+	Group.NONMETAL: "Mastery: Chain Reactions can now also spread status effects.",
+	Group.HALOGEN: "Mastery: At the start of combat, poisons a random enemy.",
+	Group.NOBLE_GAS: "Mastery: Doubles passive HP regeneration to 10% per turn.",
+	Group.ACTINIDE: "Mastery: Reduces passive HP decay from 10% to 5%.",
+	Group.LANTHANIDE: "Mastery: Can now absorb stats from fallen allies as well as enemies."
 }
 
 # Default Movesets based on Group

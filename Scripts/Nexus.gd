@@ -28,11 +28,21 @@ var confirm_fuse_btn
 var cancel_fuse_btn
 var confirm_label
 var popup_particles
+var stabilizer_checkbox: CheckBox
+var buy_stabilizer_btn: Button
+var catalyst_checkbox: CheckBox
+var buy_catalyst_btn: Button
 
 # Stability UI
 var stability_bar
 var stability_label
 var help_icon
+
+enum SortMode { ATOMIC_NUMBER, NAME, STABILITY }
+var current_sort_mode: SortMode = SortMode.ATOMIC_NUMBER
+var sort_btn: Button
+var search_bar: LineEdit
+var search_text: String = ""
 
 func _ready():
 	# Locate nodes dynamically to avoid path errors
@@ -44,6 +54,10 @@ func _ready():
 	fusion_confirm_popup = find_child("FusionConfirmPopup", true, false)
 	if fusion_confirm_popup:
 		fusion_confirm_popup.visible = false
+		# Force reset size to prevent it from getting stuck at a huge height due to previous bugs
+		fusion_confirm_popup.custom_minimum_size = Vector2(600, 0)
+		fusion_confirm_popup.size = Vector2(600, 0)
+		
 		confirm_fuse_btn = fusion_confirm_popup.find_child("ConfirmButton", true, false)
 		cancel_fuse_btn = fusion_confirm_popup.find_child("CancelButton", true, false)
 		confirm_label = fusion_confirm_popup.find_child("Label", true, false)
@@ -52,6 +66,61 @@ func _ready():
 			confirm_fuse_btn.pressed.connect(_on_confirm_fusion_pressed)
 		if cancel_fuse_btn:
 			cancel_fuse_btn.pressed.connect(func(): fusion_confirm_popup.visible = false)
+			
+		# Find the checkbox added in the editor
+		stabilizer_checkbox = fusion_confirm_popup.find_child("StabilizerCheckBox", true, false)
+		
+		if stabilizer_checkbox:
+			var container = stabilizer_checkbox.get_parent()
+			
+			# Setup Styles (Shared)
+			var sb_normal = StyleBoxFlat.new()
+			sb_normal.bg_color = Color(0, 0, 0, 0.5)
+			sb_normal.border_color = Color("#60fafc")
+			sb_normal.border_width_left = 2
+			sb_normal.border_width_top = 2
+			sb_normal.border_width_right = 2
+			sb_normal.border_width_bottom = 2
+			sb_normal.set_corner_radius_all(8)
+			sb_normal.content_margin_left = 20
+			sb_normal.content_margin_right = 20
+			
+			var sb_hover = sb_normal.duplicate()
+			sb_hover.bg_color = Color("#60fafc")
+			sb_hover.bg_color.a = 0.2
+			
+			# Get siblings directly (No creation logic needed as they are in the scene)
+			catalyst_checkbox = container.get_node_or_null("CatalystCheckBox")
+			buy_stabilizer_btn = container.get_node_or_null("BuyStabilizerButton")
+			buy_catalyst_btn = container.get_node_or_null("BuyCatalystButton")
+			
+			# CLEANUP: Remove any duplicates that might have accumulated from previous bugs
+			var children = container.get_children()
+			for child in children:
+				if child == stabilizer_checkbox or child == catalyst_checkbox or child == buy_stabilizer_btn or child == buy_catalyst_btn:
+					continue
+				
+				if child.name.begins_with("StabilizerCheckBox") or \
+				   child.name.begins_with("CatalystCheckBox") or \
+				   child.name.begins_with("BuyStabilizerButton") or \
+				   child.name.begins_with("BuyCatalystButton") or \
+				   (child is Button and child.text.begins_with("Buy")):
+					print("Nexus: Removing duplicate node ", child.name)
+					child.queue_free()
+			
+			# Setup UI Properties
+			_setup_booster_ui(stabilizer_checkbox, buy_stabilizer_btn, "Use Magnetic Stabilizer (+10%)", "Buy Stabilizer (250 Dust)", sb_normal, sb_hover)
+			_setup_booster_ui(catalyst_checkbox, buy_catalyst_btn, "Use Quantum Catalyst (+25%)", "Buy Catalyst (500 Dust)", sb_normal, sb_hover)
+			
+			# Connect Signals
+			if not stabilizer_checkbox.toggled.is_connected(_on_stabilizer_toggled):
+				stabilizer_checkbox.toggled.connect(_on_stabilizer_toggled)
+			if buy_stabilizer_btn and not buy_stabilizer_btn.pressed.is_connected(_on_buy_stabilizer_pressed):
+				buy_stabilizer_btn.pressed.connect(_on_buy_stabilizer_pressed)
+			if catalyst_checkbox and not catalyst_checkbox.toggled.is_connected(_on_catalyst_toggled):
+				catalyst_checkbox.toggled.connect(_on_catalyst_toggled)
+			if buy_catalyst_btn and not buy_catalyst_btn.pressed.is_connected(_on_buy_catalyst_pressed):
+				buy_catalyst_btn.pressed.connect(_on_buy_catalyst_pressed)
 			
 		popup_particles = fusion_confirm_popup.find_child("PopupParticles", true, false)
 	
@@ -94,6 +163,44 @@ func _ready():
 			# Ensure the grid itself expands to fill the ScrollContainer width
 			selection_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			selection_container.mouse_filter = Control.MOUSE_FILTER_PASS
+			
+		# Add Filter Row (Search + Sort)
+		var filter_row = HBoxContainer.new()
+		filter_row.layout_mode = 1 # Anchors
+		filter_row.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		filter_row.offset_left = 20
+		filter_row.offset_right = -20
+		filter_row.offset_top = 20
+		filter_row.offset_bottom = 80
+		filter_row.add_theme_constant_override("separation", 20)
+		selection_panel.add_child(filter_row)
+		
+		search_bar = LineEdit.new()
+		search_bar.placeholder_text = "Search..."
+		search_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		search_bar.add_theme_font_size_override("font_size", 32)
+		search_bar.text_changed.connect(_on_search_text_changed)
+		filter_row.add_child(search_bar)
+
+		# Add Sort Button programmatically if not present, or move it if it is
+		sort_btn = selection_panel.find_child("SortButton", true, false)
+		if not sort_btn:
+			sort_btn = Button.new()
+			sort_btn.name = "SortButton"
+			sort_btn.text = "Sort: Atomic #"
+			sort_btn.add_theme_font_size_override("font_size", 32)
+		elif sort_btn.get_parent():
+			sort_btn.get_parent().remove_child(sort_btn)
+		
+		filter_row.add_child(sort_btn)
+		sort_btn.pressed.connect(_on_sort_pressed)
+		
+		# Adjust ScrollContainer to sit below the filter row
+		if selection_container:
+			var scroll = selection_container.get_parent()
+			if scroll is ScrollContainer:
+				scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+				scroll.offset_top = 100 # Push down below header
 	
 	# Connect UI signals
 	if parent_1_btn: parent_1_btn.pressed.connect(func(): _open_selection(1))
@@ -155,6 +262,21 @@ func _ready():
 	if not SynthesisManager.capsule_created.is_connected(_on_capsule_created):
 		SynthesisManager.capsule_created.connect(_on_capsule_created)
 
+func _on_sort_pressed():
+	if current_sort_mode == SortMode.ATOMIC_NUMBER: current_sort_mode = SortMode.NAME
+	elif current_sort_mode == SortMode.NAME: current_sort_mode = SortMode.STABILITY
+	else: current_sort_mode = SortMode.ATOMIC_NUMBER
+		
+	match current_sort_mode:
+		SortMode.ATOMIC_NUMBER: sort_btn.text = "Sort: Atomic #"
+		SortMode.NAME: sort_btn.text = "Sort: Name"
+		SortMode.STABILITY: sort_btn.text = "Sort: Stability"
+	_populate_selection_list()
+
+func _on_search_text_changed(new_text: String):
+	search_text = new_text
+	_populate_selection_list()
+
 func _on_fusion_error(message: String):
 	var popup = find_child("ErrorPopup", true, false)
 	if popup:
@@ -214,6 +336,10 @@ func _open_selection(slot: int):
 		selection_panel.visible = true
 		# Force the panel to the front so it catches mouse clicks
 		selection_panel.z_index = 20
+		# Reset search
+		if search_bar:
+			search_bar.text = ""
+			search_text = ""
 		selection_panel.move_to_front()
 		_populate_selection_list()
 
@@ -229,8 +355,21 @@ func _populate_selection_list():
 		child.queue_free()
 		
 	var count = 0
+	
+	var sorted_list = PlayerData.owned_monsters.duplicate()
+	
+	if search_text != "":
+		sorted_list = sorted_list.filter(func(m): return search_text.to_lower() in m.monster_name.to_lower())
+	
+	sorted_list.sort_custom(func(a, b):
+		match current_sort_mode:
+			SortMode.NAME: return a.monster_name < b.monster_name
+			SortMode.STABILITY: return a.stability > b.stability
+			_: return a.atomic_number < b.atomic_number
+	)
+	
 	# Create a button for each monster in inventory
-	for monster in PlayerData.owned_monsters:
+	for monster in sorted_list:
 		# Skip if this monster is already selected in the other slot
 		if (selecting_slot == 1 and monster == parent_2) or (selecting_slot == 2 and monster == parent_1):
 			continue
@@ -255,6 +394,18 @@ func _populate_selection_list():
 			if card.has_method("set_monster"):
 				card.set_monster(monster)
 			wrapper.add_child(card)
+			
+			# Add gold border for 100% stability
+			if monster.stability >= 100:
+				var panel_style = card.get_theme_stylebox("panel", "PanelContainer")
+				if panel_style:
+					var mastery_style = panel_style.duplicate()
+					mastery_style.border_width_left = 4
+					mastery_style.border_width_top = 4
+					mastery_style.border_width_right = 4
+					mastery_style.border_width_bottom = 4
+					mastery_style.border_color = Color("#ffd700") # Gold
+					card.add_theme_stylebox_override("panel", mastery_style)
 			
 			# Add an invisible button on top to handle the click
 			var btn = Button.new()
@@ -327,6 +478,8 @@ func _populate_selection_list():
 			btn.custom_minimum_size = Vector2(200, 250)
 			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			btn.add_theme_font_size_override("font_size", 56)
+			btn.add_theme_constant_override("outline_size", 8)
+			btn.add_theme_color_override("font_outline_color", Color.BLACK)
 			btn.mouse_filter = Control.MOUSE_FILTER_PASS
 			btn.focus_mode = Control.FOCUS_NONE
 			
@@ -408,9 +561,16 @@ func _on_breed_pressed():
 		if SynthesisManager.has_method("calculate_success_rate"):
 			chance = SynthesisManager.calculate_success_rate(parent_1.stability, parent_2.stability, target_z)
 			
+		# Reset checkboxes state based on inventory
+		if stabilizer_checkbox:
+			stabilizer_checkbox.button_pressed = false
+		if catalyst_checkbox:
+			catalyst_checkbox.button_pressed = false
+			
+		_refresh_boosters_ui()
+			
 		if confirm_label:
-			confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nSuccess Rate: %d%%\nCost: %d Binding Energy" % \
-				[parent_1.monster_name, parent_2.monster_name, target_z, int(chance), cost]
+			_update_confirm_label(chance, cost, target_z)
 			
 		fusion_confirm_popup.visible = true
 		fusion_confirm_popup.move_to_front()
@@ -422,6 +582,97 @@ func _on_breed_pressed():
 		# Fallback if no popup exists
 		SynthesisManager.attempt_fusion(parent_1, parent_2)
 
+func _refresh_boosters_ui():
+	# Stabilizer
+	if stabilizer_checkbox and buy_stabilizer_btn:
+		var count = PlayerData.get_item_count("magnetic_stabilizer")
+		if count > 0:
+			stabilizer_checkbox.visible = true
+			buy_stabilizer_btn.visible = false
+			stabilizer_checkbox.text = "Use Magnetic Stabilizer (+10%%) [%d Owned]" % count
+		else:
+			stabilizer_checkbox.visible = false
+			buy_stabilizer_btn.visible = true
+			buy_stabilizer_btn.text = "Buy Stabilizer (250 Dust)"
+			
+	# Catalyst
+	if catalyst_checkbox and buy_catalyst_btn:
+		var count = PlayerData.get_item_count("quantum_catalyst")
+		if count > 0:
+			catalyst_checkbox.visible = true
+			buy_catalyst_btn.visible = false
+			catalyst_checkbox.text = "Use Quantum Catalyst (+25%%) [%d Owned]" % count
+		else:
+			catalyst_checkbox.visible = false
+			buy_catalyst_btn.visible = true
+			buy_catalyst_btn.text = "Buy Catalyst (500 Dust)"
+
+func _on_buy_stabilizer_pressed():
+	var cost = 250
+	_handle_buy_booster("magnetic_stabilizer", cost, buy_stabilizer_btn, stabilizer_checkbox, "Buy Stabilizer (250 Dust)")
+
+func _on_buy_catalyst_pressed():
+	var cost = 500
+	_handle_buy_booster("quantum_catalyst", cost, buy_catalyst_btn, catalyst_checkbox, "Buy Catalyst (500 Dust)")
+
+func _handle_buy_booster(item_id: String, cost: int, btn: Button, checkbox: CheckBox, default_text: String):
+	if PlayerData.spend_resource("neutron_dust", cost):
+		PlayerData.add_item(item_id, 1)
+		_refresh_boosters_ui()
+		# Auto-select for convenience
+		if checkbox:
+			checkbox.button_pressed = true
+	else:
+		btn.text = "Not enough Dust!"
+		var tween = create_tween()
+		tween.tween_interval(1.0)
+		tween.tween_callback(func(): if btn: btn.text = default_text)
+
+func _on_stabilizer_toggled(_pressed: bool):
+	_update_chance_display()
+
+func _on_catalyst_toggled(_pressed: bool):
+	_update_chance_display()
+
+func _update_chance_display():
+	if not parent_1 or not parent_2: return
+	var target_z = parent_1.atomic_number + parent_2.atomic_number
+	var cost = AtomicConfig.calculate_fusion_cost(target_z)
+	var chance = 0.0
+	if SynthesisManager.has_method("calculate_success_rate"):
+		chance = SynthesisManager.calculate_success_rate(parent_1.stability, parent_2.stability, target_z)
+	
+	_update_confirm_label(chance, cost, target_z)
+	
+	# Animate the stability bar to reflect the boosted chance
+	var final_chance = chance
+	if stabilizer_checkbox and stabilizer_checkbox.button_pressed:
+		final_chance += 10.0
+	if catalyst_checkbox and catalyst_checkbox.button_pressed:
+		final_chance += 25.0
+		
+	if stability_bar:
+		if stability_bar.has_meta("anim_tween"):
+			var t = stability_bar.get_meta("anim_tween")
+			if t and t.is_valid(): t.kill()
+		var tween = create_tween()
+		tween.tween_property(stability_bar, "value", final_chance, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		stability_bar.set_meta("anim_tween", tween)
+		_update_bar_color(final_chance)
+
+	if stability_label:
+		stability_label.text = "Chance of Success: %d%%" % int(final_chance)
+
+func _update_confirm_label(base_chance: float, cost: int, target_z: int):
+	var final_chance = base_chance
+	if stabilizer_checkbox and stabilizer_checkbox.button_pressed:
+		final_chance += 10.0
+	if catalyst_checkbox and catalyst_checkbox.button_pressed:
+		final_chance += 25.0
+	
+	confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nSuccess Rate: %d%%\nCost: %d Binding Energy" % \
+		[parent_1.monster_name, parent_2.monster_name, target_z, int(final_chance), cost]
+
 func _on_confirm_fusion_pressed():
 	if fusion_confirm_popup:
 		fusion_confirm_popup.visible = false
@@ -430,7 +681,21 @@ func _on_confirm_fusion_pressed():
 	var cost = AtomicConfig.calculate_fusion_cost(target_z)
 	
 	if PlayerData.spend_resource("binding_energy", cost):
-		SynthesisManager.attempt_fusion(parent_1, parent_2)
+		# Consume boosters if checked
+		var bonus = 0
+		if stabilizer_checkbox and stabilizer_checkbox.button_pressed:
+			if PlayerData.consume_item("magnetic_stabilizer", 1):
+				bonus += 10
+		if catalyst_checkbox and catalyst_checkbox.button_pressed:
+			if PlayerData.consume_item("quantum_catalyst", 1):
+				bonus += 25
+		
+		# Pass bonus to SynthesisManager if it supports it
+		if SynthesisManager.has_method("attempt_fusion_with_bonus"):
+			SynthesisManager.attempt_fusion_with_bonus(parent_1, parent_2, bonus)
+		else:
+			# Fallback to standard (Bonus item consumed but effect depends on Manager implementation)
+			SynthesisManager.attempt_fusion(parent_1, parent_2)
 	else:
 		status_label.text = "Not enough Binding Energy!"
 
@@ -525,13 +790,21 @@ func _update_success_rate_preview():
 			chance = SynthesisManager.calculate_success_rate(parent_1.stability, parent_2.stability, target_z)
 		
 		if stability_bar:
-			stability_bar.value = chance
+			if stability_bar.has_meta("anim_tween"):
+				var t = stability_bar.get_meta("anim_tween")
+				if t and t.is_valid(): t.kill()
+			var tween = create_tween()
+			tween.tween_property(stability_bar, "value", chance, 0.5).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+			stability_bar.set_meta("anim_tween", tween)
+			
 			_update_bar_color(chance)
 			
 		if stability_label:
 			stability_label.text = "Chance of Success: %d%%" % int(chance)
 	else:
-		if stability_bar: stability_bar.value = 0
+		if stability_bar:
+			var tween = create_tween()
+			tween.tween_property(stability_bar, "value", 0.0, 0.5)
 		if stability_label: stability_label.text = "Chance of Success: --"
 
 func _update_bar_color(chance: float):
@@ -589,8 +862,39 @@ func _animate_button_press(btn: Control):
 	tween.tween_property(btn, "scale", Vector2(0.95, 0.95), 0.1)
 	tween.tween_property(btn, "scale", Vector2.ONE, 0.1)
 
+func _setup_booster_ui(checkbox: CheckBox, btn: Button, check_text: String, btn_text: String, style_normal: StyleBox, style_hover: StyleBox):
+	if checkbox:
+		checkbox.text = check_text
+		checkbox.add_theme_font_size_override("font_size", 28)
+		checkbox.add_theme_color_override("font_color", Color("#60fafc"))
+		checkbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		checkbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		checkbox.custom_minimum_size.y = 60
+		checkbox.add_theme_constant_override("h_separation", 15)
+		checkbox.add_theme_stylebox_override("normal", style_normal)
+		checkbox.add_theme_stylebox_override("hover", style_hover)
+		checkbox.add_theme_stylebox_override("pressed", style_hover)
+		checkbox.add_theme_stylebox_override("focus", style_hover)
+		checkbox.add_theme_stylebox_override("hover_pressed", style_hover)
+		
+	if btn:
+		btn.text = btn_text
+		btn.visible = false
+		btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		btn.custom_minimum_size.y = 60
+		btn.add_theme_font_size_override("font_size", 28)
+		btn.add_theme_color_override("font_color", Color("#60fafc"))
+		btn.add_theme_stylebox_override("normal", style_normal)
+		btn.add_theme_stylebox_override("hover", style_hover)
+		btn.add_theme_stylebox_override("pressed", style_hover)
+
 func _create_monster_visual(monster: MonsterData, container_size: Vector2) -> Node2D:
-	var anim_path = "res://Assets/Animations/" + monster.monster_name.replace(" ", "") + ".tres"
+	var anim_name = monster.monster_name.replace(" ", "")
+	if "animation_override" in monster and monster.animation_override != "":
+		anim_name = monster.animation_override
+		
+	var anim_path = "res://Assets/Animations/" + anim_name + ".tres"
 	
 	if ResourceLoader.exists(anim_path):
 		var sprite_frames = load(anim_path)
@@ -698,6 +1002,8 @@ func _show_tooltip_popup(text: String):
 func _apply_font_override(node: Node, size: int):
 	if node is Label or node is Button or node is RichTextLabel:
 		node.add_theme_font_size_override("font_size", size)
+		node.add_theme_constant_override("outline_size", 6)
+		node.add_theme_color_override("font_outline_color", Color.BLACK)
 	
 	for child in node.get_children():
 		_apply_font_override(child, size)

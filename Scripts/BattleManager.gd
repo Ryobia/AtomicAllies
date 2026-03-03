@@ -184,14 +184,14 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	for unit in all_units:
 		if unit.data.group == AtomicConfig.Group.ALKALI_METAL and unit.data.stability >= 100:
 			unit.atb_value = 100.0
-			log_event.emit("%s surges with instability! (Free Turn)" % unit.data.monster_name)
+			_show_mastery_trigger(unit, "Mastery: Free Turn!")
 		
 		# Mastery: Alkaline Earths (100% Stability) -> Start with 25% Shield
 		if unit.data.group == AtomicConfig.Group.ALKALINE_EARTH and unit.data.stability >= 100:
 			var shield_amt = int(unit.max_hp * 0.25)
 			unit.set_meta("shield", shield_amt)
 			_check_shield_update(unit)
-			log_event.emit("%s hardens its crust! (Shield)" % unit.data.monster_name)
+			_show_mastery_trigger(unit, "Mastery: Shielded!")
 			
 		# Mastery: Halogens (100% Stability) -> Randomly poison 1 enemy
 		if unit.data.group == AtomicConfig.Group.HALOGEN and unit.data.stability >= 100:
@@ -200,12 +200,10 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 			
 			if not living_targets.is_empty():
 				var target = living_targets.pick_random()
-				# Halogen poison is 10% Max HP (handled by _process_status_damage)
-				# We apply it with damage_percent to be safe
 				target.apply_effect({ "status": "poison", "duration": 3, "damage_percent": 0.1, "type": "status" })
 				_refresh_unit_status(target)
-				log_event.emit("%s leaks toxic gas! %s is poisoned!" % [unit.data.monster_name, target.data.monster_name])
-				_show_damage_number(target, 0, "poison") # Visual cue
+				_show_mastery_trigger(unit, "Mastery: Toxic Start!")
+				_show_damage_number(target, 0, "poison") # Keep visual cue on target
 	
 	# Setup the HUD with the monster data
 	if battle_hud:
@@ -214,6 +212,15 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 			player_data_list.append(unit.data)
 		# The setup_ui function expects a list of MonsterData, not BattleMonster nodes
 		battle_hud.setup_ui(player_data_list, enemy_data_list)
+		
+		# Force update HUD with actual HP values (since setup_ui defaults to Max HP)
+		for i in range(active_player_monsters.size()):
+			var unit = active_player_monsters[i]
+			hud_update_hp.emit(true, i, unit.current_hp, unit.max_hp)
+			
+		for i in range(active_enemy_monsters.size()):
+			var unit = active_enemy_monsters[i]
+			hud_update_hp.emit(false, i, unit.current_hp, unit.max_hp)
 
 	# Start the clock
 	current_state = BattleState.COUNTING
@@ -329,7 +336,13 @@ func start_turn():
 	# Handle dead unit turn (Force Swap)
 	if current_acting_unit.is_dead:
 		if current_acting_unit.is_player:
-			if benched_player_monsters.is_empty():
+			var available_replacements = benched_player_monsters.filter(func(m):
+				if roster_hp_cache.has(m) and roster_hp_cache[m] <= 0:
+					return false
+				return true
+			)
+			
+			if available_replacements.is_empty():
 				end_turn()
 				return
 			
@@ -353,7 +366,13 @@ func start_turn():
 	
 	# Check if unit died from start-of-turn effects (like Corrosion)
 	if current_acting_unit.is_dead:
-		if current_acting_unit.is_player and not benched_player_monsters.is_empty():
+		var available_replacements = benched_player_monsters.filter(func(m):
+			if roster_hp_cache.has(m) and roster_hp_cache[m] <= 0:
+				return false
+			return true
+		)
+		
+		if current_acting_unit.is_player and not available_replacements.is_empty():
 			log_event.emit("%s has fallen! Choose a replacement!" % current_acting_unit.data.monster_name)
 			if battle_hud:
 				battle_hud.show_swap_options(_get_swap_options(), true)
@@ -379,6 +398,13 @@ func start_turn():
 		_refresh_unit_status(current_acting_unit)
 		log_event.emit("It's %s's turn!" % current_acting_unit.data.monster_name)
 		if battle_hud:
+			var can_swap = false
+			for m in benched_player_monsters:
+				if not (roster_hp_cache.has(m) and roster_hp_cache[m] <= 0):
+					can_swap = true
+					break
+			
+			battle_hud.set_swap_disabled(not can_swap)
 			battle_hud.show_actions()
 	else:
 		# AI Turn
@@ -466,7 +492,13 @@ func _on_action_selected(action_type):
 		if battle_hud:
 			battle_hud.show_moves(moves)
 	elif action_type == "swap":
-		if benched_player_monsters.is_empty():
+		var can_swap = false
+		for m in benched_player_monsters:
+			if not (roster_hp_cache.has(m) and roster_hp_cache[m] <= 0):
+				can_swap = true
+				break
+				
+		if not can_swap:
 			log_event.emit("No monsters to swap with!")
 			return
 		if battle_hud:
@@ -1034,6 +1066,15 @@ func end_battle(player_won: bool):
 			var be_per_enemy = float(run_cost) / float(estimated_enemies)
 			total_be = int(be_per_enemy * active_enemy_monsters.size())
 			if total_be < 1: total_be = 1
+			
+			# Neutron Dust: Common, flat amount
+			if randf() < 0.5: # 50% chance
+				var dust_amount = randi_range(100, 200)
+				rewards["neutron_dust"] = dust_amount
+			
+			# Gems: Rare, small amount
+			if randf() < 0.05: # 5% chance
+				rewards["gems"] = 1
 		else:
 			for unit in active_enemy_monsters:
 				# Binding Energy: Base 10 + (Atomic Number * 2)
@@ -1056,6 +1097,8 @@ func end_battle(player_won: bool):
 		# If this was part of a run, show the total accumulated loot instead of just this battle's
 		if player_won and CampaignManager.current_run_energy > 0:
 			rewards["binding_energy"] = CampaignManager.current_run_energy
+		if player_won and CampaignManager.current_run_dust > 0: rewards["neutron_dust"] = CampaignManager.current_run_dust
+		if player_won and CampaignManager.current_run_gems > 0: rewards["gems"] = CampaignManager.current_run_gems
 
 	if battle_hud:
 		battle_hud.show_result(player_won, rewards)
@@ -1101,7 +1144,15 @@ func check_win_condition():
 		if not m.is_dead:
 			player_team_defeated = false
 			break
-	if player_team_defeated and benched_player_monsters.is_empty():
+			
+	var bench_has_living = false
+	for m in benched_player_monsters:
+		# If not in cache, assume alive (fresh). If in cache and > 0, alive.
+		if not (roster_hp_cache.has(m) and roster_hp_cache[m] <= 0):
+			bench_has_living = true
+			break
+			
+	if player_team_defeated and not bench_has_living:
 		end_battle(false)
 
 	var enemy_team_defeated = true
@@ -1505,17 +1556,36 @@ func _handle_team_status(attacker: BattleMonster, effect: Dictionary):
 
 func _update_status_visuals(unit: BattleMonster):
 	var has_vapor = false
+	var has_radiation = false
+	var has_stun = false
+	
 	if "active_effects" in unit:
 		for effect in unit.active_effects:
-			if effect.get("status") == "reactive_vapor":
+			var s = effect.get("status")
+			if s == "reactive_vapor" or s == "poison":
 				has_vapor = true
-				break
+			elif s == "radiation":
+				has_radiation = true
+			elif s == "stun":
+				has_stun = true
 	
 	var cloud = unit.find_child("VaporCloud", false, false)
 	if has_vapor and not cloud:
 		_create_vapor_cloud(unit)
 	elif not has_vapor and cloud:
 		cloud.queue_free()
+		
+	var glow = unit.find_child("RadiationGlow", false, false)
+	if has_radiation and not glow:
+		_create_radiation_glow(unit)
+	elif not has_radiation and glow:
+		glow.queue_free()
+		
+	var stun = unit.find_child("StunVisual", false, false)
+	if has_stun and not stun:
+		_create_stun_visual(unit)
+	elif not has_stun and stun:
+		stun.queue_free()
 
 func _create_vapor_cloud(parent: Node):
 	var particles = CPUParticles2D.new()
@@ -1536,6 +1606,43 @@ func _create_vapor_cloud(parent: Node):
 	
 	parent.add_child(particles)
 
+func _create_radiation_glow(parent: Node):
+	var particles = CPUParticles2D.new()
+	particles.name = "RadiationGlow"
+	particles.amount = 24
+	particles.lifetime = 1.2
+	particles.preprocess = 0.5
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	particles.emission_sphere_radius = 55.0
+	particles.gravity = Vector2(0, -10)
+	particles.scale_amount_min = 8.0
+	particles.scale_amount_max = 16.0
+	
+	var gradient = Gradient.new()
+	gradient.set_color(0, Color(0.4, 1.0, 0.2, 0.6)) # Radioactive Green
+	gradient.set_color(1, Color(0.4, 1.0, 0.2, 0.0))
+	particles.color_ramp = gradient
+	
+	parent.add_child(particles)
+
+func _create_stun_visual(parent: Node):
+	var particles = CPUParticles2D.new()
+	particles.name = "StunVisual"
+	particles.amount = 12
+	particles.lifetime = 1.0
+	particles.preprocess = 0.0
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	particles.emission_sphere_radius = 35.0
+	particles.gravity = Vector2(0, 0)
+	particles.orbit_velocity_min = 1.0
+	particles.orbit_velocity_max = 1.5
+	particles.scale_amount_min = 4.0
+	particles.scale_amount_max = 8.0
+	particles.color = Color("#ffd700") # Gold
+	
+	parent.add_child(particles)
+	particles.position = Vector2(0, -100) # Above head
+
 func _play_vapor_reaction(unit: BattleMonster):
 	var tween = create_tween()
 	tween.tween_property(unit, "modulate", Color(0.8, 0.2, 1.0), 0.1)
@@ -1546,6 +1653,28 @@ func _play_vapor_reaction(unit: BattleMonster):
 		var offset = Vector2(randf_range(-5, 5), randf_range(-5, 5))
 		tween.tween_property(unit, "position", base_pos + offset, 0.05)
 	tween.tween_property(unit, "position", base_pos, 0.05)
+
+func _show_mastery_trigger(unit: Node2D, text: String):
+	var label = Label.new()
+	label.z_index = 25 # Above damage numbers
+	label.text = text
+	
+	label.add_theme_font_size_override("font_size", 48)
+	label.add_theme_color_override("font_color", Color("#ffd700")) # Gold
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 6)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	unit.add_child(label)
+	label.position = Vector2(-100, -160) # Above unit, wider
+	label.custom_minimum_size = Vector2(200, 60)
+	
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "scale", Vector2(1.2, 1.2), 0.3).from(Vector2.ZERO).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.chain().tween_property(label, "modulate:a", 0.0, 0.5).set_delay(1.5)
+	tween.chain().tween_callback(label.queue_free)
 
 func _process_radiation(unit: BattleMonster):
 	if unit.is_dead: return
@@ -1631,15 +1760,15 @@ func _show_damage_number(unit: Node2D, amount: int, type: String = "damage"):
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	
 	unit.add_child(label)
-	label.position = Vector2(-50, -120) # Above unit
 	label.custom_minimum_size = Vector2(100, 50)
+	label.position = Vector2(-50, -120) # Above unit
+	label.pivot_offset = label.custom_minimum_size / 2
+	label.scale = Vector2(0.1, 0.1)
 	
 	var tween = create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(label, "position:y", label.position.y - 60, 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN)
-	if scale_factor > 1.0:
-		label.scale = Vector2(0.5, 0.5)
-		tween.tween_property(label, "scale", Vector2(scale_factor, scale_factor), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "scale", Vector2(scale_factor, scale_factor), 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	tween.chain().tween_callback(label.queue_free)

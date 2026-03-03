@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://bgflyp85r8cbj"]
+
+[ext_resource type="AudioStream" uid="uid://bnwymsdo1soig" path="res://Assets/Sounds/Lonely Orbit.mp3" id="1_5psdy"]
+
+[node name="MusicPlayer" type="AudioStreamPlayer" unique_id=1538565018]
+stream = ExtResource("1_5psdy")
+volume_db = -10.0
+autoplay = true
+parameters/looping = true

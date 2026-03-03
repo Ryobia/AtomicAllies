@@ -22,6 +22,11 @@ bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.9019608)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h8wke"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -90,14 +95,13 @@ size_flags_horizontal = 2
 size_flags_vertical = 3
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
-visible = false
 z_index = 10
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = -1
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 0.4
 anchor_right = 0.5
-anchor_bottom = 0.5
+anchor_bottom = 0.4
 offset_left = -476.0
 offset_top = -320.0
 offset_right = 476.0
@@ -139,10 +143,10 @@ texture_pressed = ExtResource("7_26528")
 [node name="VboxContainer" type="VBoxContainer" parent="." unique_id=479629868]
 layout_mode = 1
 anchors_preset = -1
-anchor_top = 0.678
+anchor_top = 0.66200006
 anchor_right = 1.0
 anchor_bottom = 0.866
-offset_top = -0.040039063
+offset_top = 0.95983887
 offset_bottom = -0.00012207031
 grow_horizontal = 2
 grow_vertical = 0
@@ -162,12 +166,14 @@ stretch_mode = 4
 
 [node name="StabilityLabel" type="Label" parent="VboxContainer/VBoxContainer" unique_id=1425843288]
 layout_mode = 2
-theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_constants/outline_size = 3
-theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 11
+theme_override_font_sizes/font_size = 42
 horizontal_alignment = 1
 
 [node name="StabilityBar" type="ProgressBar" parent="VboxContainer/VBoxContainer" unique_id=1065992710]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -175,6 +181,7 @@ theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.988235
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 32
 value = 100.0
+show_percentage = false
 
 [node name="StatusLabel" type="Label" parent="VboxContainer" unique_id=1683976128]
 layout_mode = 2
@@ -218,7 +225,8 @@ text = "Fusion Guide"
 oversampling_override = 1.0
 
 [node name="FusionConfirmPopup" type="PanelContainer" parent="." unique_id=1747203823]
-custom_minimum_size = Vector2(350, 250)
+z_index = 10
+custom_minimum_size = Vector2(600, 400)
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
@@ -240,34 +248,52 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="Label" type="Label" parent="FusionConfirmPopup/MarginContainer" unique_id=25140591]
+[node name="VBoxContainer" type="VBoxContainer" parent="FusionConfirmPopup/MarginContainer" unique_id=1001900488]
 layout_mode = 2
-size_flags_vertical = 1
-theme_override_font_sizes/font_size = 24
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=25140591]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="FusionConfirmPopup/MarginContainer" unique_id=1408633696]
+[node name="StabilizerCheckBox" type="CheckBox" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1783786234]
+layout_mode = 2
+
+[node name="BuyStabilizerButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=355599025]
+layout_mode = 2
+
+[node name="CatalystCheckBox" type="CheckBox" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1278115379]
+layout_mode = 2
+
+[node name="BuyCatalystButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1974865229]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1408633696]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_vertical = 8
 alignment = 1
 
-[node name="ConfirmButton" type="Button" parent="FusionConfirmPopup/MarginContainer/HBoxContainer" unique_id=1624059872]
+[node name="ConfirmButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1624059872]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_ut1jl")
 text = "FUSE"
 
-[node name="CancelButton" type="Button" parent="FusionConfirmPopup/MarginContainer/HBoxContainer" unique_id=1586337905]
+[node name="CancelButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1586337905]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_ut1jl")
 text = "CANCEL"
 

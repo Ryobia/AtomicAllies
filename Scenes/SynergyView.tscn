@@ -56,7 +56,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="CenterContainer" unique_id=654282960]
-custom_minimum_size = Vector2(650, 800)
+custom_minimum_size = Vector2(900, 1200)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_popup")
 

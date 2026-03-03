@@ -170,8 +170,16 @@ func _add_card(grid: Container, z: int):
 	# --- Custom Styling ---
 	# Fog of War: If locked, don't show group color
 	var display_monster = monster if status > 0 else null
-	var style = _get_cached_style(display_monster, is_owned or has_blueprint)
+	var style = _get_cached_style(display_monster, is_owned or has_blueprint).duplicate()
 	card.add_theme_stylebox_override("panel", style)
+	
+	# Add gold border for 100% stability on owned monsters
+	if is_owned and monster and monster.stability >= 100:
+		style.border_width_left = 4
+		style.border_width_top = 4
+		style.border_width_right = 4
+		style.border_width_bottom = 4
+		style.border_color = Color("#ffd700") # Gold
 	
 	var labels = [card.find_child("NameLabel", true, false), card.find_child("NumberLabel", true, false)]
 	for lbl in labels:
@@ -424,7 +432,11 @@ func _show_run_dialog(z: int, monster: MonsterData, has_blueprint: bool):
 				icon_rect.visible = true
 				
 				# Try to load animation
-				var anim_path = "res://Assets/Animations/" + monster.monster_name.replace(" ", "") + ".tres"
+				var anim_name = monster.monster_name.replace(" ", "")
+				if "animation_override" in monster and monster.animation_override != "":
+					anim_name = monster.animation_override
+					
+				var anim_path = "res://Assets/Animations/" + anim_name + ".tres"
 				if ResourceLoader.exists(anim_path):
 					var sprite_frames = load(anim_path)
 					var sprite = AnimatedSprite2D.new()

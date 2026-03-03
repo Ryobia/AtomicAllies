@@ -75,6 +75,8 @@ var is_active_campaign_battle: bool = false
 var is_rogue_run: bool = false
 var current_run_target_z: int = 0
 var current_run_energy: int = 0
+var current_run_dust: int = 0
+var current_run_gems: int = 0
 var current_run_wave: int = 0
 var max_run_waves: int = 3 # Standard run length
 var run_team_state: Dictionary = {} # MonsterData -> int (HP)
@@ -85,6 +87,8 @@ func start_node_run(target_z: int):
     is_rogue_run = true
     current_run_target_z = target_z
     current_run_energy = 0
+    current_run_dust = 0
+    current_run_gems = 0
     current_run_wave = 1
     run_team_state.clear()
     run_buffs.clear()
@@ -124,6 +128,10 @@ func on_battle_ended(player_won: bool, rewards: Dictionary = {}, final_team_stat
             # Stash the energy
             if rewards.has("binding_energy"):
                 current_run_energy += rewards["binding_energy"]
+            if rewards.has("neutron_dust"):
+                current_run_dust += rewards["neutron_dust"]
+            if rewards.has("gems"):
+                current_run_gems += rewards["gems"]
             
             # Update HP state for next wave
             for monster in final_team_state:
@@ -153,12 +161,16 @@ func on_battle_ended(player_won: bool, rewards: Dictionary = {}, final_team_stat
                 # Run Complete!
                 print("Run Complete! Blueprint Unlocked: ", current_run_target_z)
                 PlayerData.add_resource("binding_energy", current_run_energy)
+                if current_run_dust > 0: PlayerData.add_resource("neutron_dust", current_run_dust)
+                if current_run_gems > 0: PlayerData.add_resource("gems", current_run_gems)
                 PlayerData.unlock_blueprint(current_run_target_z)
                 is_rogue_run = false
         else:
             # Run Failed - Lose Energy
             print("Run Failed. Binding Energy Lost: ", current_run_energy)
             current_run_energy = 0
+            current_run_dust = 0
+            current_run_gems = 0
             is_rogue_run = false
     
     is_active_campaign_battle = false

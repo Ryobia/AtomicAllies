@@ -95,7 +95,7 @@ func _update_enemy_preview(enemies: Array[MonsterData]):
 		icon_container.custom_minimum_size = Vector2(250, 250)
 		vbox.add_child(icon_container)
 		
-		var anim_frames = _get_anim_frames(enemy.monster_name)
+		var anim_frames = _get_anim_frames(enemy)
 		
 		if anim_frames:
 			var sprite = AnimatedSprite2D.new()
@@ -148,10 +148,21 @@ func _update_team_display():
 		
 		var anim_frames = null
 		if monster:
-			anim_frames = _get_anim_frames(monster.monster_name)
+			anim_frames = _get_anim_frames(monster)
 			
 		slot.setup(monster, team_idx, _target_slot_index != -1, anim_frames)
 		slot.pressed.connect(func(): _on_team_slot_pressed(team_idx))
+		
+		if monster and monster.stability >= 100:
+			var panel_style = slot.get_theme_stylebox("panel", "PanelContainer")
+			if panel_style:
+				var mastery_style = panel_style.duplicate()
+				mastery_style.border_width_left = 4
+				mastery_style.border_width_top = 4
+				mastery_style.border_width_right = 4
+				mastery_style.border_width_bottom = 4
+				mastery_style.border_color = Color("#ffd700") # Gold
+				slot.add_theme_stylebox_override("panel", mastery_style)
 		
 	# Update start button state
 	var has_member = false
@@ -165,15 +176,19 @@ func _update_team_display():
 	if clear_btn:
 		clear_btn.disabled = not has_member
 
-func _get_anim_frames(monster_name: String) -> SpriteFrames:
-	if _anim_cache.has(monster_name): return _anim_cache[monster_name]
+func _get_anim_frames(monster: MonsterData) -> SpriteFrames:
+	if _anim_cache.has(monster.monster_name): return _anim_cache[monster.monster_name]
 	
-	var path = "res://Assets/Animations/" + monster_name.replace(" ", "") + ".tres"
+	var anim_name = monster.monster_name.replace(" ", "")
+	if "animation_override" in monster and monster.animation_override != "":
+		anim_name = monster.animation_override
+		
+	var path = "res://Assets/Animations/" + anim_name + ".tres"
 	var frames = null
 	if ResourceLoader.exists(path):
 		frames = load(path)
 	
-	_anim_cache[monster_name] = frames
+	_anim_cache[monster.monster_name] = frames
 	return frames
 
 func _populate_legend():
@@ -317,7 +332,7 @@ func _show_collection_selector():
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.add_theme_color_override("font_color", Color("#010813"))
 		lbl.add_theme_font_size_override("font_size", 44)
-		lbl.add_theme_color_override("font_outline_color", Color("#60fafc").darkened(0.5))
+		lbl.add_theme_color_override("font_outline_color", Color("#010813").darkened(0.5))
 		lbl.add_theme_constant_override("outline_size", 5)
 		btn_vbox.add_child(lbl)
 		
@@ -349,6 +364,16 @@ func _show_collection_selector():
 		var style = StyleBoxTexture.new()
 		style.texture = grad_tex
 		btn.add_theme_stylebox_override("panel", style)
+		
+		if monster.stability >= 100:
+			var border = ReferenceRect.new()
+			border.name = "MasteryBorder"
+			border.border_color = Color("#ffd700")
+			border.border_width = 4.0
+			border.editor_only = false
+			border.set_anchors_preset(Control.PRESET_FULL_RECT)
+			border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			btn.add_child(border)
 		
 		# Manual Input Handling for better scroll feel
 		if is_fatigued:

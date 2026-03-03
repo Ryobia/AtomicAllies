@@ -9,6 +9,11 @@ signal inspect_unit(index, is_player) # New signal for long press
 signal item_selected(item_id)
 signal swap_selected(index)
 
+# --- Resource Icons ---
+@export var icon_energy: Texture2D
+@export var icon_dust: Texture2D
+@export var icon_gem: Texture2D
+
 # --- UI References ---
 # We use a flexible lookup to find slots so you can rearrange them in the editor
 @onready var enemy_slots = [
@@ -35,7 +40,6 @@ signal swap_selected(index)
 @onready var action_buttons = [
 	find_child("AttackButton", true, false),
 	find_child("SwapButton", true, false),
-	find_child("SynthesizeButton", true, false),
 	find_child("ItemButton", true, false)
 ]
 
@@ -58,13 +62,16 @@ var _press_timer: float = 0.0
 var _long_press_triggered: bool = false
 var _stat_popup_instance: Control = null
 
+var _control_deck_grid: GridContainer = null
+var _default_columns: int = 1
+var _can_swap_state: bool = true
+
 var stat_popup_scene = preload("res://Scenes/StatPopup.tscn")
 
 func _ready():
 	# Connect Control Deck Buttons
 	_connect_btn("AttackButton", "attack")
 	_connect_btn("SwapButton", "swap")
-	_connect_btn("SynthesizeButton", "synthesize")
 	_connect_btn("ItemButton", "item")
 	
 	if back_btn:
@@ -80,10 +87,24 @@ func _ready():
 	# Ensure move container is hidden initially
 	if move_container:
 		move_container.visible = false
+		# Check if parent is a GridContainer (ControlDeck)
+		var parent = move_container.get_parent()
+		if parent is GridContainer:
+			_control_deck_grid = parent
+			_default_columns = _control_deck_grid.columns
+			# Ensure MoveContainer expands to fill the grid when active
+			move_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			move_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		
 	# Hide action buttons initially
 	for btn in action_buttons:
 		if btn: btn.visible = false
+		
+	# Configure buttons for GridContainer layout
+	for btn in action_buttons:
+		if btn:
+			btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		
 	# Connect target buttons on enemy slots
 	for i in range(enemy_slots.size()):
@@ -599,7 +620,11 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 
 	if icon and monster:
 		# 3. Try to load the animation resource
-		var anim_path = "res://Assets/Animations/" + monster.monster_name.replace(" ", "") + ".tres"
+		var anim_name = monster.monster_name.replace(" ", "")
+		if "animation_override" in monster and monster.animation_override != "":
+			anim_name = monster.animation_override
+			
+		var anim_path = "res://Assets/Animations/" + anim_name + ".tres"
 		var anim_frames = null
 		
 		if ResourceLoader.exists(anim_path):
@@ -644,6 +669,7 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 	var name_lbl = slot.find_child("NameLabel", true, false)
 	if name_lbl:
 		name_lbl.text = monster.monster_name
+		_apply_mastery_border(name_lbl, monster)
 		
 	var stats = monster.get_current_stats()
 	var hp_bar = slot.find_child("HPBar", true, false)
@@ -679,7 +705,10 @@ func _set_stat_card(card: Control, monster: MonsterData):
 	var stab_bar = card.find_child("StabilityBar", true, false)
 	var speed_bar = card.find_child("SpeedBar", true, false)
 	
-	if name_lbl: name_lbl.text = monster.monster_name
+	if name_lbl: 
+		name_lbl.text = monster.monster_name
+		_apply_mastery_border(name_lbl, monster)
+		
 	var stats = monster.get_current_stats()
 	if hp_bar:
 		hp_bar.max_value = stats.max_hp
@@ -692,6 +721,24 @@ func _set_stat_card(card: Control, monster: MonsterData):
 		stab_bar.value = 100 # Start full
 	if speed_bar:
 		speed_bar.value = 0
+
+func _apply_mastery_border(label: Label, monster: MonsterData):
+	if monster and monster.stability >= 100:
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0, 0, 0, 0.5) # Semi-transparent background
+		style.border_width_left = 2
+		style.border_width_top = 2
+		style.border_width_right = 2
+		style.border_width_bottom = 2
+		style.border_color = Color("#ffd700") # Gold
+		style.set_corner_radius_all(4)
+		style.content_margin_left = 8
+		style.content_margin_right = 8
+		label.add_theme_stylebox_override("normal", style)
+		label.add_theme_color_override("font_color", Color("#ffd700"))
+	else:
+		label.remove_theme_stylebox_override("normal")
+		label.remove_theme_color_override("font_color")
 
 func _connect_btn(name: String, action: String):
 	var btn = find_child(name, true, false)
@@ -725,6 +772,7 @@ func show_moves(moves: Array):
 		print("BattleHUD Error: No 'MoveContainer' found to display moves.")
 		return
 		
+	_toggle_grid_layout(true)
 	move_container.visible = true
 	
 	# Clear old buttons
@@ -752,6 +800,7 @@ func show_moves(moves: Array):
 
 func show_move_details(move: MoveData):
 	if not move_container: return
+	_toggle_grid_layout(true)
 	move_container.visible = true
 	
 	for child in move_container.get_children():
@@ -819,6 +868,7 @@ func show_items(items: Dictionary):
 	if back_btn: back_btn.visible = false
 
 	if not move_container: return
+	_toggle_grid_layout(true)
 	move_container.visible = true
 	
 	for child in move_container.get_children():
@@ -844,9 +894,23 @@ func show_items(items: Dictionary):
 
 func show_actions():
 	if move_container: move_container.visible = false
+	_toggle_grid_layout(false)
+	
 	for btn in action_buttons:
-		if btn: btn.visible = true
+		if btn: 
+			btn.visible = true
+			if btn.name == "SwapButton":
+				btn.disabled = not _can_swap_state
+				btn.modulate = Color(0.5, 0.5, 0.5, 1.0) if not _can_swap_state else Color.WHITE
+				
 	if back_btn: back_btn.visible = true
+
+func set_swap_disabled(disabled: bool):
+	_can_swap_state = !disabled
+	for btn in action_buttons:
+		if btn and btn.name == "SwapButton":
+			btn.disabled = disabled
+			btn.modulate = Color(0.5, 0.5, 0.5, 1.0) if disabled else Color.WHITE
 
 func _on_move_btn_pressed(move):
 	move_selected.emit(move)
@@ -859,6 +923,7 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		
 	# Show move container (reused for swap list)
 	if not move_container: return
+	_toggle_grid_layout(true)
 	move_container.visible = true
 	
 	# Clear old buttons
@@ -979,6 +1044,7 @@ func _style_button(btn: Button):
 
 func show_result(player_won: bool, rewards: Dictionary = {}):
 	# Hide interaction buttons
+	_toggle_grid_layout(false)
 	if move_container: move_container.visible = false
 	for btn in action_buttons:
 		if btn: btn.visible = false
@@ -1017,14 +1083,78 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 		
 		if rewards.has("binding_energy"):
 			var total_be = rewards["binding_energy"]
+			
+			var row = HBoxContainer.new()
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_theme_constant_override("separation", 15)
+			vbox.add_child(row)
+			
+			if icon_energy:
+				var icon = TextureRect.new()
+				icon.texture = icon_energy
+				icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				icon.custom_minimum_size = Vector2(50, 50)
+				row.add_child(icon)
+			
 			var be_lbl = Label.new()
 			be_lbl.text = "+0 Binding Energy"
 			be_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			be_lbl.add_theme_font_size_override("font_size", 40)
-			vbox.add_child(be_lbl)
+			row.add_child(be_lbl)
 			
 			var tween = create_tween()
 			tween.tween_method(func(val): be_lbl.text = "+%d Binding Energy" % int(val), 0, total_be, 1.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		
+		if rewards.has("neutron_dust"):
+			var total_dust = rewards["neutron_dust"]
+			
+			var row = HBoxContainer.new()
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_theme_constant_override("separation", 15)
+			vbox.add_child(row)
+			
+			if icon_dust:
+				var icon = TextureRect.new()
+				icon.texture = icon_dust
+				icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				icon.custom_minimum_size = Vector2(50, 50)
+				row.add_child(icon)
+			
+			var dust_lbl = Label.new()
+			dust_lbl.text = "+0 Neutron Dust"
+			dust_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			dust_lbl.add_theme_font_size_override("font_size", 40)
+			row.add_child(dust_lbl)
+			
+			var tween = create_tween()
+			tween.tween_method(func(val): dust_lbl.text = "+%d Neutron Dust" % int(val), 0, total_dust, 1.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			
+		if rewards.has("gems"):
+			var total_gems = rewards["gems"]
+			
+			var row = HBoxContainer.new()
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_theme_constant_override("separation", 15)
+			vbox.add_child(row)
+			
+			if icon_gem:
+				var icon = TextureRect.new()
+				icon.texture = icon_gem
+				icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				icon.custom_minimum_size = Vector2(50, 50)
+				row.add_child(icon)
+			
+			var gems_lbl = Label.new()
+			gems_lbl.text = "+0 Gems"
+			gems_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			gems_lbl.add_theme_font_size_override("font_size", 40)
+			row.add_child(gems_lbl)
+			
+			var tween = create_tween()
+			tween.tween_method(func(val): gems_lbl.text = "+%d Gems" % int(val), 0, total_gems, 1.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	
 	var btn = Button.new()
 	btn.text = "Continue"
@@ -1032,6 +1162,13 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 	_style_button(btn) # Reuse your styling
 	btn.pressed.connect(_on_quit_confirmed)
 	vbox.add_child(btn)
+
+func _toggle_grid_layout(is_move_view: bool):
+	if _control_deck_grid:
+		if is_move_view:
+			_control_deck_grid.columns = 1
+		else:
+			_control_deck_grid.columns = _default_columns
 
 func show_stat_popup(unit: BattleMonster):
 	if _stat_popup_instance: _stat_popup_instance.queue_free()

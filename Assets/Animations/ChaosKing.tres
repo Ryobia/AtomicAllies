@@ -2,6 +2,22 @@
 
 [ext_resource type="Texture2D" uid="uid://bkib1tiadfjtk" path="res://Assets/ChaosKing.png" id="1_xe78u"]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_xe78u"]
+atlas = ExtResource("1_xe78u")
+region = Rect2(0, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1w4v3"]
+atlas = ExtResource("1_xe78u")
+region = Rect2(256, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ambb4"]
+atlas = ExtResource("1_xe78u")
+region = Rect2(512, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_31lcg"]
+atlas = ExtResource("1_xe78u")
+region = Rect2(768, 512, 256, 256)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_i4cv2"]
 atlas = ExtResource("1_xe78u")
 region = Rect2(0, 768, 256, 256)
@@ -52,7 +68,19 @@ region = Rect2(768, 256, 256, 256)
 
 [resource]
 animations = [{
-"frames": [],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xe78u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1w4v3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ambb4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_31lcg")
+}],
 "loop": false,
 "name": &"attack",
 "speed": 5.0

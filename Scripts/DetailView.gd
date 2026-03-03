@@ -29,6 +29,9 @@ var coolant_btn
 var view_toggle
 var prev_button
 var next_button
+var replay_container
+var replay_btn
+var _run_confirm_popup
 var _touch_start_pos = Vector2.ZERO
 var _min_swipe_distance = 50
 
@@ -55,12 +58,17 @@ func _ready():
 	view_toggle = find_child("ViewToggle", true, false)
 	prev_button = find_child("PrevButton", true, false)
 	next_button = find_child("NextButton", true, false)
+	replay_container = find_child("ReplayContainer", true, false)
+	replay_btn = find_child("ReplayButton", true, false)
 	
 	if prev_button: prev_button.pressed.connect(_on_prev_pressed)
 	if next_button: next_button.pressed.connect(_on_next_pressed)
 	
 	if view_toggle:
 		view_toggle.toggled.connect(_on_view_toggle_toggled)
+	
+	if replay_btn:
+		replay_btn.pressed.connect(_on_replay_pressed)
 	
 	if class_help_icon:
 		class_help_icon.theme = GlobalManager.tooltip_theme
@@ -215,6 +223,10 @@ func update_ui():
 		class_bonus_label.add_theme_color_override("font_color", group_color)
 		class_bonus_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		class_bonus_label.add_theme_constant_override("outline_size", 6)
+
+	if replay_container:
+		var has_blueprint = (current_monster.atomic_number in PlayerData.unlocked_blueprints)
+		replay_container.visible = is_owned or has_blueprint
 
 	if fatigue_label or fatigue_container:
 		var current_time = int(Time.get_unix_time_from_system())
@@ -765,3 +777,94 @@ func _on_coolant_pressed():
 		current_monster.fatigue_expiry = 0
 		PlayerData.save_game()
 		update_ui()
+
+func _on_replay_pressed():
+	if not current_monster: return
+	_show_run_confirmation(current_monster)
+
+func _show_run_confirmation(monster: MonsterData):
+	if _run_confirm_popup: _run_confirm_popup.queue_free()
+	
+	_run_confirm_popup = PanelContainer.new()
+	_run_confirm_popup.set_anchors_preset(Control.PRESET_CENTER)
+	_run_confirm_popup.z_index = 50
+	_run_confirm_popup.custom_minimum_size = Vector2(800, 500)
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	_run_confirm_popup.add_theme_stylebox_override("panel", style)
+	
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 20)
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	margin.add_child(vbox)
+	_run_confirm_popup.add_child(margin)
+	
+	var title = Label.new()
+	title.text = "Resource Run: %s" % monster.monster_name
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color("#60fafc"))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+	
+	var desc = Label.new()
+	
+	var z = monster.atomic_number
+	var energy = AtomicConfig.calculate_fusion_cost(z)
+	var waves = 3 + int(z / 16.0)
+	if CampaignManager:
+		var race = CampaignManager.GROUP_TO_RACE_MAP.get(monster.group, "void")
+		if race == "brood":
+			waves += 2
+	
+	desc.text = "Replay this discovery run to earn resources.\n\n" + \
+				"Potential Rewards (Full Run):\n" + \
+				"• Binding Energy: ~%d\n" % energy + \
+				"• Neutron Dust: 0 - %d\n" % (waves * 200) + \
+				"• Gems: 0 - %d" % waves
+	
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.add_theme_font_size_override("font_size", 36)
+	vbox.add_child(desc)
+	
+	var hbox = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 20)
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_child(hbox)
+	
+	var start_btn = Button.new()
+	start_btn.text = "Start Run"
+	start_btn.custom_minimum_size = Vector2(250, 80)
+	start_btn.add_theme_color_override("font_color", Color("#010813"))
+	start_btn.add_theme_font_size_override("font_size", 36)
+	
+	var btn_style = StyleBoxFlat.new()
+	btn_style.bg_color = Color("#60fafc")
+	btn_style.set_corner_radius_all(4)
+	start_btn.add_theme_stylebox_override("normal", btn_style)
+	start_btn.add_theme_stylebox_override("hover", btn_style)
+	start_btn.add_theme_stylebox_override("pressed", btn_style)
+	
+	start_btn.pressed.connect(func():
+		if CampaignManager:
+			CampaignManager.start_node_run(monster.atomic_number)
+		_run_confirm_popup.queue_free()
+	)
+	hbox.add_child(start_btn)
+	
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.custom_minimum_size = Vector2(250, 80)
+	cancel_btn.add_theme_font_size_override("font_size", 36)
+	cancel_btn.pressed.connect(_run_confirm_popup.queue_free)
+	hbox.add_child(cancel_btn)
+	
+	add_child(_run_confirm_popup)
+	_run_confirm_popup.position = (get_viewport_rect().size - _run_confirm_popup.custom_minimum_size) / 2

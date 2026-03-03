@@ -5,6 +5,13 @@
 [ext_resource type="PackedScene" uid="uid://b2l1bfl8d5h0a" path="res://Scenes/BattleMonster.tscn" id="2_yygwm"]
 [ext_resource type="Texture2D" uid="uid://b21fv7oeh7gqt" path="res://Images/battleground.png" id="3_l362f"]
 [ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="4_272bk"]
+[ext_resource type="Texture2D" uid="uid://drgfc0ec2wubq" path="res://Assets/BE.tres" id="5_hoy3w"]
+[ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="6_r3dt2"]
+[ext_resource type="Texture2D" uid="uid://d2k7e2ncjlh50" path="res://Assets/Gem.tres" id="7_wivlx"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mj6kv"]
+atlas = ExtResource("6_r3dt2")
+region = Rect2(585.90936, 64.43353, 326.36365, 394.54544)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jqbkq"]
 atlas = ExtResource("4_272bk")
@@ -59,6 +66,15 @@ bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.81960785)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jqbkq"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.80784315)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wd8r5"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jbp3h"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.8156863)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kyqq8"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.8156863)
+
 [node name="BattleManager" type="Control" unique_id=806606935 node_paths=PackedStringArray("player_spawn_points", "enemy_spawn_points")]
 layout_mode = 3
 anchors_preset = 15
@@ -89,12 +105,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_272bk")
+icon_energy = ExtResource("5_hoy3w")
+icon_dust = SubResource("AtlasTexture_mj6kv")
+icon_gem = ExtResource("7_wivlx")
 
 [node name="Theater" type="VBoxContainer" parent="BattleHUD" unique_id=550534713]
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
-anchor_bottom = 0.65500003
+anchor_bottom = 0.699
 offset_bottom = -0.36010742
 grow_horizontal = 2
 
@@ -451,11 +470,11 @@ grow_vertical = 2
 [node name="Dashboard" type="HBoxContainer" parent="BattleHUD" unique_id=284010607]
 layout_mode = 1
 anchors_preset = -1
-anchor_top = 0.657
+anchor_top = 0.702
 anchor_right = 1.0
-anchor_bottom = 0.735
+anchor_bottom = 0.78700006
 offset_top = -0.44006348
-offset_bottom = 98.90991
+offset_bottom = -0.9301758
 grow_horizontal = 2
 grow_vertical = 0
 alignment = 1
@@ -481,7 +500,7 @@ layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1616180284]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 1
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -534,7 +553,7 @@ layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=1472754783]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 1
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -599,7 +618,7 @@ layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=40486499]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 1
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -631,7 +650,7 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
 
-[node name="ControlDeck" type="HBoxContainer" parent="BattleHUD" unique_id=1252948411]
+[node name="ControlDeck" type="GridContainer" parent="BattleHUD" unique_id=533835758]
 layout_mode = 1
 anchors_preset = -1
 anchor_top = 0.79
@@ -640,12 +659,14 @@ anchor_bottom = 1.0
 offset_top = -0.26000977
 grow_horizontal = 2
 grow_vertical = 0
-alignment = 1
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
 
 [node name="AttackButton" type="Button" parent="BattleHUD/ControlDeck" unique_id=2136096031]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 0
+size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_focus_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
 theme_override_colors/font_pressed_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
@@ -655,10 +676,23 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_272bk")
 theme_override_styles/focus = SubResource("StyleBoxFlat_jqbkq")
 text = "ATTACK"
 
+[node name="ItemButton" type="Button" parent="BattleHUD/ControlDeck" unique_id=1861752357]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_focus_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+theme_override_colors/font_pressed_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+theme_override_font_sizes/font_size = 90
+theme_override_styles/normal = SubResource("StyleBoxFlat_wd8r5")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_jbp3h")
+theme_override_styles/focus = SubResource("StyleBoxFlat_kyqq8")
+text = "ITEM"
+
 [node name="SwapButton" type="Button" parent="BattleHUD/ControlDeck" unique_id=252330254]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 0
+size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_focus_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
 theme_override_colors/font_pressed_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
@@ -671,7 +705,7 @@ text = "SWAP"
 [node name="Quit" type="Button" parent="BattleHUD/ControlDeck" unique_id=1907146130]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 0
+size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_focus_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
 theme_override_colors/font_pressed_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
@@ -685,6 +719,7 @@ text = "QUIT"
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="QuitConfirmationDialog" type="ConfirmationDialog" parent="BattleHUD" unique_id=56278763]
 dialog_text = "Are you sure you want to quit? All progress in this battle will be lost."

@@ -44,6 +44,9 @@ func calculate_stability_gain(current: int) -> int:
 	return gain
 
 func attempt_fusion(parent_a: MonsterData, parent_b: MonsterData):
+	attempt_fusion_with_bonus(parent_a, parent_b, 0)
+
+func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bonus_percent: int):
 	var initial_target_z = parent_a.atomic_number + parent_b.atomic_number
 	
 	# Check for empty chamber first
@@ -79,6 +82,8 @@ func attempt_fusion(parent_a: MonsterData, parent_b: MonsterData):
 	# Decay Loop: Keep rolling until we succeed or hit Hydrogen (1)
 	while current_z > 1:
 		var chance = calculate_success_rate(parent_a.stability, parent_b.stability, current_z)
+		chance += float(bonus_percent)
+		chance = clamp(chance, MIN_CHANCE, MAX_CHANCE)
 		var roll = randf() * 100.0
 		
 		print("Rolling for Z%d (Chance: %.1f%%)... Rolled: %.1f" % [current_z, chance, roll])

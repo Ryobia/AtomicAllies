@@ -173,21 +173,14 @@ func get_max_unlocked_z() -> int:
 
 func recalculate_class_resonance():
 	class_resonance.clear()
-	var unique_z = {}
 	
 	# Count from owned monsters
 	for m in owned_monsters:
-		unique_z[m.atomic_number] = true
+		if not m: continue
 		
-	# Count from blueprints
-	for z in unlocked_blueprints:
-		unique_z[z] = true
-		
-	for z in unique_z:
-		var monster = MonsterManifest.get_monster(z)
-		if monster:
-			if not class_resonance.has(monster.group): class_resonance[monster.group] = 0
-			class_resonance[monster.group] += 1
+		if not class_resonance.has(m.group):
+			class_resonance[m.group] = 0
+		class_resonance[m.group] += 1
 
 # --- Save & Load System ---
 
@@ -315,9 +308,9 @@ func reset_save():
 	class_resonance.clear()
 	inventory.clear()
 	resources = {
-		"neutron_dust": 99999,
+		"neutron_dust": 999999,
 		"gems": 99999,
-		"binding_energy": 99999
+		"binding_energy": 999999
 	}
 	
 	# 2. Delete Save Files
