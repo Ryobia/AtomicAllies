@@ -18,14 +18,20 @@ corner_radius_bottom_left = 10
 bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 
 [node name="StatPopup" type="PanelContainer" unique_id=1735982455]
-custom_minimum_size = Vector2(500, 500)
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -134.0
+z_index = 100
+custom_minimum_size = Vector2(900, 100)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -250.0
+offset_right = 250.0
+offset_bottom = 250.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
+size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_khfvu")
 script = ExtResource("1_ibyab")
 
@@ -36,39 +42,47 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="GridContainer" type="GridContainer" parent="MarginContainer" unique_id=1597382522]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1761999797]
 layout_mode = 2
-columns = 2
 
-[node name="HPLabel" type="Label" parent="MarginContainer/GridContainer" unique_id=1784295579]
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=1597382522]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_font_sizes/font_size = 40
-horizontal_alignment = 1
+columns = 4
 
-[node name="DefenseLabel" type="Label" parent="MarginContainer/GridContainer" unique_id=911392613]
+[node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=1784295579]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 
-[node name="AttackLabel" type="Label" parent="MarginContainer/GridContainer" unique_id=903148752]
+[node name="DefenseLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=911392613]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 
-[node name="SpeedLabel" type="Label" parent="MarginContainer/GridContainer" unique_id=864772590]
+[node name="AttackLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=903148752]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 
-[node name="CloseButton" type="Button" parent="MarginContainer" unique_id=369144118]
+[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=864772590]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+
+[node name="EffectsContainer" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=548254339]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 3
+
+[node name="CloseButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=369144118]
 layout_mode = 2
 size_flags_vertical = 8
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)

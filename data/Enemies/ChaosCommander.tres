@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MonsterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/MonsterData.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+monster_name = "Chaos Commander"
+atomic_number = 0
+group = 25
+moves = []
+stability = 50
+fatigue_expiry = 0

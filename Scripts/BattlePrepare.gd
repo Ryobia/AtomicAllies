@@ -251,10 +251,7 @@ func _show_collection_selector():
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	
-	# Make scrollbar chunky for mobile
-	var v_scroll = scroll.get_v_scroll_bar()
-	v_scroll.custom_minimum_size.x = 40
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	
 	main_vbox.add_child(scroll)
 	

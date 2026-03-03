@@ -11,7 +11,9 @@ const STATUS_DESCRIPTIONS = {
 	"invulnerable": "Immune to all damage and status.",
 	"reactive_vapor": "Takes damage when attacking enemies.",
 	"radiation": "Taking increasing damage each turn.",
-	"refracted": "Accuracy reduced by 20%."
+	"refracted": "Accuracy reduced by 20%.",
+	"insanity": "Accuracy reduced by 20%.",
+	"static_reflection": "Reflects 30% of incoming damage."
 }
 
 func setup(unit: BattleMonster):
@@ -55,24 +57,92 @@ func setup(unit: BattleMonster):
             lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
             effects_container.add_child(lbl)
         else:
+            # Group permanent stat mods
+            var base_stats = unit.data.get_current_stats()
+            var display_effects = []
+            var perm_stat_mods = {} # stat -> amount
+            
+            # Assumes effects_container is a GridContainer with 3 columns
             for effect in unit.active_effects:
-                var lbl = Label.new()
+                var e_type = effect.get("type", "")
                 var duration = effect.get("duration", 0)
-                var text = ""
                 
-                if effect.type == "stat_mod":
-                    var sign_str = "+" if effect.amount > 0 else ""
-                    text = "%s%d %s (%d turns)" % [sign_str, effect.amount, effect.stat.capitalize(), duration]
-                    lbl.modulate = Color.GREEN if effect.amount > 0 else Color.RED
-                elif effect.type == "status":
-                    var status_key = effect.name.to_lower()
-                    text = "%s (%d turns)" % [effect.name.capitalize(), duration]
-                    if STATUS_DESCRIPTIONS.has(status_key):
-                        text += "\n" + STATUS_DESCRIPTIONS[status_key]
-                    lbl.modulate = Color.YELLOW
+                if e_type == "stat_mod" and duration > 50: # Threshold for "Permanent"
+                    var stat = effect.get("stat")
+                    if not perm_stat_mods.has(stat): perm_stat_mods[stat] = 0
+                    perm_stat_mods[stat] += effect.get("amount", 0)
+                else:
+                    display_effects.append(effect)
+            
+            # Add grouped permanent mods to display list
+            for stat in perm_stat_mods:
+                display_effects.append({ "type": "stat_mod", "stat": stat, "amount": perm_stat_mods[stat], "duration": 99, "is_perm": true })
+
+            for effect in display_effects:
+                var card = PanelContainer.new()
+                card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
                 
-                lbl.text = text
-                effects_container.add_child(lbl)
+                var style = StyleBoxFlat.new()
+                style.set_corner_radius_all(8)
+                style.content_margin_left = 10
+                style.content_margin_right = 10
+                style.content_margin_top = 10
+                style.content_margin_bottom = 10
+                card.add_theme_stylebox_override("panel", style)
+
+                var vbox = VBoxContainer.new()
+                vbox.add_theme_constant_override("separation", 5)
+                card.add_child(vbox)
+
+                var title_lbl = Label.new()
+                title_lbl.add_theme_font_size_override("font_size", 28)
+                title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+                vbox.add_child(title_lbl)
+
+                var desc_lbl = Label.new()
+                desc_lbl.add_theme_font_size_override("font_size", 22)
+                desc_lbl.add_theme_color_override("font_color", Color(1,1,1,0.7))
+                desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+                vbox.add_child(desc_lbl)
+
+                var duration = effect.get("duration", 0)
+                var title_text = ""
+                var desc_text = ""
+                
+                var e_type = effect.get("type", "")
+                
+                if e_type == "stat_mod":
+                    style.bg_color = Color("#010813").lightened(0.1)
+                    var stat = effect.get("stat", "stat")
+                    var amount = effect.get("amount", 0)
+                    
+                    # Calculate Percentage
+                    var base_val = float(base_stats.get(stat, 1))
+                    if base_val <= 0: base_val = 1.0
+                    var pct = (float(amount) / base_val) * 100.0
+                    var pct_str = "%.1f" % pct
+                    if pct_str.ends_with(".0"): pct_str = pct_str.trim_suffix(".0")
+                    
+                    var sign_str = "+" if pct >= 0 else ""
+                    var dur_str = "(%d turns)" % duration
+                    if effect.get("is_perm", false) or duration > 50: dur_str = "(Passive)"
+                    
+                    title_text = "%s%s%% %s %s" % [sign_str, pct_str, stat.capitalize(), dur_str]
+                    title_lbl.add_theme_color_override("font_color", Color.GREEN if amount > 0 else Color.RED)
+                    desc_text = "Flat Change: %s%d" % [sign_str, amount]
+                elif e_type == "status":
+                    style.bg_color = Color("#010813").lightened(0.1)
+                    var s_name = effect.get("status", "Unknown")
+                    var status_key = str(s_name).to_lower()
+                    title_text = "%s (%d turns)" % [s_name.capitalize(), duration]
+                    if STATUS_DESCRIPTIONS.has(status_key): desc_text = STATUS_DESCRIPTIONS[status_key]
+                    title_lbl.add_theme_color_override("font_color", Color.YELLOW if status_key in ["invulnerable", "taunt"] else Color.ORANGE_RED)
+                
+                title_lbl.text = title_text
+                desc_lbl.text = desc_text
+                desc_lbl.visible = (desc_text != "")
+                
+                effects_container.add_child(card)
 
     # --- Close Button ---
     var close_btn = find_child("CloseButton", true, false)

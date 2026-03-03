@@ -178,7 +178,7 @@ func _calculate_result_stability(z: int) -> int:
 				if owned.stability > current_val:
 					current_val = owned.stability
 	
-	var min_val = clampi(current_val + 1, 1, 100)
+	var min_val = clampi(current_val + 3, 1, 100)
 	
 	if min_val >= 100: return 100
 	

@@ -19,9 +19,24 @@ func _ready():
 		var he = load("res://data/Monsters/Helium.tres")
 		var h = load("res://data/Monsters/Hydrogen.tres")
 		var li = load("res://data/Monsters/Lithium.tres")
+		var be = load("res://data/Monsters/Beryllium.tres")
+		var b = load("res://data/Monsters/Boron.tres")
+		var f = load("res://data/Monsters/Fluorine.tres")
+		var sc = load("res://data/Monsters/Scandium.tres")
+		var la = load("res://data/Monsters/Lanthanum.tres")
+		var ac = load("res://data/Monsters/Actinium.tres")
+		var al = load("res://data/Monsters/Aluminium.tres")
+		
+		if al: owned_monsters.append(al.duplicate())
+		if ac: owned_monsters.append(ac.duplicate())
+		if la: owned_monsters.append(la.duplicate())
+		if sc: owned_monsters.append(sc.duplicate())
+		if be: owned_monsters.append(be.duplicate())
 		if li: owned_monsters.append(li.duplicate())
 		if h: owned_monsters.append(h.duplicate())
 		if he: owned_monsters.append(he.duplicate())
+		if b: owned_monsters.append(b.duplicate())
+		if f: owned_monsters.append(f.duplicate())
 		save_game()
 	
 	recalculate_class_resonance()
@@ -301,7 +316,7 @@ func reset_save():
 	inventory.clear()
 	resources = {
 		"neutron_dust": 99999,
-		"gems": 999,
+		"gems": 99999,
 		"binding_energy": 99999
 	}
 	
@@ -321,9 +336,24 @@ func reset_save():
 	var he = load("res://data/Monsters/Helium.tres")
 	var h = load("res://data/Monsters/Hydrogen.tres")
 	var li = load("res://data/Monsters/Lithium.tres")
+	var be = load("res://data/Monsters/Beryllium.tres")
+	var b = load("res://data/Monsters/Boron.tres")
+	var f = load("res://data/Monsters/Fluorine.tres")
+	var sc = load("res://data/Monsters/Scandium.tres")
+	var la = load("res://data/Monsters/Lanthanum.tres")
+	var ac = load("res://data/Monsters/Actinium.tres")
+	var al = load("res://data/Monsters/Aluminium.tres")
+		
+	if al: owned_monsters.append(al.duplicate())
+	if ac: owned_monsters.append(ac.duplicate())
+	if la: owned_monsters.append(la.duplicate())
+	if sc: owned_monsters.append(sc.duplicate())
+	if be: owned_monsters.append(be.duplicate())
 	if li: owned_monsters.append(li.duplicate())
 	if h: owned_monsters.append(h.duplicate())
 	if he: owned_monsters.append(he.duplicate())
+	if b: owned_monsters.append(b.duplicate())
+	if f: owned_monsters.append(f.duplicate())
 	
 	# 4. Save (creates fresh file)
 	save_game()

@@ -134,6 +134,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 texture = SubResource("AtlasTexture_jqbkq")
 expand_mode = 1
@@ -162,6 +164,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -175,6 +180,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_6mgkg")
 show_percentage = false
 
 [node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Theater/EnemyRow/Enemy1" unique_id=600432197]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
 [node name="Enemy2" type="VBoxContainer" parent="BattleHUD/Theater/EnemyRow" unique_id=814047354]
@@ -215,7 +221,6 @@ stretch_mode = 5
 position = Vector2(176, 178)
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Theater/EnemyRow/Enemy2" unique_id=2060434665]
-custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxFlat_l362f")
@@ -247,6 +252,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -260,6 +268,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_6mgkg")
 show_percentage = false
 
 [node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Theater/EnemyRow/Enemy2" unique_id=1141400884]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
 [node name="Enemy3" type="VBoxContainer" parent="BattleHUD/Theater/EnemyRow" unique_id=233960037]
@@ -319,6 +328,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -332,6 +344,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_6mgkg")
 show_percentage = false
 
 [node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Theater/EnemyRow/Enemy3" unique_id=1709838891]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
 [node name="ReactionSpace" type="Control" parent="BattleHUD/Theater" unique_id=163394752]
@@ -457,15 +470,16 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_wivlx")
 [node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard1" unique_id=308187073]
 layout_mode = 2
 
-[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1132351999]
-layout_mode = 2
-
 [node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1852077598]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
 theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
 show_percentage = false
+
+[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1132351999]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1616180284]
 layout_mode = 2
@@ -488,11 +502,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1140169995]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
@@ -505,15 +523,16 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_mj6kv")
 [node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard2" unique_id=17070277]
 layout_mode = 2
 
-[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=930924566]
-layout_mode = 2
-
 [node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=412822927]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
 theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
 show_percentage = false
+
+[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=930924566]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=1472754783]
 layout_mode = 2
@@ -548,11 +567,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=784228649]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
@@ -565,15 +588,16 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_f42mu")
 [node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard3" unique_id=937547351]
 layout_mode = 2
 
-[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=1058397322]
-layout_mode = 2
-
 [node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=1562555143]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
 theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
 show_percentage = false
+
+[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=1058397322]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=40486499]
 layout_mode = 2
@@ -596,11 +620,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=712019293]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32

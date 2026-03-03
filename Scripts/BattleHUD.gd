@@ -176,6 +176,7 @@ func _build_ui_cache():
 				card_hp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_ui_cache.player[i]["card_hp"] = card_hp
 			_ui_cache.player[i]["card_hp_lbl"] = stat_cards[i].find_child("HPLabel", true, false)
+			_ui_cache.player[i]["card_status_container"] = stat_cards[i].find_child("StatusContainer", true, false)
 			
 		# Enemy Cache
 		if i < enemy_slots.size() and enemy_slots[i]:
@@ -274,7 +275,8 @@ func _update_single_shield_bar(hp_bar: ProgressBar, shield: float, max_hp: float
 		shield_bar.add_theme_stylebox_override("background", StyleBoxEmpty.new())
 		
 		hp_bar.add_child(shield_bar)
-		shield_bar.set_anchors_preset(Control.PRESET_FULL_RECT)
+		shield_bar.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		shield_bar.z_index = 1
 	
 	shield_bar.max_value = max_hp
 	shield_bar.value = shield
@@ -309,15 +311,26 @@ func update_status_effects(is_player: bool, index: int, effects: Array):
 	var cache = _ui_cache.player if is_player else _ui_cache.enemy
 	if index >= cache.size(): return
 	
-	var container = cache[index].get("status_container")
-	if not container: return
+	# Update Slot Container (On-field)
+	var slot_container = cache[index].get("status_container")
+	if slot_container:
+		for child in slot_container.get_children():
+			child.queue_free()
+		for effect in effects:
+			var icon = _create_status_icon(effect)
+			if icon:
+				slot_container.add_child(icon)
 	
-	for child in container.get_children():
-		child.queue_free()
-		
-	for effect in effects:
-		var icon = _create_status_icon(effect)
-		container.add_child(icon)
+	# Update Card Container (Dashboard - Player Only)
+	if is_player:
+		var card_container = cache[index].get("card_status_container")
+		if card_container:
+			for child in card_container.get_children():
+				child.queue_free()
+			for effect in effects:
+				var icon = _create_status_icon(effect)
+				if icon:
+					card_container.add_child(icon)
 
 func _create_status_icon(effect: Dictionary) -> Control:
 	var panel = PanelContainer.new()
@@ -337,6 +350,7 @@ func _create_status_icon(effect: Dictionary) -> Control:
 	if type == "":
 		if effect.has("status"): type = "status"
 		elif effect.has("stat"): type = "stat_mod"
+		else: return null
 	
 	var bg_color = Color("#2ecc71") # Default Green (Buff)
 	var text = "??"
@@ -346,18 +360,35 @@ func _create_status_icon(effect: Dictionary) -> Control:
 			bg_color = Color("#ff4d4d") # Red (Debuff)
 		text = effect.get("stat", "").substr(0, 3).to_upper()
 	elif type == "status":
-		var s = effect.get("status", "")
+		var s = str(effect.get("status", "")).to_lower()
+		if s == "": return null
+		
 		# Known Debuffs
-		if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted"]:
+		if s == "poison" or s in ["stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity"]:
 			bg_color = Color("#ff4d4d")
+		# Known Buffs/Special
+		elif s == "invulnerable":
+			bg_color = Color("#ffd700") # Gold
+		elif s == "taunt":
+			bg_color = Color("#ff9360") # Orange
+		elif s == "static_reflection":
+			bg_color = Color("#60fafc") # Cyan
 		
 		if s == "marked_covalent": text = "COV"
 		elif s == "reactive_vapor": text = "VAP"
 		elif s == "radiation": text = "RAD"
+		elif s == "invulnerable": text = "INV"
+		elif s == "taunt": text = "AGG"
+		elif s == "poison": text = "POI"
+		elif s == "stun": text = "STN"
+		elif s == "insanity": text = "INS"
+		elif s == "static_reflection": text = "RFL"
 		else: text = s.substr(0, 3).to_upper()
 	elif type == "swap_stats":
 		bg_color = Color("#ff4d4d")
 		text = "SWP"
+	
+	if text == "": text = "??"
 		
 	style.bg_color = bg_color
 	lbl.text = text
@@ -492,7 +523,7 @@ func log_message(text: String):
 		label.modulate.a = 0.0
 		var tween = create_tween()
 		tween.tween_property(label, "modulate:a", 1.0, 0.2)
-		tween.tween_property(label, "modulate:a", 0.0, 0.5).set_delay(1.5)
+		tween.tween_property(label, "modulate:a", 0.0, 0.5).set_delay(2.5)
 		tween.tween_callback(label.queue_free)
 		return
 
@@ -704,6 +735,68 @@ func show_moves(moves: Array):
 	cancel_btn.pressed.connect(show_actions)
 	move_container.add_child(cancel_btn)
 
+func show_move_details(move: MoveData):
+	if not move_container: return
+	move_container.visible = true
+	
+	for child in move_container.get_children():
+		child.queue_free()
+		
+	var panel = PanelContainer.new()
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.85)
+	style.set_corner_radius_all(12)
+	panel.add_theme_stylebox_override("panel", style)
+	move_container.add_child(panel)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	panel.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 15)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	var snipe_text = " [Snipe]" if move.is_snipe else ""
+	title.text = "%s%s" % [move.name, snipe_text]
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", Color("#60fafc"))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+	
+	var stats = Label.new()
+	stats.text = "Type: %s  |  Power: %d  |  Acc: %d%%" % [move.type, move.power, move.accuracy]
+	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats.add_theme_font_size_override("font_size", 36)
+	stats.add_theme_color_override("font_color", Color.WHITE)
+	vbox.add_child(stats)
+	
+	var desc = Label.new()
+	desc.text = move.description
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	desc.add_theme_font_size_override("font_size", 36)
+	desc.add_theme_color_override("font_color", Color("#cccccc"))
+	vbox.add_child(desc)
+	
+	var btn = Button.new()
+	btn.text = "Cancel"
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.custom_minimum_size = Vector2(0, 80)
+	_style_button(btn)
+	btn.pressed.connect(func(): cancel_targeting.emit())
+	vbox.add_child(btn)
+
 func show_items(items: Dictionary):
 	# Hide main actions
 	for btn in action_buttons:
@@ -759,7 +852,10 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		
 	# Create buttons for benched monsters
 	for i in range(monsters.size()):
-		var m = monsters[i]
+		var data = monsters[i]
+		var m = data.monster
+		var is_dead = data.is_dead
+		
 		var btn = Button.new()
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -789,14 +885,21 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		_load_monster_visual(icon_con, m)
 		
 		var lbl = Label.new()
-		lbl.text = "%s" % [m.monster_name]
+		if is_dead:
+			lbl.text = "%s (Fainted)" % [m.monster_name]
+			btn.disabled = true
+			btn.modulate = Color(0.5, 0.5, 0.5, 0.8)
+		else:
+			lbl.text = "%s" % [m.monster_name]
+			
 		lbl.add_theme_font_size_override("font_size", 24)
 		lbl.add_theme_color_override("font_color", Color("#010813"))
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hbox.add_child(lbl)
 		
-		btn.pressed.connect(func(): swap_selected.emit(i))
+		if not is_dead:
+			btn.pressed.connect(func(): swap_selected.emit(i))
 		move_container.add_child(btn)
 		
 	if not forced:

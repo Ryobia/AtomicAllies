@@ -52,7 +52,7 @@ This prevents power creep by making early elements permanently viable through cl
 | **Lanthanides** | +1% Global stat increase per element  | Buff for your Buffs | additional 10% increase to all elements basic stats (Hp, Spd, Atk, Def) | Absorb 10% of stats of fallen enemies
 | **Nonmetals** | +5% Chain Reaction (attack spreads to additional enemy) chance per element  | Combo-Primers | Guarenteed chain reaction | Allies gain 5% attack per Nonmetal in party
 | **Metalloids** | +5% debuff effectiveness per element | Crowd Control | all debuffs last an additional turn | 10% chance to stun enemy
-| **Post-Transition** | +5% friendly buff effectiveness per element | Raw survivability | all buffs last an additional turn | gain 1% of each basic stat each turn
+| **Post-Transition** | +5% friendly buff effectiveness per element | Raw survivability | all buffs last an additional turn | gain 1 of each basic stat each turn
 | **Actinides** | Increase speed by 1% per element | mounting pressure | Increase speed by 3% every turn | Loses 10% health per turn in exchange for dealing bonus 10% max health damage on attack
 
 ### The Dopamine Loop
@@ -76,3 +76,16 @@ Prevents early-game stagnation while maintaining strategic depth:
 - **Perfect Synthesis Bonus**: 100% Stability = halved fatigue
 - **Neutron Dust Shop**: Buy fatigue reduction or quick-clear consumables
 
+## Stability System
+Elements are assigned stability when fused, can grind for better stability up to 100% at which point a bonus is granted based on class.
+
+**Alkali Metals** | gain 1 free turn at combat start
+**Alkaline Earths** | begin combat with 25% health shield
+**Transition Metals** | second hit from passive/synergy does full damage
+**Halogens** | Randomly poison 1 enemy at start of combat
+**Noble Gases** | double passive healing to 10% health per turn
+**Lanthanides** | Also absorb stats of fallen allies
+**Nonmetals** | status effects can chain-react too
+**Metalloids** | increase passive stun chance to 25%
+**Post-Transition** | healing an ally deals damage to random enemy
+**Actinides** | reduces passive health degeneration to 5% instead of 10%

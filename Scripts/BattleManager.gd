@@ -169,6 +169,34 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	print("BattleManager: Battle started with %d vs %d units." % [player_count, enemy_count])
 	_update_team_passives()
 	
+	# Mastery: Alkali Metals (100% Stability) -> Free Turn at Start
+	var all_units = active_player_monsters + active_enemy_monsters
+	for unit in all_units:
+		if unit.data.group == AtomicConfig.Group.ALKALI_METAL and unit.data.stability >= 100:
+			unit.atb_value = 100.0
+			log_event.emit("%s surges with instability! (Free Turn)" % unit.data.monster_name)
+		
+		# Mastery: Alkaline Earths (100% Stability) -> Start with 25% Shield
+		if unit.data.group == AtomicConfig.Group.ALKALINE_EARTH and unit.data.stability >= 100:
+			var shield_amt = int(unit.max_hp * 0.25)
+			unit.set_meta("shield", shield_amt)
+			_check_shield_update(unit)
+			log_event.emit("%s hardens its crust! (Shield)" % unit.data.monster_name)
+			
+		# Mastery: Halogens (100% Stability) -> Randomly poison 1 enemy
+		if unit.data.group == AtomicConfig.Group.HALOGEN and unit.data.stability >= 100:
+			var targets = active_enemy_monsters if unit.is_player else active_player_monsters
+			var living_targets = targets.filter(func(m): return not m.is_dead)
+			
+			if not living_targets.is_empty():
+				var target = living_targets.pick_random()
+				# Halogen poison is 10% Max HP (handled by _process_status_damage)
+				# We apply it with damage_percent to be safe
+				target.apply_effect({ "status": "poison", "duration": 3, "damage_percent": 0.1, "type": "status" })
+				_refresh_unit_status(target)
+				log_event.emit("%s leaks toxic gas! %s is poisoned!" % [unit.data.monster_name, target.data.monster_name])
+				_show_damage_number(target, 0, "poison") # Visual cue
+	
 	# Setup the HUD with the monster data
 	if battle_hud:
 		var player_data_list = []
@@ -299,22 +327,26 @@ func start_turn():
 			var index = active_player_monsters.find(current_acting_unit)
 			hud_highlight_unit.emit(true, index)
 			if battle_hud:
-				battle_hud.show_swap_options(benched_player_monsters, true)
+				battle_hud.show_swap_options(_get_swap_options(), true)
 			return
 		else:
 			end_turn()
 			return
 
 	current_acting_unit.on_turn_start()
+	_process_status_damage(current_acting_unit)
 	_process_radiation(current_acting_unit)
 	_apply_turn_start_passives(current_acting_unit)
+	
+	if current_acting_unit.data.stability >= 100:
+		_apply_mastery_turn_start(current_acting_unit)
 	
 	# Check if unit died from start-of-turn effects (like Corrosion)
 	if current_acting_unit.is_dead:
 		if current_acting_unit.is_player and not benched_player_monsters.is_empty():
 			log_event.emit("%s has fallen! Choose a replacement!" % current_acting_unit.data.monster_name)
 			if battle_hud:
-				battle_hud.show_swap_options(benched_player_monsters, true)
+				battle_hud.show_swap_options(_get_swap_options(), true)
 			return
 		end_turn()
 		return
@@ -343,7 +375,7 @@ func start_turn():
 		log_event.emit("Enemy %s is attacking!" % current_acting_unit.data.monster_name)
 		
 		# Simple AI: Wait a second then attack random player
-		await get_tree().create_timer(1.0).timeout
+		await get_tree().create_timer(1.5).timeout
 		execute_ai_turn()
 
 func execute_ai_turn():
@@ -420,7 +452,7 @@ func _on_action_selected(action_type):
 			log_event.emit("No monsters to swap with!")
 			return
 		if battle_hud:
-			battle_hud.show_swap_options(benched_player_monsters)
+			battle_hud.show_swap_options(_get_swap_options())
 
 	elif action_type == "item":
 		var battle_items = {}
@@ -443,6 +475,7 @@ func _on_move_selected(move: MoveData):
 	
 	# Handle Self-Targeting immediately
 	if move.target_type == MoveData.TargetType.SELF:
+		if battle_hud and battle_hud.move_container: battle_hud.move_container.visible = false
 		perform_move(current_acting_unit, current_acting_unit, move)
 		return
 	
@@ -486,8 +519,8 @@ func _on_move_selected(move: MoveData):
 					# Otherwise (Vanguard dead OR Snipe move), you can target anyone
 					valid_targets.append(i)
 	
-	# Hide the move list and enable targeting mode on the HUD
-	battle_hud.move_container.visible = false
+	# Show move details and enable targeting mode on the HUD
+	battle_hud.show_move_details(move)
 	battle_hud.set_targeting_mode(true, valid_targets, target_allies)
 	log_event.emit("Select a target for %s..." % move.name)
 
@@ -517,13 +550,28 @@ func _on_cancel_targeting():
 	# We only care about it if we are currently selecting a target.
 	if current_state != BattleState.TARGET_SELECTION: return
 	
+	var was_move = (selected_move != null)
+	var was_item = (selected_item_id != "")
+	
 	# Revert to the move selection screen
 	current_state = BattleState.ACTION_SELECTION
 	selected_move = null
 	selected_item_id = ""
 	
 	battle_hud.set_targeting_mode(false)
-	battle_hud.move_container.visible = true # Re-show the move list
+	
+	if was_move:
+		var moves = CombatManager.get_active_moves(current_acting_unit.data)
+		battle_hud.show_moves(moves)
+	elif was_item:
+		var battle_items = {}
+		for item_id in PlayerData.inventory:
+			if CombatManager.get_item_data(item_id).has("target"):
+				battle_items[item_id] = PlayerData.inventory[item_id]
+		battle_hud.show_items(battle_items)
+	else:
+		battle_hud.show_actions()
+		
 	log_event.emit("It's %s's turn!" % current_acting_unit.data.monster_name)
 
 func _on_target_selected(index: int):
@@ -572,6 +620,7 @@ func _on_target_selected(index: int):
 					return # Stay in targeting mode
 
 	battle_hud.set_targeting_mode(false)
+	if battle_hud and battle_hud.move_container: battle_hud.move_container.visible = false
 	perform_move(current_acting_unit, defender, selected_move)
 
 func _on_swap_selected(index: int):
@@ -582,6 +631,12 @@ func _on_swap_selected(index: int):
 		battle_hud.move_container.visible = false
 		
 	var new_monster_data = benched_player_monsters[index]
+	
+	if roster_hp_cache.has(new_monster_data) and roster_hp_cache[new_monster_data] <= 0:
+		log_event.emit("That unit is unable to battle!")
+		if battle_hud: battle_hud.show_actions()
+		return
+		
 	perform_swap(current_acting_unit, new_monster_data, index)
 
 func _on_inspect_unit(index: int, is_player: bool):
@@ -602,7 +657,7 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	log_event.emit("%s retreats!" % active_unit.data.monster_name)
 	await active_unit.play_move()
 		
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(2.0).timeout
 	
 	# Swap data: Active goes to bench, Bench goes to active
 	benched_player_monsters.remove_at(bench_index)
@@ -657,7 +712,7 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 			_refresh_unit_status(u)
 			battle_hud.update_speed_bar(false, i, u.atb_value)
 	
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(1.5).timeout
 	end_turn()
 
 func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveData):
@@ -668,15 +723,17 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 		var hazard_dmg = int(attacker.max_hp * 0.15) # 15% Max HP damage
 		attacker.take_damage(hazard_dmg)
 		log_event.emit("%s reacts with the vapor! (%d dmg)" % [attacker.data.monster_name, hazard_dmg])
+		_show_damage_number(attacker, hazard_dmg, "poison")
+		_play_vapor_reaction(attacker)
 		_check_shield_update(attacker)
 		
 		if attacker.is_dead:
-			await get_tree().create_timer(1.0).timeout
+			await get_tree().create_timer(1.5).timeout
 			end_turn()
 			return
 	
 	log_event.emit("%s used %s!" % [attacker.data.monster_name, move.name])
-	await attacker.play_attack()
+	await attacker.play_attack(move.type == "Physical")
 	
 	# Calculate Damage using CombatManager
 	var result = CombatManager.execute_move(attacker, defender, move)
@@ -692,6 +749,16 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				log_event.emit("%s is invulnerable!" % defender.data.monster_name)
 			else:
 				var damage = result.damage
+				
+				# Reflection Check
+				if defender.has_status("static_reflection") and move.target_type == MoveData.TargetType.ENEMY:
+					var reflect_dmg = int(damage * 0.3)
+					if reflect_dmg > 0:
+						attacker.take_damage(reflect_dmg)
+						_show_damage_number(attacker, reflect_dmg, "damage")
+						log_event.emit("Static discharge hits %s!" % attacker.data.monster_name)
+						_check_shield_update(attacker)
+				
 				var shield = defender.get_meta("shield", 0)
 				
 				if shield > 0:
@@ -703,13 +770,16 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				
 				if damage > 0:
 					defender.take_damage(damage)
+					_show_damage_number(defender, damage, "damage")
 					log_event.emit("Dealt %d damage!" % result.damage)
+					await get_tree().create_timer(1.2).timeout
 			
 		# Log other messages (status effects etc)
 		for i in range(result.messages.size()):
 			# Skip the damage message if we already logged it manually or just log all
 			if "damage" not in result.messages[i]:
 				log_event.emit(result.messages[i])
+				await get_tree().create_timer(1.2).timeout
 				
 		# Apply result.effects to BattleMonster nodes
 		for effect in result.effects:
@@ -731,6 +801,11 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					
 					if heal_val > 0:
 						target.heal(heal_val)
+						_show_damage_number(target, heal_val, "heal")
+						
+						# Mastery: Post-Transition (100% Stability) -> Heal deals damage
+						if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+							_apply_post_transition_mastery_damage(attacker, heal_val)
 						
 					if shield_val > 0:
 						var current = target.get_meta("shield", 0)
@@ -739,6 +814,69 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 						log_event.emit("%s gains %d shield!" % [target.data.monster_name, shield_val])
 					
 					_refresh_unit_status(target)
+				continue
+			
+			if effect.get("effect") == "meltdown":
+				var amount = effect.get("amount", 0)
+				var all_units = active_player_monsters + active_enemy_monsters
+				for unit in all_units:
+					if unit != attacker and not unit.is_dead:
+						unit.take_damage(amount)
+						_show_damage_number(unit, amount, "damage")
+				log_event.emit("Meltdown irradiates the battlefield!")
+				continue
+			
+			if effect.get("effect") == "scramble_team":
+				var target = effect.get("target")
+				if target:
+					_scramble_team(target.is_player)
+				log_event.emit("Positions shuffled!")
+				continue
+			
+			if effect.get("effect") == "call_reinforcements":
+				_handle_reinforcements(attacker)
+				continue
+			
+			if effect.get("effect") == "pheromones":
+				var allies = active_enemy_monsters if not attacker.is_player else active_player_monsters
+				for unit in allies:
+					if not unit.is_dead:
+						var atk_amt = int(unit.stats.attack * 0.15)
+						var spd_amt = int(unit.stats.speed * 0.15)
+						unit.apply_effect({ "target": unit, "stat": "attack", "amount": atk_amt, "duration": 3, "type": "stat_mod" })
+						unit.apply_effect({ "target": unit, "stat": "speed", "amount": spd_amt, "duration": 3, "type": "stat_mod" })
+						_refresh_unit_status(unit)
+				log_event.emit("The swarm is frenzied!")
+				continue
+			
+			if effect.get("effect") == "madness_aura":
+				var targets = active_enemy_monsters if attacker.is_player else active_player_monsters
+				var debuffs = ["poison", "stun", "vulnerable", "refracted", "insanity", "stat_drop"]
+				
+				for unit in targets:
+					if not unit.is_dead:
+						if unit.has_status("invulnerable"):
+							log_event.emit("%s is invulnerable!" % unit.data.monster_name)
+							continue
+						
+						var choice = debuffs.pick_random()
+						if choice == "stat_drop":
+							var stats = ["attack", "defense", "speed"]
+							var s = stats.pick_random()
+							var drop_amt = int(unit.stats.get(s, 10) * 0.25)
+							unit.apply_effect({ "target": unit, "stat": s, "amount": -drop_amt, "duration": 3, "type": "stat_mod" })
+							log_event.emit("%s's %s fell!" % [unit.data.monster_name, s.capitalize()])
+						else:
+							var duration = 3
+							if choice == "stun": duration = 1
+							
+							var new_effect = { "target": unit, "status": choice, "duration": duration, "type": "status" }
+							if choice == "poison": new_effect["damage_percent"] = 0.1
+							
+							unit.apply_effect(new_effect)
+							log_event.emit("%s is affected by %s!" % [unit.data.monster_name, choice.capitalize()])
+						
+						_refresh_unit_status(unit)
 				continue
 			
 			if effect.get("effect") == "cleanse":
@@ -762,6 +900,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				var amount = effect.get("amount", 0)
 				if target and is_instance_valid(target):
 					target.take_damage(amount)
+					_show_damage_number(target, amount, "damage")
 					log_event.emit("%s takes %d recoil damage!" % [target.data.monster_name, amount])
 					_check_shield_update(target)
 				continue
@@ -773,7 +912,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				var is_harmful = false
 				if effect.get("type") == "status":
 					var s = effect.get("status")
-					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor"]:
+					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "insanity"]:
 						is_harmful = true
 				elif effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
 					is_harmful = true
@@ -785,6 +924,13 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					continue
 			
 			if target_unit and is_instance_valid(target_unit):
+				# Mastery: Post-Transition (100% Stability) -> Heal deals damage
+				if effect.get("effect") == "heal":
+					var amount = effect.get("amount", 0)
+					var actual_heal = min(amount, target_unit.max_hp - target_unit.current_hp)
+					if actual_heal > 0 and attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+						_apply_post_transition_mastery_damage(attacker, actual_heal)
+
 				target_unit.apply_effect(effect)
 				_refresh_unit_status(target_unit)
 				
@@ -797,30 +943,45 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					var secondary = living.pick_random()
 					_play_chain_reaction_effect(defender.global_position, secondary.global_position)
 					secondary.take_damage(int(effect.amount * 0.5)) # 50% damage to secondary
+					_show_damage_number(secondary, int(effect.amount * 0.5), "damage")
 					log_event.emit("Chain Reaction hits %s!" % secondary.data.monster_name)
+					
+					# Mastery: Copy Status Effects
+					if effect.get("copy_status", false):
+						for other_effect in result.effects:
+							if other_effect.get("type") == "status" and other_effect.get("target") == defender:
+								var new_status = other_effect.duplicate()
+								new_status["target"] = secondary
+								secondary.apply_effect(new_status)
+								_refresh_unit_status(secondary)
+								log_event.emit("Status spreads to %s!" % secondary.data.monster_name)
 	
 	# Wait for animation/text
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(1.0).timeout # Short final wait since we waited during messages
 	
 	end_turn()
 
 func perform_item(user: BattleMonster, target: BattleMonster, item_id: String):
 	current_state = BattleState.EXECUTING
-	var item_name = CombatManager.get_item_data(item_id).get("name", "Item")
+	var data = CombatManager.get_item_data(item_id)
+	var item_name = data.get("name", "Item")
 	
 	log_event.emit("%s used %s!" % [user.data.monster_name, item_name])
 	await user.play_move() # Or specific item animation
+	
+	if data.get("effect") == "heal_percent":
+		var amount = int(target.max_hp * data.get("amount", 0))
+		_show_damage_number(target, amount, "heal")
 	
 	CombatManager.apply_item_effect(target, item_id)
 	PlayerData.consume_item(item_id, 1)
 	_check_shield_update(target)
 	
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(2.0).timeout
 	end_turn()
 
 func end_turn():
 	if is_instance_valid(current_acting_unit):
-		_process_effect_expiration(current_acting_unit)
 		current_acting_unit.on_turn_end()
 		current_acting_unit.atb_value = 0
 		_refresh_unit_status(current_acting_unit)
@@ -888,8 +1049,15 @@ func _on_monster_death(dead_unit: BattleMonster):
 	var all_active = active_player_monsters + active_enemy_monsters
 	for unit in all_active:
 		if not unit.is_dead and unit.data.group == AtomicConfig.Group.LANTHANIDE:
-			# Only absorb from enemies
+			var should_absorb = false
+			# Default: Absorb from enemies
 			if unit.is_player != dead_unit.is_player:
+				should_absorb = true
+			# Mastery: Lanthanides (100% Stability) -> Absorb from allies too
+			elif unit.data.stability >= 100 and unit.is_player == dead_unit.is_player:
+				should_absorb = true
+			
+			if should_absorb:
 				var absorb_atk = int(dead_unit.stats.attack * 0.1)
 				var absorb_def = int(dead_unit.stats.defense * 0.1)
 				var absorb_spd = int(dead_unit.stats.speed * 0.1)
@@ -900,6 +1068,10 @@ func _on_monster_death(dead_unit: BattleMonster):
 				unit.apply_effect({ "target": unit, "stat": "speed", "amount": absorb_spd, "duration": 99, "type": "stat_mod" })
 				
 				log_event.emit("%s absorbs power from %s!" % [unit.data.monster_name, dead_unit.data.monster_name])
+	
+	# If player unit dies, fill ATB to trigger immediate swap turn
+	if dead_unit.is_player:
+		dead_unit.atb_value = 100.0
 	
 	check_win_condition()
 
@@ -953,6 +1125,15 @@ func _refresh_unit_status(unit: BattleMonster):
 			hud_update_status.emit(unit.is_player, index, unit.active_effects)
 			_update_status_visuals(unit)
 
+func _get_swap_options() -> Array:
+	var options = []
+	for m in benched_player_monsters:
+		var is_dead = false
+		if roster_hp_cache.has(m) and roster_hp_cache[m] <= 0:
+			is_dead = true
+		options.append({ "monster": m, "is_dead": is_dead })
+	return options
+
 func _update_team_passives():
 	# Apply Team Auras (Passives)
 	var nonmetal_count_p = 0
@@ -984,17 +1165,29 @@ func _apply_turn_start_passives(unit: BattleMonster):
 			
 		AtomicConfig.Group.NOBLE_GAS:
 			# Passive: Restore 5% HP
-			unit.apply_effect({ "target": unit, "effect": "heal", "amount": int(unit.max_hp * 0.05) })
+			var pct = 0.05
+			# Mastery: Noble Gases (100% Stability) -> Double healing (10%)
+			if unit.data.stability >= 100:
+				pct = 0.10
+			
+			var heal_amount = int(unit.max_hp * pct)
+			unit.heal(heal_amount)
+			_show_damage_number(unit, heal_amount, "heal")
 			
 		AtomicConfig.Group.POST_TRANSITION:
-			# Passive: Gain 1% stats each turn
-			unit.apply_effect({ "target": unit, "stat": "attack", "amount": int(unit.stats.attack * 0.01), "duration": 99, "type": "stat_mod" })
-			unit.apply_effect({ "target": unit, "stat": "defense", "amount": int(unit.stats.defense * 0.01), "duration": 99, "type": "stat_mod" })
-			unit.apply_effect({ "target": unit, "stat": "speed", "amount": int(unit.stats.speed * 0.01), "duration": 99, "type": "stat_mod" })
+			# Passive: Gain +1 to all stats each turn
+			unit.apply_effect({ "target": unit, "stat": "attack", "amount": 1, "duration": 99, "type": "stat_mod" })
+			unit.apply_effect({ "target": unit, "stat": "defense", "amount": 1, "duration": 99, "type": "stat_mod" })
+			unit.apply_effect({ "target": unit, "stat": "speed", "amount": 1, "duration": 99, "type": "stat_mod" })
 			
 		AtomicConfig.Group.ACTINIDE:
 			# Passive: Lose 10% HP
-			var loss = int(unit.max_hp * 0.1)
+			var loss_pct = 0.1
+			# Mastery: Actinides (100% Stability) -> Reduce decay to 5%
+			if unit.data.stability >= 100:
+				loss_pct = 0.05
+			
+			var loss = int(unit.max_hp * loss_pct)
 			unit.take_damage(loss)
 			log_event.emit("%s decays!" % unit.data.monster_name)
 			_check_shield_update(unit)
@@ -1018,6 +1211,124 @@ func _apply_turn_start_passives(unit: BattleMonster):
 						applied = true
 			if applied:
 				log_event.emit("%s emits radiation!" % unit.data.monster_name)
+			
+			# Full Set Bonus: Gain +3% Speed every turn
+			var act_count = PlayerData.class_resonance.get(AtomicConfig.Group.ACTINIDE, 0)
+			var total_act = 0
+			if MonsterManifest:
+				for m in MonsterManifest.all_monsters:
+					if m.group == AtomicConfig.Group.ACTINIDE:
+						total_act += 1
+			
+			if act_count >= total_act and total_act > 0:
+				var spd_gain = max(1, int(unit.stats.speed * 0.03))
+				unit.apply_effect({ "target": unit, "stat": "speed", "amount": spd_gain, "duration": 99, "type": "stat_mod" })
+				log_event.emit("%s accelerates! (Full Set)" % unit.data.monster_name)
+
+func _apply_mastery_turn_start(unit: BattleMonster):
+	# Framework for 100% Stability Bonuses (Turn Start)
+	match unit.data.group:
+		# Add other groups as needed...
+		_: pass
+
+func _apply_post_transition_mastery_damage(attacker: BattleMonster, amount: int):
+	var enemies = active_enemy_monsters if attacker.is_player else active_player_monsters
+	var living = enemies.filter(func(m): return not m.is_dead)
+	
+	if not living.is_empty():
+		var target = living.pick_random()
+		target.take_damage(amount)
+		_show_damage_number(target, amount, "damage")
+		log_event.emit("%s's healing energy strikes %s!" % [attacker.data.monster_name, target.data.monster_name])
+
+func _scramble_team(is_player: bool):
+	var team = active_player_monsters if is_player else active_enemy_monsters
+	var spawn_points = player_spawn_points if is_player else enemy_spawn_points
+	
+	# Shuffle the array in place
+	team.shuffle()
+	
+	# Re-assign physical positions based on new index
+	# Mapping for 3v3 Triangle: 0->Center, 1->Left, 2->Right
+	var spawn_map = [1, 0, 2]
+	
+	for i in range(team.size()):
+		var unit = team[i]
+		var spawn_idx = i
+		if i < 3 and spawn_points.size() >= 3:
+			spawn_idx = spawn_map[i]
+			
+		if spawn_idx < spawn_points.size():
+			var marker = spawn_points[spawn_idx]
+			# Reparent to the new marker
+			if unit.get_parent() != marker:
+				unit.get_parent().remove_child(unit)
+				marker.add_child(unit)
+				unit.position = Vector2.ZERO
+	
+	# Update HUD to reflect new order
+	if battle_hud:
+		var player_data = []
+		for u in active_player_monsters: player_data.append(u.data)
+		var enemy_data = []
+		for u in active_enemy_monsters: enemy_data.append(u.data)
+		
+		battle_hud.setup_ui(player_data, enemy_data)
+		
+		# Restore Bars and Status for the shuffled team
+		for i in range(team.size()):
+			var u = team[i]
+			hud_update_hp.emit(is_player, i, u.current_hp, u.max_hp)
+			hud_update_atb.emit(is_player, i, u.atb_value)
+			_refresh_unit_status(u)
+			_check_shield_update(u)
+
+func _handle_reinforcements(caller: BattleMonster):
+	if caller.is_player: return # Only enemies call reinforcements for now
+	
+	var spawn_points = enemy_spawn_points
+	var target_marker: Marker2D = null
+	var unit_to_replace: BattleMonster = null
+	
+	# 1. Look for empty slot
+	for marker in spawn_points:
+		if marker.get_child_count() == 0:
+			target_marker = marker
+			break
+			
+	# 2. If full, look for dead unit to replace
+	if not target_marker:
+		for unit in active_enemy_monsters:
+			if unit.is_dead:
+				target_marker = unit.get_parent()
+				unit_to_replace = unit
+				break
+	
+	if target_marker:
+		var replace_idx = -1
+		if unit_to_replace:
+			replace_idx = active_enemy_monsters.find(unit_to_replace)
+			active_enemy_monsters.remove_at(replace_idx)
+			all_monsters.erase(unit_to_replace)
+			unit_to_replace.queue_free()
+			
+		# Spawn Brood Grunt
+		var grunt_path = "res://data/Enemies/BroodGrunt.tres"
+		if ResourceLoader.exists(grunt_path):
+			var grunt_data = load(grunt_path).duplicate()
+			grunt_data.stability = caller.data.stability
+			
+			spawn_unit(grunt_data, target_marker, false)
+			
+			# If we replaced a unit, move the new unit (which was appended) to the old index
+			# to maintain formation logic (Vanguard at index 0)
+			if replace_idx != -1:
+				var new_u = active_enemy_monsters.pop_back()
+				active_enemy_monsters.insert(replace_idx, new_u)
+			
+			log_event.emit("Reinforcements arrive!")
+	else:
+		log_event.emit("No room for reinforcements!")
 
 func _play_chain_reaction_effect(start_pos: Vector2, end_pos: Vector2):
 	var parent = self
@@ -1046,38 +1357,6 @@ func _play_chain_reaction_effect(start_pos: Vector2, end_pos: Vector2):
 	tween.tween_property(line, "width", 20.0, 0.1).from(2.0)
 	tween.parallel().tween_property(line, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(line.queue_free)
-
-func _process_effect_expiration(unit: BattleMonster):
-	if not "active_effects" in unit: return
-	
-	var effects = unit.active_effects
-	# Iterate backwards to safely remove
-	for i in range(effects.size() - 1, -1, -1):
-		var effect = effects[i]
-		if effect.get("duration", 0) > 0:
-			effect["duration"] -= 1
-			if effect["duration"] <= 0:
-				effects.remove_at(i)
-				
-				# Revert Stat Mods
-				if effect.get("type") == "stat_mod":
-					var stat = effect.get("stat")
-					var amount = effect.get("amount", 0)
-					if unit.stats.has(stat):
-						unit.stats[stat] -= amount
-						log_event.emit("%s's %s returned to normal." % [unit.data.monster_name, stat.capitalize()])
-				
-				# Revert Swap Stats
-				if effect.get("type") == "swap_stats":
-					var stats_swapped = effect.get("stats", [])
-					if stats_swapped.size() == 2:
-						var s1 = stats_swapped[0]
-						var s2 = stats_swapped[1]
-						var v1 = unit.stats.get(s1, 0)
-						var v2 = unit.stats.get(s2, 0)
-						unit.stats[s1] = v2
-						unit.stats[s2] = v1
-						log_event.emit("%s's stats returned to normal." % unit.data.monster_name)
 
 func _handle_cleanse(unit: BattleMonster):
 	if not "active_effects" in unit: return
@@ -1175,7 +1454,8 @@ func _handle_team_status(attacker: BattleMonster, effect: Dictionary):
 	else:
 		targets = active_player_monsters
 	
-	var status_name = effect.get("status")
+	var status_name = effect.get("status", "")
+	if status_name == "": return
 	var duration = effect.get("duration", 3)
 	var pct = effect.get("damage_percent", 0.0)
 	var applied_count = 0
@@ -1238,6 +1518,17 @@ func _create_vapor_cloud(parent: Node):
 	
 	parent.add_child(particles)
 
+func _play_vapor_reaction(unit: BattleMonster):
+	var tween = create_tween()
+	tween.tween_property(unit, "modulate", Color(0.8, 0.2, 1.0), 0.1)
+	tween.tween_property(unit, "modulate", Color.WHITE, 0.1)
+	
+	var base_pos = unit.position
+	for i in range(5):
+		var offset = Vector2(randf_range(-5, 5), randf_range(-5, 5))
+		tween.tween_property(unit, "position", base_pos + offset, 0.05)
+	tween.tween_property(unit, "position", base_pos, 0.05)
+
 func _process_radiation(unit: BattleMonster):
 	if unit.is_dead: return
 	
@@ -1252,8 +1543,85 @@ func _process_radiation(unit: BattleMonster):
 		var pct = rad_effect.get("damage_percent", 0.05)
 		var dmg = int(unit.max_hp * pct)
 		unit.take_damage(dmg)
+		_show_damage_number(unit, dmg, "poison")
 		log_event.emit("%s takes %d radiation damage!" % [unit.data.monster_name, dmg])
 		_check_shield_update(unit)
 		
 		# Ramp up for next turn
 		rad_effect["damage_percent"] = pct + 0.05
+
+func _process_status_damage(unit: BattleMonster):
+	if unit.is_dead: return
+	
+	# Check invulnerability manually to avoid potential issues with has_status()
+	var is_invulnerable = false
+	if "active_effects" in unit:
+		for effect in unit.active_effects:
+			if str(effect.get("status", "")).to_lower() == "invulnerable":
+				is_invulnerable = true
+				break
+	
+	if is_invulnerable: return
+	
+	# Handle Poison
+	var total_dmg = 0
+	if "active_effects" in unit:
+		for effect in unit.active_effects:
+			if str(effect.get("status", "")).to_lower() == "poison":
+				var dmg = 0
+				var pct = float(effect.get("damage_percent", 0.0))
+				if pct > 0:
+					dmg = int(unit.max_hp * pct)
+				else:
+					dmg = int(effect.get("damage", 0))
+				
+				if dmg <= 0:
+					dmg = int(unit.max_hp * 0.1) # Fallback: 10% Max HP
+					if dmg <= 0: dmg = 1 # Absolute fallback
+				total_dmg += dmg
+	
+	if total_dmg > 0:
+		unit.take_damage(total_dmg)
+		_show_damage_number(unit, total_dmg, "poison")
+		log_event.emit("%s takes poison damage!" % unit.data.monster_name)
+		_check_shield_update(unit)
+
+func _show_damage_number(unit: Node2D, amount: int, type: String = "damage"):
+	var label = Label.new()
+	label.z_index = 20 # On top of units
+	
+	var color = Color("#ff4d4d") # Red
+	var scale_factor = 1.0
+	var prefix = ""
+	
+	match type:
+		"heal":
+			color = Color("#2ecc71") # Green
+			prefix = "+"
+		"poison":
+			color = Color("#802680") # Purple
+		"crit":
+			color = Color("#ffd700") # Gold
+			scale_factor = 1.5
+			
+	label.text = prefix + str(amount)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_font_size_override("font_size", 80)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	unit.add_child(label)
+	label.position = Vector2(-50, -120) # Above unit
+	label.custom_minimum_size = Vector2(100, 50)
+	
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 60, 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN)
+	if scale_factor > 1.0:
+		label.scale = Vector2(0.5, 0.5)
+		tween.tween_property(label, "scale", Vector2(scale_factor, scale_factor), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
+	tween.chain().tween_callback(label.queue_free)

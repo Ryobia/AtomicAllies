@@ -74,9 +74,6 @@ func setup(monster_data: MonsterData, player_team: bool):
 func update_atb(delta: float, tuning_factor: float = 0.5) -> float:
 	# Dead units can still charge ATB to trigger a replacement turn
 	
-	# Stun check
-	if not is_dead and has_status("stun"): return atb_value
-	
 	var speed = stats.get("speed", 10)
 	atb_value += speed * delta * tuning_factor
 	return atb_value
@@ -136,6 +133,68 @@ func _spawn_damage_number(amount: int, color: Color):
 	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN)
 	tween.tween_callback(label.queue_free)
 
+func _spawn_stat_up_effect():
+	print("Spawning Stat UP Effect")
+	var label = Label.new()
+	label.text = "▲"
+	label.z_index = 100 # Ensure visible on top
+	label.add_theme_color_override("font_color", Color("#2ecc71")) # Gree
+	label.add_theme_font_size_override("font_size", 64)
+	label.add_theme_constant_override("outline_size", 6)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	label.size = Vector2(100, 100)
+	
+	# Randomize start X slightly to handle multiple buffs at once (like Post-Transition)
+	var offset_x = randf_range(-30, 30)
+	label.position = Vector2(offset_x - 50, -150) 
+	
+	if center_marker:
+		center_marker.add_child(label)
+	else:
+		add_child(label)
+		
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 80, 1.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 1.2).set_ease(Tween.EASE_IN)
+	tween.tween_property(label, "scale", Vector2(1.5, 1.5), 0.2).from(Vector2(0.5, 0.5))
+	tween.tween_callback(label.queue_free).set_delay(1.2)
+
+func _spawn_stat_down_effect():
+	print("Spawning Stat DOWN Effect")
+	var label = Label.new()
+	label.text = "▼"
+	label.z_index = 100 # Ensure visible on top
+	label.add_theme_color_override("font_color", Color("#ff4d4d")) # Red
+	label.add_theme_font_size_override("font_size", 64)
+	label.add_theme_constant_override("outline_size", 6)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	label.size = Vector2(100, 100)
+	
+	# Randomize start X slightly
+	var offset_x = randf_range(-30, 30)
+	label.position = Vector2(offset_x - 50, -150) 
+	
+	if center_marker:
+		center_marker.add_child(label)
+	else:
+		add_child(label)
+		
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y + 60, 1.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 1.2).set_ease(Tween.EASE_IN)
+	tween.tween_property(label, "scale", Vector2(1.5, 1.5), 0.2).from(Vector2(0.5, 0.5))
+	tween.tween_callback(label.queue_free).set_delay(1.2)
+
 func heal(amount: int):
 	if is_dead: return
 	current_hp = min(max_hp, current_hp + amount)
@@ -159,12 +218,15 @@ func apply_effect(effect: Dictionary):
 				
 	# 2. Status Effects (Flags & DoTs)
 	elif "status" in effect:
-		active_effects.append({
+		var new_status = {
 			"type": "status",
-			"name": effect.status,
+			"status": effect.status,
 			"duration": effect.duration,
 			"damage": effect.get("damage", 0) # For DoT like corrosion
-		})
+		}
+		if "damage_percent" in effect:
+			new_status["damage_percent"] = effect.damage_percent
+		active_effects.append(new_status)
 		
 	# 3. Stat Modifiers
 	elif "stat" in effect:
@@ -174,14 +236,30 @@ func _apply_stat_mod(effect: Dictionary):
 	# Apply the mod immediately to current stats
 	if effect.stat in stats:
 		stats[effect.stat] += effect.amount
+		print("Stat Mod Applied: %s %d" % [effect.stat, effect.amount])
 		
-		# Store it to revert later
-		active_effects.append({
-			"type": "stat_mod",
-			"stat": effect.stat,
-			"amount": effect.amount,
-			"duration": effect.duration
-		})
+		if effect.amount > 0:
+			_spawn_stat_up_effect()
+		elif effect.amount < 0:
+			_spawn_stat_down_effect()
+		
+		# Check if we can merge with an existing permanent mod
+		var merged = false
+		if effect.duration > 50: # Permanent threshold
+			for existing in active_effects:
+				if existing.type == "stat_mod" and existing.stat == effect.stat and existing.duration > 50:
+					existing.amount += effect.amount
+					merged = true
+					break
+		
+		if not merged:
+			# Store it to revert later
+			active_effects.append({
+				"type": "stat_mod",
+				"stat": effect.stat,
+				"amount": effect.amount,
+				"duration": effect.duration
+			})
 
 func _apply_stat_swap(effect: Dictionary):
 	var s1 = effect.stats[0]
@@ -194,36 +272,61 @@ func _apply_stat_swap(effect: Dictionary):
 		stats[s1] = v2
 		stats[s2] = v1
 
-func play_attack():
-	if sprite.sprite_frames.has_animation("attack"):
+func play_attack(is_physical: bool = false):
+	var has_anim = sprite.sprite_frames.has_animation("attack")
+	
+	if has_anim:
 		sprite.play("attack")
-		await sprite.animation_finished
-		sprite.play("idle")
-	else:
-		# Fallback "Punch" tween
+	
+	# Physical attacks lunge forward
+	if is_physical:
 		var original_pos = sprite.position
 		var forward_vec = Vector2(50, 0) if is_player else Vector2(-50, 0)
 		var tween = create_tween()
-		tween.tween_property(sprite, "position", original_pos + forward_vec, 0.1)
-		tween.tween_property(sprite, "position", original_pos, 0.1)
-		await tween.finished
+		tween.tween_property(sprite, "position", original_pos + forward_vec, 0.1).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.tween_property(sprite, "position", original_pos, 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		
+		if has_anim:
+			# Wait for animation if it's not looping, otherwise wait for tween
+			if not sprite.sprite_frames.get_animation_loop("attack"):
+				await sprite.animation_finished
+			else:
+				await tween.finished
+		else:
+			await tween.finished
+	else:
+		# Special/Status attacks stay in place (or pulse)
+		if has_anim:
+			if not sprite.sprite_frames.get_animation_loop("attack"):
+				await sprite.animation_finished
+			else:
+				await get_tree().create_timer(0.5).timeout
+		else:
+			# Fallback Pulse
+			var tween = create_tween()
+			tween.tween_property(sprite, "scale", Vector2(1.2, 1.2), 0.1)
+			tween.tween_property(sprite, "scale", Vector2.ONE, 0.1)
+			await tween.finished
+
+	sprite.play("idle")
 
 func play_move():
-	if sprite.sprite_frames.has_animation("move"):
+	var has_anim = sprite.sprite_frames.has_animation("move")
+	if has_anim:
 		sprite.play("move")
-		await sprite.animation_finished
-		sprite.play("idle")
-	else:
-		# Fallback "Jump" tween
-		var original_pos = sprite.position
-		var tween = create_tween()
-		tween.tween_property(sprite, "position:y", original_pos.y - 30, 0.15).set_trans(Tween.TRANS_SINE)
-		tween.tween_property(sprite, "position:y", original_pos.y, 0.15).set_trans(Tween.TRANS_SINE)
-		await tween.finished
+	
+	# Always jump for feedback (and to handle timing if anim loops)
+	var original_pos = sprite.position
+	var tween = create_tween()
+	tween.tween_property(sprite, "position:y", original_pos.y - 30, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "position:y", original_pos.y, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	
+	await tween.finished
+	sprite.play("idle")
 
 func has_status(status_name: String) -> bool:
 	for effect in active_effects:
-		if effect.type == "status" and effect.name == status_name:
+		if effect.type == "status" and effect.get("status") == status_name:
 			return true
 	return false
 
@@ -233,7 +336,7 @@ func cleanse_negative_effects():
 		var is_negative = false
 		
 		if effect.type == "status":
-			if effect.name in ["stun", "corrosion", "silence_special", "marked_covalent", "vulnerable"]:
+			if effect.get("status") in ["stun", "corrosion", "silence_special", "marked_covalent", "vulnerable"]:
 				is_negative = true
 		elif effect.type == "stat_mod":
 			if effect.amount < 0:
@@ -247,7 +350,7 @@ func cleanse_negative_effects():
 
 func on_turn_start():
 	for effect in active_effects:
-		if effect.type == "status" and effect.name == "corrosion":
+		if effect.type == "status" and effect.get("status") == "corrosion":
 			take_damage(effect.damage)
 
 func on_turn_end():
@@ -271,6 +374,7 @@ func on_turn_end():
 func _remove_expired_effect(effect: Dictionary):
 	if effect.type == "stat_mod":
 		stats[effect.stat] -= effect.amount
+		log_action.emit("%s's %s returned to normal." % [data.monster_name, effect.stat.capitalize()])
 	elif effect.type == "swap_stats":
 		var s1 = effect.stats[0]
 		var s2 = effect.stats[1]
@@ -278,3 +382,4 @@ func _remove_expired_effect(effect: Dictionary):
 		var v2 = stats[s2]
 		stats[s1] = v2
 		stats[s2] = v1
+		log_action.emit("%s's stats returned to normal." % data.monster_name)

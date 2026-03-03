@@ -190,7 +190,21 @@ func _add_card(grid: Container, z: int):
 		card.set_monster(monster)
 		
 		if is_owned:
-			card.modulate = Color(1, 1, 1, 1) # Full Color
+			var current_time = int(Time.get_unix_time_from_system())
+			if monster.fatigue_expiry > current_time:
+				card.modulate = Color(0.6, 0.6, 0.6, 1) # Dim fatigued units
+				
+				var fatigue_lbl = Label.new()
+				fatigue_lbl.text = "zzz"
+				fatigue_lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
+				fatigue_lbl.add_theme_font_size_override("font_size", 24)
+				fatigue_lbl.layout_mode = 1 # Anchors
+				fatigue_lbl.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+				fatigue_lbl.position += Vector2(-35, 0)
+				card.add_child(fatigue_lbl)
+			else:
+				card.modulate = Color(1, 1, 1, 1) # Full Color
+			
 			card.mouse_filter = Control.MOUSE_FILTER_STOP
 			card.gui_input.connect(func(event):
 				if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:

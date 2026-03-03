@@ -12,6 +12,7 @@ extends Control
 
 var monster_card_scene = preload("res://Scenes/TeamSlot.tscn") # Reusing TeamSlot for visuals
 var _anim_cache: Dictionary = {} # Cache loaded animations
+var _selected_swap_index: int = -1
 
 func _ready():
 	if retreat_btn: retreat_btn.pressed.connect(_on_retreat_pressed)
@@ -156,8 +157,23 @@ func _populate_monster_grid(flashing_monsters: Array = []):
 		# Setup visual (reusing TeamSlot logic if available, or basic setup)
 		if slot.has_method("setup"):
 			slot.setup(monster, i, false, anim_frames)
-		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
+		# Allow clicking to swap
+		slot.mouse_filter = Control.MOUSE_FILTER_STOP
 		slot.focus_mode = Control.FOCUS_NONE
+		slot.gui_input.connect(_on_slot_gui_input.bind(i))
+		
+		# Visual feedback for selection
+		if i == _selected_swap_index:
+			slot.modulate = Color(1.3, 1.3, 1.1) # Highlight
+			var border = ReferenceRect.new()
+			border.name = "SelectionBorder"
+			border.border_color = Color("#ffd700")
+			border.border_width = 4.0
+			border.editor_only = false
+			border.set_anchors_preset(Control.PRESET_FULL_RECT)
+			border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			slot.add_child(border)
 		
 		var hp_lbl = Label.new()
 		hp_lbl.text = "%d/%d HP" % [current_hp, max_hp]
@@ -168,6 +184,29 @@ func _populate_monster_grid(flashing_monsters: Array = []):
 		
 		if monster in flashing_monsters:
 			_flash_slot(slot)
+
+func _on_slot_gui_input(event, index):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_on_slot_clicked(index)
+
+func _on_slot_clicked(index: int):
+	if _selected_swap_index == -1:
+		_selected_swap_index = index
+		_populate_monster_grid()
+	elif _selected_swap_index == index:
+		_selected_swap_index = -1
+		_populate_monster_grid()
+	else:
+		# Swap
+		var roster = PlayerData.active_team
+		if roster.is_empty(): roster = PlayerData.owned_monsters
+		
+		var temp = roster[index]
+		roster[index] = roster[_selected_swap_index]
+		roster[_selected_swap_index] = temp
+		
+		_selected_swap_index = -1
+		_populate_monster_grid()
 
 func _heal_monster(monster: MonsterData, cost: int):
 	if CampaignManager:

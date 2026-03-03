@@ -2,17 +2,69 @@ extends Node
 
 # Autoload: CampaignManager
 
-const ENEMY_PATHS = {
-    "grunt": "res://data/Enemies/NullGrunt.tres",
-    "tank": "res://data/Enemies/NullTank.tres",
-    "commander": "res://data/Enemies/NullCommander.tres"
+# Current active race for encounters (Change this to "brood", "eldritch", etc. to test)
+var current_enemy_race: String = "brood"
+
+const RACE_CONFIG = {
+    "void": {
+        "grunt": "res://data/Enemies/NullGrunt.tres",
+        "brute": "res://data/Enemies/NullTank.tres",
+        "assassin": "res://data/Enemies/NullAssassin.tres",
+        "commander": "res://data/Enemies/NullCommander.tres",
+        "king": "res://data/Enemies/NullKing.tres"
+    },
+    "brood": {
+        "grunt": "res://data/Enemies/BroodGrunt.tres",
+        "assassin": "res://data/Enemies/BroodAssassin.tres",
+        "brute": "res://data/Enemies/BroodBrute.tres",
+        "commander": "res://data/Enemies/BroodCommander.tres",
+        "king": "res://data/Enemies/BroodKing.tres"
+    },
+    "chaos": {
+        "grunt": "res://data/Enemies/ChaosGrunt.tres",
+        "assassin": "res://data/Enemies/ChaosAssassin.tres",
+        "brute": "res://data/Enemies/ChaosBrute.tres",
+        "commander": "res://data/Enemies/ChaosCommander.tres",
+        "king": "res://data/Enemies/ChaosKing.tres"
+    },
+    "fission": {
+        "grunt": "res://data/Enemies/FissionGrunt.tres",
+        "assassin": "res://data/Enemies/FissionAssassin.tres",
+        "brute": "res://data/Enemies/FissionBrute.tres",
+        "commander": "res://data/Enemies/FissionCommander.tres",
+        "king": "res://data/Enemies/FissionKing.tres"
+    },
+    "eldritch": {
+        "grunt": "res://data/Enemies/EldritchGrunt.tres",
+        "assassin": "res://data/Enemies/EldritchAssassin.tres",
+        "brute": "res://data/Enemies/EldritchBrute.tres",
+        "commander": "res://data/Enemies/EldritchCommander.tres",
+        "king": "res://data/Enemies/EldritchKing.tres"
+    }
+}
+
+# Map Player Element Groups to Enemy Races for thematic Discovery Runs
+const GROUP_TO_RACE_MAP = {
+    AtomicConfig.Group.ALKALI_METAL: "fission",
+    AtomicConfig.Group.ALKALINE_EARTH: "void",
+    AtomicConfig.Group.TRANSITION_METAL: "chaos",
+    AtomicConfig.Group.POST_TRANSITION: "void",
+    AtomicConfig.Group.METALLOID: "chaos",
+    AtomicConfig.Group.NONMETAL: "brood",
+    AtomicConfig.Group.HALOGEN: "brood",
+    AtomicConfig.Group.NOBLE_GAS: "eldritch",
+    AtomicConfig.Group.ACTINIDE: "fission",
+    AtomicConfig.Group.LANTHANIDE: "eldritch",
+    AtomicConfig.Group.UNKNOWN: "void"
 }
 
 # The "Cost" of each enemy type in slots
 const WEIGHTS = {
     "grunt": 1,
-    "tank": 2,
-    "commander": 3
+    "assassin": 2,
+    "brute": 2,
+    "commander": 3,
+    "king": 5
 }
 
 const MAX_ENEMY_SLOTS = 6
@@ -36,6 +88,21 @@ func start_node_run(target_z: int):
     current_run_wave = 1
     run_team_state.clear()
     run_buffs.clear()
+    
+    # Determine Enemy Race based on Target Element's Group
+    var target_monster = MonsterManifest.get_monster(target_z)
+    if target_monster:
+        current_enemy_race = GROUP_TO_RACE_MAP.get(target_monster.group, "void")
+    else:
+        current_enemy_race = "void"
+        
+    print("Starting run for Z%d. Enemy Race: %s" % [target_z, current_enemy_race])
+    
+    # Adjust run structure based on race
+    if current_enemy_race == "brood":
+        max_run_waves = 5 # Swarm: More waves
+    else:
+        max_run_waves = 3
     
     # Difficulty scales with Atomic Number
     # Z=3 (Lithium) stays easy (Level 1).
@@ -62,8 +129,23 @@ func on_battle_ended(player_won: bool, rewards: Dictionary = {}, final_team_stat
             if current_run_wave < max_run_waves:
                 # Continue Run
                 current_run_wave += 1
-                print("Wave Complete. Proceeding to Rest Site...")
-                GlobalManager.switch_scene("rest_site")
+                
+                var skip_rest = false
+                if current_enemy_race == "brood":
+                    # Swarm behavior: Fight 2 waves back-to-back before resting
+                    # Wave 1 -> 2 (Skip Rest)
+                    # Wave 2 -> 3 (Rest)
+                    # Wave 3 -> 4 (Skip Rest)
+                    # Wave 4 -> 5 (Rest)
+                    if current_run_wave % 2 == 0:
+                        skip_rest = true
+                
+                if skip_rest:
+                    print("Swarm continues! Immediate next wave...")
+                    start_next_wave()
+                else:
+                    print("Wave Complete. Proceeding to Rest Site...")
+                    GlobalManager.switch_scene("rest_site")
             else:
                 # Run Complete!
                 print("Run Complete! Blueprint Unlocked: ", current_run_target_z)
@@ -103,18 +185,23 @@ func generate_level_encounter(level: int) -> Array[MonsterData]:
     
     # 2. Determine Available Enemy Types based on progression
     var pool = ["grunt"]
-    if level >= 4: pool.append("tank")
-    if level >= 10: pool.append("commander")
+    if level >= 2: pool.append("assassin")
+    if level >= 4: pool.append("brute")
+    if level >= 8: pool.append("commander")
+    if level >= 15: pool.append("king")
     
     # 3. Fill the Budget
     var current_weight = 0
     
-    # For Bosses, force a Commander first
+    # For Bosses, force a Commander or King
     if is_boss:
-        var boss = _create_enemy("commander", level + 2) # Boss is stronger
-        boss.monster_name = "Void Lord"
+        var boss_type = "commander"
+        if level >= 10: boss_type = "king"
+        
+        var boss = _create_enemy(boss_type, level + 2) # Boss is stronger
+        # Removed name override to ensure animations load correctly
         enemies.append(boss)
-        current_weight += WEIGHTS["commander"]
+        current_weight += WEIGHTS[boss_type]
     
     # Fill remaining slots until budget is met or slots are full
     while current_weight < budget and enemies.size() < MAX_ENEMY_SLOTS:
@@ -137,7 +224,8 @@ func generate_level_encounter(level: int) -> Array[MonsterData]:
     return enemies
 
 func _create_enemy(type: String, level: int) -> MonsterData:
-    var path = ENEMY_PATHS.get(type)
+    var race_paths = RACE_CONFIG.get(current_enemy_race, RACE_CONFIG["void"])
+    var path = race_paths.get(type)
     if ResourceLoader.exists(path):
         var base = load(path)
         var enemy = base.duplicate()

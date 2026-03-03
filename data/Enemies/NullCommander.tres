@@ -6,5 +6,7 @@
 script = ExtResource("1_script")
 monster_name = "Null Commander"
 atomic_number = 0
-group = 14
-level = 1
+group = 15
+moves = []
+stability = 50
+fatigue_expiry = 0

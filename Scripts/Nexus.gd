@@ -281,6 +281,24 @@ func _populate_selection_list():
 				
 				btn.disabled = true
 				btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				
+				var coolant_count = PlayerData.get_item_count("coolant_gel")
+				if coolant_count > 0:
+					var cool_btn = Button.new()
+					cool_btn.text = "Use Coolant (%d)" % coolant_count
+					cool_btn.add_theme_font_size_override("font_size", 24)
+					
+					var c_style = StyleBoxFlat.new()
+					c_style.bg_color = Color("#60fafc")
+					c_style.set_corner_radius_all(4)
+					cool_btn.add_theme_stylebox_override("normal", c_style)
+					cool_btn.add_theme_stylebox_override("hover", c_style)
+					cool_btn.add_theme_stylebox_override("pressed", c_style)
+					cool_btn.add_theme_color_override("font_color", Color("#010813"))
+					cool_btn.size_flags_vertical = Control.SIZE_SHRINK_END
+					cool_btn.custom_minimum_size = Vector2(0, 50)
+					cool_btn.pressed.connect(func(): _on_use_coolant(monster))
+					wrapper.add_child(cool_btn)
 			else:
 				btn.pressed.connect(func(): _on_monster_selected(monster))
 				
@@ -318,6 +336,12 @@ func _populate_selection_list():
 				var secs = time_left % 60
 				btn.text += "\n(Fatigued %02d:%02d)" % [mins, secs]
 				btn.disabled = true
+				
+				var coolant_count = PlayerData.get_item_count("coolant_gel")
+				if coolant_count > 0:
+					btn.text = "Use Coolant (%d)" % coolant_count
+					btn.disabled = false
+					btn.pressed.connect(func(): _on_use_coolant(monster))
 			else:
 				btn.pressed.connect(func(): _on_monster_selected(monster))
 				
@@ -338,6 +362,12 @@ func _populate_selection_list():
 	cancel_btn.add_theme_font_size_override("font_size", 56)
 	cancel_btn.pressed.connect(func(): selection_panel.visible = false)
 	selection_container.add_child(cancel_btn)
+
+func _on_use_coolant(monster: MonsterData):
+	if PlayerData.consume_item("coolant_gel", 1):
+		monster.fatigue_expiry = 0
+		PlayerData.save_game()
+		_populate_selection_list()
 
 func _on_monster_selected(monster: MonsterData):
 	if selecting_slot == 1:
