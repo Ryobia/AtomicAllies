@@ -37,6 +37,13 @@ signal hud_update_shield(is_player, index, shield, max_hp)
 signal hud_update_status(is_player, index, effects)
 
 func _ready():
+	if AudioManager:
+		var music = load("res://Assets/Sounds/Horizon of the Unseen.mp3")
+		if music:
+			if music is AudioStreamMP3:
+				music.loop = true
+			AudioManager.play_music(music)
+
 	if not battle_hud:
 		battle_hud = find_child("BattleHUD", true, false)
 
@@ -267,6 +274,9 @@ func spawn_unit(data: MonsterData, spawn_marker: Marker2D, is_player: bool):
 		active_player_monsters.append(unit)
 	else:
 		active_enemy_monsters.append(unit)
+		# Track encounter for Codex
+		if PlayerData:
+			PlayerData.mark_enemy_seen(data.monster_name)
 	all_monsters.append(unit)
 
 func clear_battlefield():

@@ -103,7 +103,14 @@ func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bon
 	
 	# Calculate Synthesis Time based on Stability
 	# 100% Stability = 0 minutes, 0% Stability = 60 minutes (3600 seconds)
-	var duration = int(3600.0 * (1.0 - (clamp(final_stability, 0.0, 100.0) / 100.0)))
+	var base_duration = 3600.0 * (1.0 - (clamp(final_stability, 0.0, 100.0) / 100.0))
+	
+	# Apply Ship Upgrade: Fusion Speed (10% reduction per level)
+	if PlayerData:
+		var speed_level = PlayerData.get_upgrade_level("fusion_speed")
+		base_duration *= (1.0 - (speed_level * 0.10))
+	
+	var duration = int(max(0, base_duration))
 	var finish_time = int(Time.get_unix_time_from_system()) + duration
 	
 	if PlayerData:

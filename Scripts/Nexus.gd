@@ -262,6 +262,10 @@ func _ready():
 	if not SynthesisManager.capsule_created.is_connected(_on_capsule_created):
 		SynthesisManager.capsule_created.connect(_on_capsule_created)
 
+	# Trigger tutorial check
+	if TutorialManager:
+		TutorialManager.check_tutorial_progress()
+
 func _on_sort_pressed():
 	if current_sort_mode == SortMode.ATOMIC_NUMBER: current_sort_mode = SortMode.NAME
 	elif current_sort_mode == SortMode.NAME: current_sort_mode = SortMode.STABILITY
@@ -531,6 +535,14 @@ func _on_monster_selected(monster: MonsterData):
 		parent_2 = monster
 		parent_2_btn.text = monster.monster_name
 		_update_slot_visuals(2, monster)
+		
+		# Tutorial: Advance if P2 selected
+		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_PARENT_2:
+			TutorialManager.advance_step()
+	
+	# Tutorial: Advance if P1 selected
+	if selecting_slot == 1 and TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_PARENT_1:
+		TutorialManager.advance_step()
 	
 	selection_panel.visible = false
 	_update_success_rate_preview()
@@ -696,6 +708,10 @@ func _on_confirm_fusion_pressed():
 		else:
 			# Fallback to standard (Bonus item consumed but effect depends on Manager implementation)
 			SynthesisManager.attempt_fusion(parent_1, parent_2)
+			
+		# Tutorial: Advance after clicking Fuse
+		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CLICK_FUSE:
+			TutorialManager.advance_step()
 	else:
 		status_label.text = "Not enough Binding Energy!"
 

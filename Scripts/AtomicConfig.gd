@@ -230,6 +230,12 @@ static func calculate_stats(group: Group, atomic_number: int, stability: int = 0
 	var def_mult = 1.0
 	var spd_mult = 1.0
 	
+	# Ship Upgrades (Combat)
+	if PlayerData:
+		hp_mult += PlayerData.get_upgrade_level("combat_hull") * 0.05
+		atk_mult += PlayerData.get_upgrade_level("combat_optics") * 0.05
+		def_mult += PlayerData.get_upgrade_level("combat_shielding") * 0.05
+	
 	match group:
 		Group.ALKALINE_EARTH:
 			def_mult += (resonance_count * 0.05) # +5% Def per element

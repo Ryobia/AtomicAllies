@@ -41,6 +41,10 @@ func _ready():
 	if not SynthesisManager.fusion_completed.is_connected(_on_synthesis_completed):
 		SynthesisManager.fusion_completed.connect(_on_synthesis_completed)
 	
+	# Trigger tutorial check
+	if TutorialManager:
+		TutorialManager.check_tutorial_progress()
+	
 	update_ui()
 
 func _process(_delta):
@@ -235,6 +239,10 @@ func _on_stabilize_pressed(index):
 	# Call the manager to finish the process
 	# This will trigger the fusion_completed signal
 	var stab = capsule.get("stability", 50)
+	
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.STABILIZE_CAPSULE:
+		TutorialManager.complete_tutorial()
+		
 	SynthesisManager.complete_synthesis(capsule.z, stab)
 
 func _on_synthesis_completed(z_num, success, reward):

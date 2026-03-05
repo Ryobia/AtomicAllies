@@ -23,11 +23,12 @@ CombatManager="*uid://cabdcso0eq5to"
 MonsterManifest="*uid://d3sl71wg2x7yg"
 CampaignManager="*uid://2psnrul2dlet"
 PlayerData="*uid://casdb1lyk128y"
+TutorialManager="*uid://bh7l8tlt7wq8l"
 TimeManager="*uid://bj600r82swun6"
 SynthesisManager="*uid://dhljhfpbqj4kk"
 NavBar="*uid://cftdsp5wnnexb"
 ResourceHeader="*uid://d04kd13gs4hae"
-MusicPlayer="*uid://bgflyp85r8cbj"
+AudioManager="*uid://cgfyef31ospb1"
 
 [display]
 

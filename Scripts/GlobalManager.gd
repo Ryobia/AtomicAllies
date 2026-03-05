@@ -17,6 +17,7 @@ var scenes = {
 	"rest_site": "res://Scenes/RestSite.tscn",
 	"synergy_view": "res://Scenes/SynergyView.tscn",
 	"item_shop": "res://Scenes/ItemShop.tscn",
+	"codex": "res://Scenes/Codex.tscn",
 }
 
 var tooltip_theme: Theme

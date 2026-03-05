@@ -177,11 +177,16 @@ func _create_synergy_card(group: int):
 
     # Toggle Logic
     panel.gui_input.connect(func(event):
-        if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-            var show = !element_grid.visible
-            element_grid.visible = show
-            separator.visible = show
-            arrow.text = " ▲" if show else " ▼"
+        if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+            if event.pressed:
+                panel.set_meta("touch_start", event.global_position)
+            else:
+                var start = panel.get_meta("touch_start", Vector2.ZERO)
+                if start.distance_to(event.global_position) < 40:
+                    var show = !element_grid.visible
+                    element_grid.visible = show
+                    separator.visible = show
+                    arrow.text = " ▲" if show else " ▼"
     )
     
     grid.add_child(panel)

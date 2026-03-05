@@ -3,6 +3,9 @@
 [ext_resource type="Script" uid="uid://cmf13vyke1i30" path="res://Scripts/MainMenu.gd" id="1_8um5k"]
 [ext_resource type="Texture2D" uid="uid://cbljv54boso2n" path="res://Images/Home.png" id="2_853f1"]
 [ext_resource type="Shader" uid="uid://ryl0qht6242f" path="res://Scenes/BlackHole.gdshader" id="3_loo7a"]
+[ext_resource type="PackedScene" uid="uid://di3fttiuef8tt" path="res://Scenes/SettingsPopup.tscn" id="4_settings"]
+[ext_resource type="PackedScene" path="res://Scenes/QuestLog.tscn" id="5_questlog"]
+[ext_resource type="Texture2D" uid="uid://dslgli1r16a2t" path="res://Assets/menuicons.png" id="7_koqhg"]
 [ext_resource type="Texture2D" uid="uid://dw1d73a004nvf" path="res://Assets/swirlmain.png" id="9_if7li"]
 [ext_resource type="Texture2D" uid="uid://d12oglxndoyp2" path="res://Assets/swirlsecondary.png" id="10_rrcx7"]
 [ext_resource type="Shader" uid="uid://cau2cawesljrh" path="res://Scenes/core.gdshader" id="11_if7li"]
@@ -55,6 +58,18 @@ shader_parameter/roationSpeed = 0.1
 shader = ExtResource("11_if7li")
 shader_parameter/radius = 0.4
 shader_parameter/softness = 0.1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
+bg_color = Color(1, 0.2, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [sub_resource type="Animation" id="Animation_fh7cp"]
 resource_name = "Blackhole"
@@ -172,6 +187,18 @@ _data = {
 &"blackholering": SubResource("Animation_7467j")
 }
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_koqhg"]
+atlas = ExtResource("7_koqhg")
+region = Rect2(310.45483, 42.814735, 163.63635, 191.18463)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cmrfp"]
+atlas = ExtResource("7_koqhg")
+region = Rect2(44.486877, 40.8486, 192.43427, 190.3883)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_loo7a"]
+atlas = ExtResource("7_koqhg")
+region = Rect2(547.3638, 39.64835, 185.66992, 190.335)
+
 [node name="MainMenu" type="Control" unique_id=167432749]
 layout_mode = 3
 anchors_preset = 15
@@ -270,4 +297,91 @@ offset_right = 58.0
 offset_bottom = 43.91992
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_font_sizes/font_size = 24
 text = "RESET"
+
+[node name="CodexButton" type="TextureButton" parent="." unique_id=1242320120]
+custom_minimum_size = Vector2(30, 0)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -50.0
+offset_right = 100.0
+offset_bottom = 50.0
+grow_vertical = 2
+texture_normal = SubResource("AtlasTexture_koqhg")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="SettingsButton" type="TextureButton" parent="." unique_id=2098183573]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 30.0
+offset_right = 130.0
+offset_bottom = 130.0
+texture_normal = SubResource("AtlasTexture_cmrfp")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="QuestButton" type="TextureButton" parent="." unique_id=2098183574]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -50.0
+offset_bottom = 50.0
+grow_horizontal = 0
+grow_vertical = 2
+texture_normal = SubResource("AtlasTexture_loo7a")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="NotificationBadge" type="Panel" parent="QuestButton"]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = -5.0
+offset_right = 5.0
+offset_bottom = 35.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
+
+[node name="Label" type="Label" parent="QuestButton/NotificationBadge"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="QuestLog" parent="." unique_id=2081973020 instance=ExtResource("5_questlog")]
+visible = false
+layout_mode = 1
+
+[node name="SettingsPopup" parent="." unique_id=1959082954 instance=ExtResource("4_settings")]
+visible = false
+layout_mode = 0
+anchors_preset = 0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 500.0
+offset_bottom = 400.0
+grow_horizontal = 1
+grow_vertical = 1

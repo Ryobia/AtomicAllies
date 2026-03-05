@@ -27,11 +27,6 @@ A mobile elemental battler game set in a ship where players synthesize atomic el
 - Non-destructive: Parents remain but are fatigued for cooldown period
 - Failed fusions award Neutron Dust currency
 
-**Training & Enhancement**
-- **Leveling**: Pool of XP earned from battles, allocatable to any element
-- **Essence Infusion**: Fire→Attack, Water→Defense, Nature→HP, Mind→Speed, Light→Surge Rate, Dark→Crit
-- Each element owned is unique and permanent (dissolving duplicates into Essence)
-
 **Stability/Pity Mechanics**
 - Fusion success chance = Base% + (Level Sum / Z Target)
 - Minimum 15% success rate, maximum capped at 100%
@@ -55,8 +50,7 @@ A mobile elemental battler game set in a ship where players synthesize atomic el
 1. **Synthesis Chamber**: Breed/fuse two elements with Essence cost
 2. **Stellar Cradle**: Incubate eggs on timer (longer for higher tiers)
 3. **Collection/Manifest**: Track discovered elements; unlock recipes
-4. **Attunement Chamber**: Level up and infuse stats with Essence
-5. **The Crucible**: 3v3 turn-based combat in portrait mode
+4. **The Crucible**: 3v3 turn-based combat in portrait mode
 
 ## UI/UX Design
 
@@ -95,8 +89,7 @@ A mobile elemental battler game set in a ship where players synthesize atomic el
 **Phase 1**: Database, Global State, Navigation
 **Phase 2**: Breeding Logic & Timers (with cheat-prevention)
 **Phase 3**: Collection Grid & Discovery Tracking
-**Phase 4**: Attunement & Training UI
-**Phase 5**: Combat HUD & Battle System (Deferred)
+**Phase 4**: Combat HUD & Battle System
 
 **Starting Element Set**: First 10 (Hydrogen through Neon)
 **Future Expansion**: Remainder of periodic table

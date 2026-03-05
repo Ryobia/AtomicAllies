@@ -198,12 +198,22 @@ func generate_level_encounter(level: int) -> Array[MonsterData]:
     var is_boss = (level % 10 == 0)
     if is_boss: budget = 6
     
+    # Special balancing for Lithium (Z=3) run where player has only 2 units
+    if is_rogue_run and current_run_target_z == 3:
+        if current_run_wave == 1:
+            budget = 1 # Warm-up
+        else:
+            budget = 2
+    
     # 2. Determine Available Enemy Types based on progression
     var pool = ["grunt"]
-    if level >= 2: pool.append("assassin")
-    if level >= 4: pool.append("brute")
-    if level >= 8: pool.append("commander")
-    if level >= 15: pool.append("king")
+    
+    # Special restriction for Lithium run: Only Grunts allowed
+    if not (is_rogue_run and current_run_target_z == 3):
+        if level >= 2: pool.append("assassin")
+        if level >= 4: pool.append("brute")
+        if level >= 8: pool.append("commander")
+        if level >= 15: pool.append("king")
     
     # 3. Fill the Budget
     var current_weight = 0

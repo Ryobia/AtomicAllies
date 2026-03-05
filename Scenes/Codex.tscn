@@ -1,0 +1,123 @@
+[gd_scene format=3 uid="uid://jckibijsycpr"]
+
+[ext_resource type="Script" uid="uid://c2ec185ljtbim" path="res://Scripts/Codex.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.00392157, 0.0313726, 0.0745098, 1)
+
+[node name="Codex" type="Control" unique_id=1953070956]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="Panel" parent="." unique_id=1819057541]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1655254623]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.093
+anchor_right = 1.0
+anchor_bottom = 0.887
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1760461323]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1109138399]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.376471, 0.980392, 0.988235, 1)
+theme_override_font_sizes/font_size = 48
+text = "The Alchemist's Codex"
+horizontal_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=2037150130]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TopicList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer" unique_id=672476767]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=529511233]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "Back to Main Menu"
+
+[node name="ContentPanel" type="PanelContainer" parent="." unique_id=873781575]
+custom_minimum_size = Vector2(1000, 1000)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -113.5
+offset_top = -129.5
+offset_right = 113.5
+offset_bottom = 129.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="Panel" parent="ContentPanel" unique_id=567712844]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="MarginContainer" type="MarginContainer" parent="ContentPanel" unique_id=1090919837]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ContentPanel/MarginContainer" unique_id=34311895]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ContentTitle" type="Label" parent="ContentPanel/MarginContainer/VBoxContainer" unique_id=2107568815]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.843137, 0, 1)
+theme_override_font_sizes/font_size = 42
+text = "Topic Title"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="ContentPanel/MarginContainer/VBoxContainer" unique_id=1100241156]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="ContentPanel/MarginContainer/VBoxContainer" unique_id=231780757]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ContentLabel" type="RichTextLabel" parent="ContentPanel/MarginContainer/VBoxContainer/ScrollContainer" unique_id=1358884785]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "Lore text goes here..."
+
+[node name="CloseContentButton" type="Button" parent="ContentPanel/MarginContainer/VBoxContainer" unique_id=1120967859]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "Close"

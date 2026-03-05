@@ -18,25 +18,9 @@ func _ready():
 	if owned_monsters.is_empty():
 		var he = load("res://data/Monsters/Helium.tres")
 		var h = load("res://data/Monsters/Hydrogen.tres")
-		var li = load("res://data/Monsters/Lithium.tres")
-		var be = load("res://data/Monsters/Beryllium.tres")
-		var b = load("res://data/Monsters/Boron.tres")
-		var f = load("res://data/Monsters/Fluorine.tres")
-		var sc = load("res://data/Monsters/Scandium.tres")
-		var la = load("res://data/Monsters/Lanthanum.tres")
-		var ac = load("res://data/Monsters/Actinium.tres")
-		var al = load("res://data/Monsters/Aluminium.tres")
-		
-		if al: owned_monsters.append(al.duplicate())
-		if ac: owned_monsters.append(ac.duplicate())
-		if la: owned_monsters.append(la.duplicate())
-		if sc: owned_monsters.append(sc.duplicate())
-		if be: owned_monsters.append(be.duplicate())
-		if li: owned_monsters.append(li.duplicate())
+	
 		if h: owned_monsters.append(h.duplicate())
 		if he: owned_monsters.append(he.duplicate())
-		if b: owned_monsters.append(b.duplicate())
-		if f: owned_monsters.append(f.duplicate())
 		save_game()
 	
 	recalculate_class_resonance()
@@ -56,6 +40,11 @@ var current_campaign_level: int = 1
 var unlocked_blueprints: Array = [] # Array of Atomic Numbers (int)
 var class_resonance: Dictionary = {} # Group (int) -> Resonance Level (int)
 var inventory: Dictionary = {} # Item ID (String) -> Count (int)
+var ship_upgrades: Dictionary = {} # Upgrade ID (String) -> Level (int)
+var seen_enemies: Dictionary = {} # Enemy Name (String) -> bool
+var settings: Dictionary = {} # Volume, Fullscreen, etc.
+var quest_data: Dictionary = { "z": 3, "stage": 0 } # z: Atomic Number, stage: 0=Run, 1=Fuse
+var tutorial_step: int = 0 # 0: Not started, 1+: In progress, 999: Complete
 
 # Resources
 var resources = {
@@ -192,7 +181,12 @@ func save_game():
 		"current_campaign_level": current_campaign_level,
 		"unlocked_blueprints": unlocked_blueprints,
 		"class_resonance": class_resonance,
-		"inventory": inventory
+		"inventory": inventory,
+		"tutorial_step": tutorial_step,
+		"ship_upgrades": ship_upgrades,
+		"seen_enemies": seen_enemies,
+		"settings": settings,
+		"quest_data": quest_data
 	}
 	
 	# Serialize Monsters
@@ -202,11 +196,6 @@ func save_game():
 			"stability": m.stability,
 			"fatigue_expiry": m.fatigue_expiry
 		}
-		# Save infusion stats if they exist on the monster object
-		if "infusion_hp" in m: m_data["infusion_hp"] = m.infusion_hp
-		if "infusion_attack" in m: m_data["infusion_attack"] = m.infusion_attack
-		if "infusion_defense" in m: m_data["infusion_defense"] = m.infusion_defense
-		if "infusion_speed" in m: m_data["infusion_speed"] = m.infusion_speed
 		save_data["monsters"].append(m_data)
 		
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -266,6 +255,21 @@ func load_game():
 		if "inventory" in save_data:
 			inventory = save_data["inventory"]
 
+		if "ship_upgrades" in save_data:
+			ship_upgrades = save_data["ship_upgrades"]
+
+		if "seen_enemies" in save_data:
+			seen_enemies = save_data["seen_enemies"]
+
+		if "settings" in save_data:
+			settings = save_data["settings"]
+
+		if "quest_data" in save_data:
+			quest_data = save_data["quest_data"]
+
+		if "tutorial_step" in save_data:
+			tutorial_step = int(save_data["tutorial_step"])
+
 		if "monsters" in save_data:
 			owned_monsters.clear()
 			for m_data in save_data["monsters"]:
@@ -282,12 +286,6 @@ func load_game():
 						
 						if "fatigue_expiry" in m_data:
 							new_m.fatigue_expiry = int(m_data["fatigue_expiry"])
-						
-						# Load infusion stats
-						if "infusion_hp" in m_data: new_m.infusion_hp = int(m_data["infusion_hp"])
-						if "infusion_attack" in m_data: new_m.infusion_attack = int(m_data["infusion_attack"])
-						if "infusion_defense" in m_data: new_m.infusion_defense = int(m_data["infusion_defense"])
-						if "infusion_speed" in m_data: new_m.infusion_speed = int(m_data["infusion_speed"])
 						
 						owned_monsters.append(new_m)
 						break
@@ -306,11 +304,15 @@ func reset_save():
 	current_campaign_level = 1
 	unlocked_blueprints.clear()
 	class_resonance.clear()
+	tutorial_step = 0
+	ship_upgrades.clear()
+	seen_enemies.clear()
 	inventory.clear()
+	quest_data = { "z": 3, "stage": 0 }
 	resources = {
-		"neutron_dust": 999999,
-		"gems": 99999,
-		"binding_energy": 999999
+		"neutron_dust": 0,
+		"gems": 10,
+		"binding_energy": 500
 	}
 	
 	# 2. Delete Save Files
@@ -328,25 +330,10 @@ func reset_save():
 		
 	var he = load("res://data/Monsters/Helium.tres")
 	var h = load("res://data/Monsters/Hydrogen.tres")
-	var li = load("res://data/Monsters/Lithium.tres")
-	var be = load("res://data/Monsters/Beryllium.tres")
-	var b = load("res://data/Monsters/Boron.tres")
-	var f = load("res://data/Monsters/Fluorine.tres")
-	var sc = load("res://data/Monsters/Scandium.tres")
-	var la = load("res://data/Monsters/Lanthanum.tres")
-	var ac = load("res://data/Monsters/Actinium.tres")
-	var al = load("res://data/Monsters/Aluminium.tres")
-		
-	if al: owned_monsters.append(al.duplicate())
-	if ac: owned_monsters.append(ac.duplicate())
-	if la: owned_monsters.append(la.duplicate())
-	if sc: owned_monsters.append(sc.duplicate())
-	if be: owned_monsters.append(be.duplicate())
-	if li: owned_monsters.append(li.duplicate())
+	
 	if h: owned_monsters.append(h.duplicate())
 	if he: owned_monsters.append(he.duplicate())
-	if b: owned_monsters.append(b.duplicate())
-	if f: owned_monsters.append(f.duplicate())
+	
 	
 	# 4. Save (creates fresh file)
 	save_game()
@@ -354,3 +341,37 @@ func reset_save():
 	
 	print("PlayerData: Save reset. Reloading scene...")
 	get_tree().reload_current_scene()
+
+func get_upgrade_level(id: String) -> int:
+	return ship_upgrades.get(id, 0)
+
+func purchase_ship_upgrade(id: String, cost: int) -> bool:
+	if spend_resource("neutron_dust", cost):
+		if not ship_upgrades.has(id): ship_upgrades[id] = 0
+		ship_upgrades[id] += 1
+		save_game()
+		return true
+	return false
+
+func mark_enemy_seen(enemy_name: String):
+	if not seen_enemies.has(enemy_name):
+		seen_enemies[enemy_name] = true
+		save_game()
+		print("PlayerData: New enemy encountered: ", enemy_name)
+
+func is_quest_claimable() -> bool:
+	var z = int(quest_data.get("z", 3))
+	var stage = int(quest_data.get("stage", 0))
+	
+	if z > 118: return false
+	
+	if stage == 0:
+		# Discovery Run: Check if blueprint unlocked
+		return z in unlocked_blueprints
+	elif stage == 1:
+		# Fusion: Check if monster owned
+		var monster = MonsterManifest.get_monster(z)
+		if monster:
+			return is_monster_owned(monster.monster_name)
+			
+	return false
