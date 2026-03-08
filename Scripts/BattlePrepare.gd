@@ -67,6 +67,12 @@ func _ready():
 			
 	_update_team_display()
 	_populate_legend()
+	
+	# Trigger tutorial check (Wait for layout to settle)
+	if TutorialManager:
+		await get_tree().process_frame
+		await get_tree().process_frame
+		TutorialManager.check_tutorial_progress()
 
 func _generate_preview_enemies() -> Array[MonsterData]:
 	if CampaignManager:
@@ -132,6 +138,14 @@ func _update_enemy_preview(enemies: Array[MonsterData]):
 			color.set_anchors_preset(Control.PRESET_FULL_RECT)
 			icon_container.add_child(color)
 		
+		var name_lbl = Label.new()
+		name_lbl.text = enemy.monster_name
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_lbl.add_theme_font_size_override("font_size", 32)
+		name_lbl.add_theme_color_override("font_color", Color("#ff4d4d")) # Red for enemies
+		name_lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+		name_lbl.add_theme_constant_override("outline_size", 4)
+		vbox.add_child(name_lbl)
 
 func _update_team_display():
 	if not team_container: return
@@ -175,6 +189,10 @@ func _update_team_display():
 		start_btn.disabled = not has_member
 	if clear_btn:
 		clear_btn.disabled = not has_member
+
+	# Tutorial Hook: Check if we can advance
+	if TutorialManager:
+		_check_tutorial_advancement()
 
 func _get_anim_frames(monster: MonsterData) -> SpriteFrames:
 	if _anim_cache.has(monster.monster_name): return _anim_cache[monster.monster_name]
@@ -222,11 +240,37 @@ func _populate_legend():
 
 func _on_team_slot_pressed(index: int):
 	_target_slot_index = index
+	
+	# Tutorial: Advance from ASSIGN steps when slot is clicked
+	if TutorialManager:
+		var step = PlayerData.tutorial_step
+		if step == TutorialManager.Step.ASSIGN_VANGUARD and index == 0:
+			TutorialManager.advance_step() # Goes to SELECT_HELIUM
+			# Note: _show_collection_selector is called below, which handles the highlight
+		elif step == TutorialManager.Step.INSPECT_HELIUM and index == 0:
+			TutorialManager.advance_step() # Goes to CLOSE_INSPECT
+		elif step == TutorialManager.Step.ASSIGN_FLANK and (index == 1 or index == 2):
+			TutorialManager.advance_step() # Goes to SELECT_HYDROGEN
+
 	var monster = PlayerData.active_team[index]
 	if monster:
 		_show_mini_detail(monster, true)
 	else:
 		_show_collection_selector()
+
+func _check_tutorial_advancement():
+	var step = PlayerData.tutorial_step
+	
+	if step == TutorialManager.Step.ASSIGN_VANGUARD:
+		# Check if Vanguard (Index 0) is filled
+		if PlayerData.active_team[0] != null:
+			# Don't advance yet, wait for specific monster check in _confirm_assignment
+			pass
+			
+	elif step == TutorialManager.Step.ASSIGN_FLANK:
+		# Check if at least one Flank (Index 1 or 2) is filled
+		if PlayerData.active_team[1] != null or PlayerData.active_team[2] != null:
+			pass
 
 func _show_collection_selector():
 	if _collection_popup_node: _collection_popup_node.queue_free()
@@ -286,6 +330,19 @@ func _show_collection_selector():
 	
 	# Populate Grid
 	for monster in PlayerData.owned_monsters:
+		# Tutorial Filtering: Only show relevant monster for the step
+		if TutorialManager:
+			var step = PlayerData.tutorial_step
+			# Force Helium for Vanguard assignment too, not just the SELECT_HELIUM step
+			if step == TutorialManager.Step.ASSIGN_VANGUARD:
+				if monster.atomic_number != 2: continue
+				
+			if step == TutorialManager.Step.SELECT_HELIUM:
+				if monster.atomic_number != 2: continue
+			elif step == TutorialManager.Step.SELECT_HYDROGEN:
+				if monster.atomic_number != 1: continue
+				# Also skip if already assigned (though active_team check handles this)
+		
 		var current_time = int(Time.get_unix_time_from_system())
 		var is_fatigued = monster.fatigue_expiry > current_time
 		
@@ -312,8 +369,9 @@ func _show_collection_selector():
 		btn_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		btn_margin.add_child(btn_vbox)
 		
+		var icon_rect = null
 		if monster.icon:
-			var icon_rect = TextureRect.new()
+			icon_rect = TextureRect.new()
 			icon_rect.texture = monster.icon
 			icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -337,6 +395,10 @@ func _show_collection_selector():
 		btn_vbox.add_child(lbl)
 		
 		if is_fatigued:
+			# Dim the visual elements, but NOT the container (so overlays stay bright)
+			if icon_rect: icon_rect.modulate = Color(0.5, 0.5, 0.5, 0.8)
+			lbl.modulate = Color(0.5, 0.5, 0.5, 0.8)
+			
 			var time_left = monster.fatigue_expiry - current_time
 			var mins = time_left / 60
 			var secs = time_left % 60
@@ -344,7 +406,9 @@ func _show_collection_selector():
 			fatigue_lbl.text = "Fatigued: %02d:%02d" % [mins, secs]
 			fatigue_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			fatigue_lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
-			fatigue_lbl.add_theme_font_size_override("font_size", 32)
+			fatigue_lbl.add_theme_font_size_override("font_size", 48)
+			fatigue_lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+			fatigue_lbl.add_theme_constant_override("outline_size", 8)
 			btn_vbox.add_child(fatigue_lbl)
 			
 		# Style
@@ -377,7 +441,8 @@ func _show_collection_selector():
 		
 		# Manual Input Handling for better scroll feel
 		if is_fatigued:
-			btn.modulate = Color(0.5, 0.5, 0.5, 0.8)
+			# Do not dim the whole button, visuals are already dimmed above
+			pass
 		else:
 			btn.gui_input.connect(func(event):
 				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -390,6 +455,42 @@ func _show_collection_selector():
 			)
 		
 		grid.add_child(btn)
+		
+		# Add Coolant Button overlay if fatigued
+		if is_fatigued:
+			var coolant_count = PlayerData.get_item_count("coolant_gel")
+			var cool_btn = Button.new()
+			cool_btn.text = "Use Coolant (%d)" % coolant_count
+			if coolant_count == 0:
+				cool_btn.text = "Buy Coolant (100 Dust)"
+				
+			cool_btn.custom_minimum_size = Vector2(0, 60)
+			cool_btn.size_flags_vertical = Control.SIZE_SHRINK_END
+			
+			var c_style = StyleBoxFlat.new()
+			c_style.bg_color = Color("#60fafc")
+			c_style.set_corner_radius_all(4)
+			cool_btn.add_theme_font_size_override("font_size", 32)
+			cool_btn.add_theme_stylebox_override("normal", c_style)
+			cool_btn.add_theme_stylebox_override("hover", c_style)
+			cool_btn.add_theme_stylebox_override("pressed", c_style)
+			cool_btn.add_theme_color_override("font_color", Color("#010813"))
+			
+			cool_btn.pressed.connect(func(): _on_use_coolant_in_prep(monster))
+			
+			# Add to the button's internal container (btn is a PanelContainer)
+			# We need to find the VBox inside btn created above
+			var internal_vbox = btn.get_child(0).get_child(0) # Margin -> VBox
+			internal_vbox.add_child(cool_btn)
+		
+		# Tutorial Highlight
+		if TutorialManager:
+			var step = PlayerData.tutorial_step
+			if step == TutorialManager.Step.SELECT_HELIUM and monster.atomic_number == 2:
+				TutorialManager.show_instruction("Select Helium. Its Noble Gas properties make it an excellent tank.", btn, "talk")
+				TutorialManager.current_target_node = btn # Ensure highlight tracks this button
+			elif step == TutorialManager.Step.SELECT_HYDROGEN and monster.atomic_number == 1:
+				TutorialManager.show_instruction("Select Hydrogen. As a Nonmetal, it can prime reactions.", btn, "talk")
 		
 	# Footer Buttons
 	var footer_style = StyleBoxFlat.new()
@@ -430,6 +531,20 @@ func _show_collection_selector():
 	_collection_popup_node.modulate.a = 0.0
 	var tween = create_tween()
 	tween.tween_property(_collection_popup_node, "modulate:a", 1.0, 0.2)
+
+func _on_use_coolant_in_prep(monster: MonsterData):
+	var count = PlayerData.get_item_count("coolant_gel")
+	if count > 0:
+		if PlayerData.consume_item("coolant_gel", 1):
+			monster.fatigue_expiry = 0
+			PlayerData.save_game()
+			_show_collection_selector() # Refresh UI
+	else:
+		# Buy logic
+		if PlayerData.spend_resource("neutron_dust", 100):
+			PlayerData.add_item("coolant_gel", 1)
+			# Auto-use after buying for convenience
+			_on_use_coolant_in_prep(monster)
 
 func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	if _selection_popup and is_instance_valid(_selection_popup): _selection_popup.queue_free()
@@ -586,6 +701,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	vbox.add_child(hbox)
 	
 	var back_btn_popup = Button.new()
+	back_btn_popup.name = "PopupBackButton"
 	back_btn_popup.text = "Back"
 	back_btn_popup.custom_minimum_size = Vector2(200, 80)
 	back_btn_popup.add_theme_font_size_override("font_size", 32)
@@ -593,8 +709,19 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	back_btn_popup.add_theme_stylebox_override("normal", footer_style)
 	back_btn_popup.add_theme_stylebox_override("hover", footer_style)
 	back_btn_popup.add_theme_stylebox_override("pressed", footer_style)
-	back_btn_popup.pressed.connect(_selection_popup.queue_free)
+	back_btn_popup.pressed.connect(func():
+		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CLOSE_INSPECT:
+			TutorialManager.advance_step()
+		_selection_popup.queue_free()
+	)
 	hbox.add_child(back_btn_popup)
+	
+	# Tutorial Highlight for Back Button
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CLOSE_INSPECT:
+		# Force the highlight immediately since we have the reference
+		TutorialManager.show_instruction("Review stats and moves here. Tap Back to continue.", back_btn_popup, "talk")
+		# Also update the manager's target so it tracks position
+		TutorialManager.current_target_node = back_btn_popup 
 	
 	if is_squad_member:
 		var remove_btn = Button.new()
@@ -673,7 +800,26 @@ func _confirm_assignment(monster: MonsterData):
 	if _selection_popup and is_instance_valid(_selection_popup): _selection_popup.queue_free()
 	if _collection_popup_node and is_instance_valid(_collection_popup_node): _collection_popup_node.queue_free()
 	
+	var tutorial_needs_update = false
+	
+	# Tutorial Advancement Logic
+	if TutorialManager and monster:
+		var step = PlayerData.tutorial_step
+		if step == TutorialManager.Step.SELECT_HELIUM and monster.atomic_number == 2:
+			# Move to Assign Flank
+			TutorialManager.advance_step()
+			tutorial_needs_update = true # Will trigger check for INSPECT_HELIUM
+		elif step == TutorialManager.Step.SELECT_HYDROGEN and monster.atomic_number == 1:
+			# Move to Intel
+			TutorialManager.advance_step()
+			tutorial_needs_update = true # Will trigger check for EXPLAIN_INTEL
+	
 	_update_team_display()
+	
+	if tutorial_needs_update:
+		# Wait for UI layout to settle so TutorialManager finds the correct new slot position
+		await get_tree().process_frame
+		TutorialManager.check_tutorial_progress()
 
 func _on_clear_team_pressed():
 	for i in range(PlayerData.active_team.size()):

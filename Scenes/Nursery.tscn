@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dir1y46pq877y" path="res://Scripts/Nursery.gd" id="1_xqppg"]
 [ext_resource type="Texture2D" uid="uid://ist0tl0il484" path="res://Images/Synthesis.png" id="2_8qu53"]
+[ext_resource type="Texture2D" uid="uid://d2k7e2ncjlh50" path="res://Assets/Gem.tres" id="2_36rvm"]
 [ext_resource type="Script" uid="uid://i8qoui2cnkcf" path="res://Scripts/FusionResultPopup.gd" id="3_5odor"]
 [ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="3_8qu53"]
 
@@ -81,6 +82,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_xqppg")
+icon_gem = ExtResource("2_36rvm")
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1314204874]
 self_modulate = Color(1, 1, 1, 0.85490197)

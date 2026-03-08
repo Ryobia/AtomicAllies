@@ -5,8 +5,11 @@
 [ext_resource type="Shader" uid="uid://ryl0qht6242f" path="res://Scenes/BlackHole.gdshader" id="3_loo7a"]
 [ext_resource type="PackedScene" uid="uid://di3fttiuef8tt" path="res://Scenes/SettingsPopup.tscn" id="4_settings"]
 [ext_resource type="PackedScene" path="res://Scenes/QuestLog.tscn" id="5_questlog"]
+[ext_resource type="PackedScene" path="res://Scenes/HelpPopup.tscn" id="6_help"]
 [ext_resource type="Texture2D" uid="uid://dslgli1r16a2t" path="res://Assets/menuicons.png" id="7_koqhg"]
+[ext_resource type="PackedScene" path="res://Scenes/ProgressPopup.tscn" id="7_progress"]
 [ext_resource type="Texture2D" uid="uid://dw1d73a004nvf" path="res://Assets/swirlmain.png" id="9_if7li"]
+[ext_resource type="Texture2D" uid="uid://0mei3erw14uq" path="res://Assets/menuassetsheet2.png" id="10_loo7a"]
 [ext_resource type="Texture2D" uid="uid://d12oglxndoyp2" path="res://Assets/swirlsecondary.png" id="10_rrcx7"]
 [ext_resource type="Shader" uid="uid://cau2cawesljrh" path="res://Scenes/core.gdshader" id="11_if7li"]
 
@@ -58,18 +61,6 @@ shader_parameter/roationSpeed = 0.1
 shader = ExtResource("11_if7li")
 shader_parameter/radius = 0.4
 shader_parameter/softness = 0.1
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
-bg_color = Color(1, 0.2, 0.2, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
 
 [sub_resource type="Animation" id="Animation_fh7cp"]
 resource_name = "Blackhole"
@@ -187,17 +178,45 @@ _data = {
 &"blackholering": SubResource("Animation_7467j")
 }
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_koqhg"]
-atlas = ExtResource("7_koqhg")
-region = Rect2(310.45483, 42.814735, 163.63635, 191.18463)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_cmrfp"]
 atlas = ExtResource("7_koqhg")
 region = Rect2(44.486877, 40.8486, 192.43427, 190.3883)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_fh7cp"]
+atlas = ExtResource("10_loo7a")
+region = Rect2(45.000046, 545.6184, 193.97374, 187.81586)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8e205"]
+atlas = ExtResource("7_koqhg")
+region = Rect2(543.2176, 285.75424, 187.87518, 200.59818)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_koqhg"]
+atlas = ExtResource("7_koqhg")
+region = Rect2(310.45483, 42.814735, 163.63635, 191.18463)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_if7li"]
+atlas = ExtResource("10_loo7a")
+region = Rect2(46.42711, 42.32054, 188.1392, 187.51828)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_loo7a"]
 atlas = ExtResource("7_koqhg")
 region = Rect2(547.3638, 39.64835, 185.66992, 190.335)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_badge"]
+bg_color = Color(1, 0.2, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rrcx7"]
+atlas = ExtResource("10_loo7a")
+region = Rect2(294.24426, 41.78813, 190.83398, 187.82874)
 
 [node name="MainMenu" type="Control" unique_id=167432749]
 layout_mode = 3
@@ -300,21 +319,8 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 24
 text = "RESET"
 
-[node name="CodexButton" type="TextureButton" parent="." unique_id=1242320120]
-custom_minimum_size = Vector2(30, 0)
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -50.0
-offset_right = 100.0
-offset_bottom = 50.0
-grow_vertical = 2
-texture_normal = SubResource("AtlasTexture_koqhg")
-ignore_texture_size = true
-stretch_mode = 0
-
 [node name="SettingsButton" type="TextureButton" parent="." unique_id=2098183573]
+custom_minimum_size = Vector2(150, 150)
 layout_mode = 0
 offset_left = 30.0
 offset_top = 30.0
@@ -324,23 +330,100 @@ texture_normal = SubResource("AtlasTexture_cmrfp")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="QuestButton" type="TextureButton" parent="." unique_id=2098183574]
+[node name="QuestLog" parent="." unique_id=2081973020 instance=ExtResource("5_questlog")]
+visible = false
+z_index = 10
+custom_minimum_size = Vector2(700, 400)
 layout_mode = 1
-anchors_preset = 6
+offset_left = -350.0
+offset_top = -206.5
+offset_right = 350.0
+offset_bottom = 206.5
+icon_discovery = SubResource("AtlasTexture_fh7cp")
+icon_fusion = SubResource("AtlasTexture_8e205")
+
+[node name="SettingsPopup" parent="." unique_id=1959082954 instance=ExtResource("4_settings")]
+visible = false
+z_index = 10
+layout_mode = 0
+anchors_preset = 0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 500.0
+offset_bottom = 400.0
+grow_horizontal = 1
+grow_vertical = 1
+
+[node name="HelpPopup" parent="." unique_id=794262298 instance=ExtResource("6_help")]
+visible = false
+z_index = 10
+layout_mode = 1
+
+[node name="ProgressPopup" parent="." unique_id=267457677 instance=ExtResource("7_progress")]
+visible = false
+z_index = 10
+custom_minimum_size = Vector2(700, 1200)
+layout_mode = 1
+offset_left = -250.0
+offset_top = -293.5
+offset_right = 250.0
+offset_bottom = 293.5
+
+[node name="VBoxLeft" type="VBoxContainer" parent="." unique_id=1932156234]
+custom_minimum_size = Vector2(0, 800)
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 30.0
+offset_top = -400.0
+offset_right = 180.0
+offset_bottom = 400.0
+grow_vertical = 2
+theme_override_constants/separation = 50
+
+[node name="CodexButton" type="TextureButton" parent="VBoxLeft" unique_id=1242320120]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+texture_normal = SubResource("AtlasTexture_koqhg")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="HelpButton" type="TextureButton" parent="VBoxLeft" unique_id=617180160]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+texture_normal = SubResource("AtlasTexture_if7li")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="VBoxRight" type="VBoxContainer" parent="." unique_id=1850190476]
+custom_minimum_size = Vector2(0, 800)
+layout_mode = 1
+anchors_preset = -1
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -50.0
-offset_bottom = 50.0
+offset_left = -150.0
+offset_top = -400.0
+offset_right = -30.0
+offset_bottom = 400.0
 grow_horizontal = 0
 grow_vertical = 2
+theme_override_constants/separation = 50
+
+[node name="QuestButton" type="TextureButton" parent="VBoxRight" unique_id=2098183574]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
 texture_normal = SubResource("AtlasTexture_loo7a")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="NotificationBadge" type="Panel" parent="QuestButton"]
+[node name="NotificationBadge" type="Panel" parent="VBoxRight/QuestButton" unique_id=447568217]
 visible = false
 layout_mode = 1
 anchors_preset = 1
@@ -354,7 +437,7 @@ grow_horizontal = 0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_badge")
 
-[node name="Label" type="Label" parent="QuestButton/NotificationBadge"]
+[node name="Label" type="Label" parent="VBoxRight/QuestButton/NotificationBadge" unique_id=1997427320]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -367,21 +450,10 @@ text = "!"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="QuestLog" parent="." unique_id=2081973020 instance=ExtResource("5_questlog")]
-visible = false
-layout_mode = 1
-
-[node name="SettingsPopup" parent="." unique_id=1959082954 instance=ExtResource("4_settings")]
-visible = false
-layout_mode = 0
-anchors_preset = 0
-anchor_left = 0.0
-anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 500.0
-offset_bottom = 400.0
-grow_horizontal = 1
-grow_vertical = 1
+[node name="ProgressButton" type="TextureButton" parent="VBoxRight" unique_id=2108921700]
+clip_contents = true
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+texture_normal = SubResource("AtlasTexture_rrcx7")
+ignore_texture_size = true
+stretch_mode = 0

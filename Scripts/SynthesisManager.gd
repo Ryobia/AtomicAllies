@@ -110,6 +110,10 @@ func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bon
 		var speed_level = PlayerData.get_upgrade_level("fusion_speed")
 		base_duration *= (1.0 - (speed_level * 0.10))
 	
+	# Tutorial Override: 30 seconds for the first fusion
+	if TutorialManager and PlayerData and PlayerData.tutorial_step == TutorialManager.Step.CLICK_FUSE:
+		base_duration = 30.0
+	
 	var duration = int(max(0, base_duration))
 	var finish_time = int(Time.get_unix_time_from_system()) + duration
 	

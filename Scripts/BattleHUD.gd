@@ -1179,3 +1179,8 @@ func show_stat_popup(unit: BattleMonster):
 	
 	if _stat_popup_instance.has_method("setup"):
 		_stat_popup_instance.setup(unit)
+		
+	_stat_popup_instance.tree_exited.connect(func():
+		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CLOSE_INSPECT_ENEMY:
+			TutorialManager.advance_step() # To BATTLE_RESUME
+	)

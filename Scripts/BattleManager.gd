@@ -27,6 +27,7 @@ var current_acting_unit: BattleMonster = null
 var selected_move: MoveData = null
 var selected_item_id: String = ""
 var roster_hp_cache: Dictionary = {} # MonsterData -> int (HP)
+var tutorial_paused: bool = false
 
 # --- Signals for UI Decoupling ---
 signal log_event(text)
@@ -91,6 +92,13 @@ func _ready():
 
 func _process(delta):
 	if current_state == BattleState.COUNTING:
+		# Resume from tutorial pause if step advanced
+		if tutorial_paused:
+			if TutorialManager and PlayerData.tutorial_step >= TutorialManager.Step.BATTLE_RESUME:
+				tutorial_paused = false
+				resume_battle()
+			return # Skip ATB processing while paused
+			
 		process_atb(delta)
 
 func process_atb(delta):
@@ -228,6 +236,12 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 		for i in range(active_enemy_monsters.size()):
 			var unit = active_enemy_monsters[i]
 			hud_update_hp.emit(false, i, unit.current_hp, unit.max_hp)
+
+	# Tutorial Hook: Start Battle Tutorial
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.START_BATTLE:
+		# Advance from START_BATTLE (12) to BATTLE_INTRO (13)
+		TutorialManager.advance_step()
+		# Note: TutorialManager will handle the rest via advance_step calls
 
 	# Start the clock
 	current_state = BattleState.COUNTING
@@ -501,6 +515,10 @@ func _on_action_selected(action_type):
 		
 		if battle_hud:
 			battle_hud.show_moves(moves)
+			
+		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_ATTACK:
+			TutorialManager.advance_step() # To SELECT_MOVE
+			
 	elif action_type == "swap":
 		var can_swap = false
 		for m in benched_player_monsters:
@@ -581,8 +599,12 @@ func _on_move_selected(move: MoveData):
 	
 	# Show move details and enable targeting mode on the HUD
 	battle_hud.show_move_details(move)
-	battle_hud.set_targeting_mode(true, valid_targets, target_allies)
+	battle_hud.set_targeting_mode(true, valid_targets, target_allies or move.target_type == MoveData.TargetType.SELF)
 	log_event.emit("Select a target for %s..." % move.name)
+	
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_MOVE:
+		if move.name == "Electronegativity":
+			TutorialManager.advance_step() # To EXPLAIN_TARGETING
 
 func _on_item_selected(item_id: String):
 	if current_state != BattleState.ACTION_SELECTION: return
@@ -681,6 +703,10 @@ func _on_target_selected(index: int):
 
 	battle_hud.set_targeting_mode(false)
 	if battle_hud and battle_hud.move_container: battle_hud.move_container.visible = false
+	
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.EXPLAIN_TARGETING:
+		TutorialManager.advance_step() # To INSPECT_ENEMY
+	
 	perform_move(current_acting_unit, defender, selected_move)
 
 func _on_swap_selected(index: int):
@@ -710,6 +736,9 @@ func _on_inspect_unit(index: int, is_player: bool):
 			
 	if unit and battle_hud:
 		battle_hud.show_stat_popup(unit)
+
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.INSPECT_ENEMY:
+		TutorialManager.advance_step() # To CLOSE_INSPECT_ENEMY
 
 func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index: int):
 	current_state = BattleState.EXECUTING
@@ -1037,6 +1066,9 @@ func perform_item(user: BattleMonster, target: BattleMonster, item_id: String):
 	PlayerData.consume_item(item_id, 1)
 	_check_shield_update(target)
 	
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.EXPLAIN_TARGETING:
+		TutorialManager.advance_step() # To INSPECT_ENEMY
+		
 	await get_tree().create_timer(2.0).timeout
 	end_turn()
 
@@ -1054,7 +1086,18 @@ func end_turn():
 	current_acting_unit = null
 	selected_move = null
 	
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.INSPECT_ENEMY:
+		tutorial_paused = true
+		current_state = BattleState.COUNTING # Ensure _process runs to check for resume
+		return # Pause here for inspection tutorial
+	
 	# Go back to counting or process next in queue
+	if turn_queue.is_empty():
+		current_state = BattleState.COUNTING
+	else:
+		start_turn()
+
+func resume_battle():
 	if turn_queue.is_empty():
 		current_state = BattleState.COUNTING
 	else:

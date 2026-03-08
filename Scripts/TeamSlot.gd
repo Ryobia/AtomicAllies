@@ -12,6 +12,9 @@ func setup(monster: MonsterData, team_idx: int, is_selection_mode: bool, anim_fr
 	for child in sprite_center.get_children():
 		child.queue_free()
 	
+	# Always setup role label so it's visible even when empty
+	_setup_role_label(team_idx)
+	
 	if monster:
 		# --- Monster State ---
 		flat = false
@@ -38,9 +41,6 @@ func setup(monster: MonsterData, team_idx: int, is_selection_mode: bool, anim_fr
 		add_theme_stylebox_override("normal", style)
 		add_theme_stylebox_override("hover", style)
 		add_theme_stylebox_override("pressed", style)
-		
-		# Role Label
-		_setup_role_label(team_idx)
 		
 		# Name Label
 		name_label.text = "%s" % [monster.monster_name]
@@ -77,9 +77,12 @@ func setup(monster: MonsterData, team_idx: int, is_selection_mode: bool, anim_fr
 		remove_theme_stylebox_override("hover")
 		remove_theme_stylebox_override("pressed")
 		
-		labels_container.visible = false
+		labels_container.visible = true
+		name_label.text = "" # Hide name, keep role
 		empty_label.visible = true
 		empty_label.text = "Tap to Select"
+		empty_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		
 		
 func _setup_role_label(team_idx: int):

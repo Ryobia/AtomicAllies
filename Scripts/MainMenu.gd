@@ -53,6 +53,19 @@ func _ready():
 	if settings_btn and settings_popup:
 		settings_btn.pressed.connect(func(): settings_popup.visible = true)
 
+	# Help Button
+	var help_btn = find_child("HelpButton", true, false)
+	var help_popup = find_child("HelpPopup", true, false)
+	
+	if help_btn and help_popup:
+		help_btn.pressed.connect(func(): help_popup.visible = true)
+
+	# Progress Button
+	var progress_btn = find_child("ProgressButton", true, false)
+	var progress_popup = find_child("ProgressPopup", true, false)
+	if progress_btn and progress_popup:
+		progress_btn.pressed.connect(func(): progress_popup.visible = true)
+
 	# Quest Button
 	var quest_btn = find_child("QuestButton", true, false)
 	var quest_log = find_child("QuestLog", true, false)
@@ -63,6 +76,10 @@ func _ready():
 		quest_log.visibility_changed.connect(_update_quest_badge)
 		
 	_update_quest_badge()
+
+	# Trigger tutorial check
+	if TutorialManager:
+		TutorialManager.check_tutorial_progress()
 
 func _update_quest_badge():
 	var badge = find_child("NotificationBadge", true, false)

@@ -1,5 +1,7 @@
 extends Control
 
+@export var icon_gem: Texture2D
+
 var chambers_grid # Container for the 4 synthesis chambers
 
 var dissolve_popup
@@ -172,7 +174,10 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 			_start_bobbing_tween(sprite)
 			
 			var speed_btn = Button.new()
-			speed_btn.text = "Speed Up (1 Gem)"
+			speed_btn.text = "Speed Up (1)"
+			if icon_gem:
+				speed_btn.icon = icon_gem
+				speed_btn.expand_icon = true
 			speed_btn.custom_minimum_size = Vector2(0, 40)
 			
 			var spd_style = StyleBoxFlat.new()
@@ -224,12 +229,14 @@ func _on_unlock_pressed(index):
 		pass
 
 func _on_speed_up_pressed(index):
-	if PlayerData.spend_resource("gems", 1):
-		var chamber = PlayerData.synthesis_chambers[index]
-		if chamber.capsule:
-			chamber.capsule["finish_time"] = int(Time.get_unix_time_from_system())
-			PlayerData.save_game()
-			update_ui()
+	_show_gem_confirmation("Speed Up Synthesis", 1, func():
+		if PlayerData.spend_resource("gems", 1):
+			var chamber = PlayerData.synthesis_chambers[index]
+			if chamber.capsule:
+				chamber.capsule["finish_time"] = int(Time.get_unix_time_from_system())
+				PlayerData.save_game()
+				update_ui()
+	)
 
 func _on_stabilize_pressed(index):
 	var capsule = PlayerData.synthesis_chambers[index]["capsule"]
@@ -334,3 +341,51 @@ func _start_bobbing_tween(node: Node2D):
 	tween.set_loops()
 	tween.tween_property(node, "position:y", start_y - 10, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(node, "position:y", start_y, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable):
+	var popup = PanelContainer.new()
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.custom_minimum_size = Vector2(500, 300)
+	popup.z_index = 100
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	popup.add_theme_stylebox_override("panel", style)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 20)
+	popup.add_child(vbox)
+	
+	var lbl = Label.new()
+	lbl.text = "Spend %d Gem(s) to %s?" % [cost, action_name]
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.add_theme_font_size_override("font_size", 32)
+	vbox.add_child(lbl)
+	
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 20)
+	vbox.add_child(hbox)
+	
+	var confirm_btn = Button.new()
+	confirm_btn.text = "Confirm"
+	confirm_btn.custom_minimum_size = Vector2(150, 60)
+	confirm_btn.pressed.connect(func():
+		on_confirm.call()
+		popup.queue_free()
+	)
+	hbox.add_child(confirm_btn)
+	
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.custom_minimum_size = Vector2(150, 60)
+	cancel_btn.pressed.connect(popup.queue_free)
+	hbox.add_child(cancel_btn)
+	
+	add_child(popup)
+	popup.position = (get_viewport_rect().size - popup.custom_minimum_size) / 2

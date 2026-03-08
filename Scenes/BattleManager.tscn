@@ -119,11 +119,13 @@ grow_horizontal = 2
 
 [node name="EnemyRow" type="HBoxContainer" parent="BattleHUD/Theater" unique_id=1783936866]
 layout_mode = 2
+size_flags_horizontal = 4
 size_flags_vertical = 3
 theme_override_constants/separation = 20
 alignment = 1
 
 [node name="Enemy1" type="VBoxContainer" parent="BattleHUD/Theater/EnemyRow" unique_id=803714756]
+custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 alignment = 1
@@ -201,6 +203,7 @@ custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
 [node name="Enemy2" type="VBoxContainer" parent="BattleHUD/Theater/EnemyRow" unique_id=814047354]
+custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 alignment = 1
@@ -289,6 +292,7 @@ custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
 [node name="Enemy3" type="VBoxContainer" parent="BattleHUD/Theater/EnemyRow" unique_id=233960037]
+custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 alignment = 1
@@ -370,12 +374,13 @@ size_flags_vertical = 3
 
 [node name="PlayerRow" type="HBoxContainer" parent="BattleHUD/Theater" unique_id=1831997512]
 layout_mode = 2
+size_flags_horizontal = 4
 size_flags_vertical = 3
 theme_override_constants/separation = 20
 alignment = 1
 
 [node name="PlayerSlot1" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=1940847232]
-custom_minimum_size = Vector2(150, 150)
+custom_minimum_size = Vector2(340, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 expand_mode = 1
@@ -406,7 +411,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="PlayerSlot2" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=1169970424]
-custom_minimum_size = Vector2(150, 150)
+custom_minimum_size = Vector2(340, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 expand_mode = 1
@@ -437,7 +442,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="PlayerSlot3" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=2038432426]
-custom_minimum_size = Vector2(150, 150)
+custom_minimum_size = Vector2(340, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 expand_mode = 1

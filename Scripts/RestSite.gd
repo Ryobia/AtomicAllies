@@ -15,6 +15,7 @@ var monster_card_scene = preload("res://Scenes/TeamSlot.tscn") # Reusing TeamSlo
 var _anim_cache: Dictionary = {} # Cache loaded animations
 var _selected_swap_index: int = -1
 var _loot_container: HBoxContainer
+var _reward_selection_container: Control
 
 func _ready():
 	if retreat_btn: retreat_btn.pressed.connect(_on_retreat_pressed)
@@ -29,6 +30,15 @@ func _ready():
 	if title_label and CampaignManager:
 		title_label.text = "Rest Site - Wave %d Complete" % (CampaignManager.current_run_wave - 1)
 	_update_loot_label()
+	
+	# Find the container added in the editor
+	_reward_selection_container = find_child("RewardContainer", true, false)
+	
+	_setup_reward_selection()
+	
+	# Trigger tutorial check
+	if TutorialManager:
+		TutorialManager.check_tutorial_progress()
 
 func _on_retreat_pressed():
 	if CampaignManager:
@@ -43,6 +53,9 @@ func _on_retreat_pressed():
 	GlobalManager.switch_scene("main_menu")
 
 func _on_continue_pressed():
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CONTINUE_RUN:
+		TutorialManager.advance_step() # To COMPLETE_RUN (Wait for run finish)
+		
 	if CampaignManager:
 		CampaignManager.start_next_wave()
 
@@ -239,14 +252,16 @@ func _heal_monster(monster: MonsterData, cost: int):
 	_populate_monster_grid([monster])
 
 func _revive_monster(monster: MonsterData):
-	if PlayerData.spend_resource("gems", PlayerData.REVIVE_COST):
-		if CampaignManager:
-			var max_hp = monster.get_current_stats().max_hp
-			CampaignManager.run_team_state[monster] = max_hp
-			print("Rest Site: Revived ", monster.monster_name)
-		_populate_monster_grid([monster])
-	else:
-		if title_label: title_label.text = "Not enough Gems!"
+	_show_gem_confirmation("Revive Unit", PlayerData.REVIVE_COST, func():
+		if PlayerData.spend_resource("gems", PlayerData.REVIVE_COST):
+			if CampaignManager:
+				var max_hp = monster.get_current_stats().max_hp
+				CampaignManager.run_team_state[monster] = max_hp
+				print("Rest Site: Revived ", monster.monster_name)
+			_populate_monster_grid([monster])
+		else:
+			if title_label: title_label.text = "Not enough Gems!"
+	)
 
 func _update_loot_label():
 	if not loot_label or not CampaignManager: return
@@ -255,6 +270,7 @@ func _update_loot_label():
 	
 	if not _loot_container:
 		_loot_container = HBoxContainer.new()
+		_loot_container.name = "LootContainer"
 		_loot_container.alignment = BoxContainer.ALIGNMENT_CENTER
 		_loot_container.add_theme_constant_override("separation", 20)
 		
@@ -332,3 +348,170 @@ func _flash_slot(slot: Control):
 	var tween = create_tween()
 	tween.tween_property(slot, "modulate", Color(0.5, 1.5, 0.5), 0.2) # Bright green
 	tween.tween_property(slot, "modulate", Color.WHITE, 0.3)
+
+func _setup_reward_selection():
+	if not _reward_selection_container:
+	
+		print("RestSite Error: RewardContainer not found.")
+		return
+		
+	_reward_selection_container.visible = true
+	
+	# Clear any placeholder children
+	for child in _reward_selection_container.get_children():
+		child.queue_free()
+	
+	# Options Container
+	var options_hbox = HBoxContainer.new()
+	options_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	options_hbox.add_theme_constant_override("separation", 30)
+	options_hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_reward_selection_container.add_child(options_hbox)
+	
+	var rewards = _generate_rewards()
+	
+	for reward in rewards:
+		var btn = Button.new()
+		btn.custom_minimum_size = Vector2(280, 350)
+		
+		var btn_style = StyleBoxFlat.new()
+		btn_style.bg_color = Color("#010813")
+		btn_style.border_color = Color("#60fafc")
+		btn_style.set_border_width_all(3)
+		btn_style.set_corner_radius_all(12)
+		btn.add_theme_stylebox_override("normal", btn_style)
+		
+		var hover_style = btn_style.duplicate()
+		hover_style.bg_color = Color("#0a1a2a")
+		hover_style.border_color = Color("#ffd700") # Gold on hover
+		btn.add_theme_stylebox_override("hover", hover_style)
+		btn.add_theme_stylebox_override("pressed", hover_style)
+		
+		var margin = MarginContainer.new()
+		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.add_theme_constant_override("margin_left", 15)
+		margin.add_theme_constant_override("margin_right", 15)
+		margin.add_theme_constant_override("margin_top", 15)
+		margin.add_theme_constant_override("margin_bottom", 15)
+		btn.add_child(margin)
+		
+		var vbox = VBoxContainer.new()
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		margin.add_child(vbox)
+		
+		var lbl = Label.new()
+		lbl.text = reward.name
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl.add_theme_font_size_override("font_size", 42)
+		lbl.add_theme_color_override("font_color", Color("#60fafc"))
+		lbl.add_theme_constant_override("outline_size", 4)
+		lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+		vbox.add_child(lbl)
+		
+		var desc = Label.new()
+		desc.text = reward.desc
+		desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.add_theme_font_size_override("font_size", 28)
+		desc.add_theme_color_override("font_color", Color("#e0e0e0"))
+		vbox.add_child(desc)
+		
+		btn.pressed.connect(func(): _select_reward(reward))
+		options_hbox.add_child(btn)
+
+func _generate_rewards() -> Array:
+	var pool = [
+		{ "type": "resource", "id": "neutron_dust", "amount": 200, "name": "Dust Cache", "desc": "+200 Neutron Dust" },
+		{ "type": "resource", "id": "binding_energy", "amount": 100, "name": "Energy Cell", "desc": "+100 Binding Energy" },
+		{ "type": "item", "id": "repair_nanites", "amount": 1, "name": "Nanites", "desc": "Get 1 Repair Nanite" },
+		{ "type": "item", "id": "adrenaline_shot", "amount": 1, "name": "Adrenaline", "desc": "Get 1 Adrenaline Shot" },
+		{ "type": "heal", "amount": 0.3, "name": "Field Repairs", "desc": "Heal Team 30%" },
+		{ "type": "item", "id": "coolant_gel", "amount": 1, "name": "Coolant Gel", "desc": "Get 1 Coolant Gel" },
+	]
+	
+	pool.shuffle()
+	return pool.slice(0, 3)
+
+func _select_reward(reward: Dictionary):
+	if reward.type == "resource":
+		if CampaignManager:
+			if reward.id == "neutron_dust": CampaignManager.current_run_dust += reward.amount
+			elif reward.id == "binding_energy": CampaignManager.current_run_energy += reward.amount
+			elif reward.id == "gems": CampaignManager.current_run_gems += reward.amount
+	elif reward.type == "item":
+		PlayerData.add_item(reward.id, reward.amount)
+	elif reward.type == "heal":
+		var roster = PlayerData.active_team
+		if roster.is_empty(): roster = PlayerData.owned_monsters
+		for m in roster:
+			if m:
+				var max_hp = m.get_current_stats().max_hp
+				var current = max_hp
+				if CampaignManager and CampaignManager.run_team_state.has(m):
+					current = CampaignManager.run_team_state[m]
+				
+				if current > 0: # Don't revive
+					var heal_amt = int(max_hp * reward.amount)
+					var new_hp = min(max_hp, current + heal_amt)
+					if CampaignManager:
+						CampaignManager.run_team_state[m] = new_hp
+		_populate_monster_grid()
+
+	_update_loot_label()
+	
+	# Hide selection
+	if _reward_selection_container:
+		_reward_selection_container.visible = false
+		
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_REWARD:
+		TutorialManager.advance_step() # To EXPLAIN_HEAL
+
+func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable):
+	var popup = PanelContainer.new()
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.custom_minimum_size = Vector2(500, 300)
+	popup.z_index = 100
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	popup.add_theme_stylebox_override("panel", style)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 20)
+	popup.add_child(vbox)
+	
+	var lbl = Label.new()
+	lbl.text = "Spend %d Gem(s) to %s?" % [cost, action_name]
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.add_theme_font_size_override("font_size", 32)
+	vbox.add_child(lbl)
+	
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 20)
+	vbox.add_child(hbox)
+	
+	var confirm_btn = Button.new()
+	confirm_btn.text = "Confirm"
+	confirm_btn.custom_minimum_size = Vector2(150, 60)
+	confirm_btn.pressed.connect(func():
+		on_confirm.call()
+		popup.queue_free()
+	)
+	hbox.add_child(confirm_btn)
+	
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.custom_minimum_size = Vector2(150, 60)
+	cancel_btn.pressed.connect(popup.queue_free)
+	hbox.add_child(cancel_btn)
+	
+	add_child(popup)
+	popup.position = (get_viewport_rect().size - popup.custom_minimum_size) / 2

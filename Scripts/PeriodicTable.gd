@@ -143,6 +143,9 @@ func _populate_table(grid: GridContainer):
 	grid.queue_redraw()
 	# Clear lookup to free memory
 	_owned_lookup.clear()
+	
+	if TutorialManager:
+		TutorialManager.check_tutorial_progress()
 
 func _add_card(grid: Container, z: int):
 	if not monster_card_scene: return
@@ -469,9 +472,18 @@ func _show_run_dialog(z: int, monster: MonsterData, has_blueprint: bool):
 				icon_rect.visible = false
 		_run_popup.visible = true
 		_run_popup.move_to_front()
+		
+		# Tutorial Hook: Advance if Lithium selected
+		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_LITHIUM and z == 3:
+			TutorialManager.advance_step()
 
 func _on_start_run_confirmed():
 	if _run_popup: _run_popup.visible = false
+	
+	# Tutorial Hook: Advance if Run Confirmed
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CONFIRM_RUN:
+		TutorialManager.advance_step()
+		
 	if CampaignManager:
 		CampaignManager.start_node_run(_selected_run_z)
 

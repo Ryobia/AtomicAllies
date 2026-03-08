@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 var _notify_timer: float = 0.0
+var _current_scene_key: String = ""
 
 func _ready():
 	# Connect to GlobalManager to listen for scene changes
@@ -23,6 +24,7 @@ func _process(delta):
 	if _notify_timer >= 1.0:
 		_notify_timer = 0.0
 		_update_notifications()
+		_update_tutorial_highlights()
 
 func _connect_btn(btn_name: String, scene_key: String):
 	var btn = find_child(btn_name, true, false)
@@ -38,6 +40,7 @@ func _on_nav_pressed(scene_key: String):
 	GlobalManager.switch_scene(scene_key)
 
 func _on_scene_changed(scene_key: String):
+	_current_scene_key = scene_key
 	# Logic to hide the bar in specific scenes (like Battle)
 	if scene_key == "battle" or scene_key == "battle_prepare" or scene_key == "detail_view" or scene_key == "rest_site":
 		visible = false
@@ -104,3 +107,30 @@ func _update_notifications():
 			badge.visible = true
 		else:
 			if badge: badge.visible = false
+
+func _update_tutorial_highlights():
+	if not PlayerData or not TutorialManager: return
+	
+	var nexus_btn = find_child("NexusButton", true, false)
+	if nexus_btn:
+		if PlayerData.tutorial_step == TutorialManager.Step.GO_TO_NEXUS:
+			_start_pulse(nexus_btn)
+		else:
+			_stop_pulse(nexus_btn)
+
+func _start_pulse(btn: Control):
+	if btn.has_meta("pulse_tween"): return
+	
+	var tween = create_tween()
+	tween.set_loops()
+	tween.tween_property(btn, "modulate", Color(1.5, 1.5, 1.5), 0.5)
+	tween.tween_property(btn, "modulate", Color.WHITE, 0.5)
+	btn.set_meta("pulse_tween", tween)
+
+func _stop_pulse(btn: Control):
+	if btn.has_meta("pulse_tween"):
+		var t = btn.get_meta("pulse_tween")
+		if t and t.is_valid(): t.kill()
+		btn.remove_meta("pulse_tween")
+		# Restore correct state (highlighted or normal)
+		_update_highlights(_current_scene_key)

@@ -723,7 +723,12 @@ func _on_fusion_completed(target_z: int, success: bool, reward: int):
 			PlayerData.pending_egg = result_monster
 			
 			# Start the timer (10 seconds for testing)
-			TimeManager.start_timer("breeding", 10)
+			var duration = 10
+			# Tutorial Override: Match the 30s override in SynthesisManager
+			if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.GO_TO_NURSERY:
+				duration = 30
+				
+			TimeManager.start_timer("breeding", duration)
 			
 			status_label.text = "Fusion started! Creating Element #%d..." % target_z
 			breed_btn.disabled = true

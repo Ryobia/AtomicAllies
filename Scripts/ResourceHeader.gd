@@ -38,7 +38,7 @@ func _on_resource_updated(type: String, amount: float):
 
 func _on_scene_changed(scene_key: String):
 	# Hide header in battle, show everywhere else
-	if scene_key == "battle" or scene_key == "battle_prepare" or scene_key == "rest_site":
+	if scene_key == "battle" or scene_key == "rest_site":
 		visible = false
 	else:
 		visible = true
