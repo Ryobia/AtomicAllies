@@ -53,28 +53,28 @@ columns = 4
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 
 [node name="DefenseLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=911392613]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 
 [node name="AttackLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=903148752]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 
 [node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=864772590]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 
 [node name="EffectsContainer" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=548254339]

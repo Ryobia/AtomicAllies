@@ -438,6 +438,19 @@ func _setup_reward_selection():
 		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 		margin.add_child(vbox)
 		
+		if reward.get("is_rare", false):
+			btn_style.border_color = Color("#ffd700") # Gold
+			btn_style.set_border_width_all(5)
+			hover_style.border_color = Color("#ffffff") # White hover for rare
+			hover_style.set_border_width_all(5)
+			
+			var rare_lbl = Label.new()
+			rare_lbl.text = "HIGH VALUE"
+			rare_lbl.add_theme_font_size_override("font_size", 24)
+			rare_lbl.add_theme_color_override("font_color", Color("#ffd700"))
+			rare_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			vbox.add_child(rare_lbl)
+		
 		var lbl = Label.new()
 		lbl.text = reward.name
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -460,17 +473,43 @@ func _setup_reward_selection():
 		options_hbox.add_child(btn)
 
 func _generate_rewards() -> Array:
+	var energy_amount = 100
+	if CampaignManager:
+		var z = 3
+		if "current_run_target_z" in CampaignManager:
+			z = CampaignManager.current_run_target_z
+		# Scale Binding Energy: Base 100 + (Z * 10) + (Wave * 20)
+		energy_amount = 100 + (z * 10) + (CampaignManager.current_run_wave * 20)
+
 	var pool = [
-		{ "type": "resource", "id": "neutron_dust", "amount": 200, "name": "Dust Cache", "desc": "+200 Neutron Dust" },
-		{ "type": "resource", "id": "binding_energy", "amount": 100, "name": "Energy Cell", "desc": "+100 Binding Energy" },
-		{ "type": "item", "id": "repair_nanites", "amount": 1, "name": "Nanites", "desc": "Get 1 Repair Nanite" },
-		{ "type": "item", "id": "adrenaline_shot", "amount": 1, "name": "Adrenaline", "desc": "Get 1 Adrenaline Shot" },
-		{ "type": "heal", "amount": 0.3, "name": "Field Repairs", "desc": "Heal Team 30%" },
-		{ "type": "item", "id": "coolant_gel", "amount": 1, "name": "Coolant Gel", "desc": "Get 1 Coolant Gel" },
+		{ "type": "resource", "id": "neutron_dust", "amount": 200, "name": "Dust Cache", "desc": "+200 Neutron Dust", "weight": 30.0 },
+		{ "type": "resource", "id": "binding_energy", "amount": energy_amount, "name": "Energy Cell", "desc": "+%d Binding Energy" % energy_amount, "weight": 30.0 },
+		{ "type": "resource", "id": "gems", "amount": 1, "name": "Gem Geode", "desc": "+1 Gem", "weight": 5.0, "is_rare": true },
+		{ "type": "item", "id": "repair_nanites", "amount": 1, "name": "Nanites", "desc": "Get 1 Repair Nanite", "weight": 20.0 },
+		{ "type": "item", "id": "adrenaline_shot", "amount": 1, "name": "Adrenaline", "desc": "Get 1 Adrenaline Shot", "weight": 20.0 },
+		{ "type": "item", "id": "coolant_gel", "amount": 1, "name": "Coolant Gel", "desc": "Get 1 Coolant Gel", "weight": 20.0 },
 	]
 	
-	pool.shuffle()
-	return pool.slice(0, 3)
+	var selected = []
+	
+	# Weighted selection for 3 unique rewards
+	for i in range(3):
+		if pool.is_empty(): break
+		
+		var total_weight = 0.0
+		for r in pool: total_weight += r.weight
+		
+		var roll = randf() * total_weight
+		var accum = 0.0
+		
+		for k in range(pool.size()):
+			accum += pool[k].weight
+			if roll <= accum:
+				selected.append(pool[k])
+				pool.remove_at(k)
+				break
+				
+	return selected
 
 func _select_reward(reward: Dictionary):
 	if reward.type == "resource":

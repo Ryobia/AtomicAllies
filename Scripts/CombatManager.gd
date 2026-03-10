@@ -32,32 +32,42 @@ func apply_item_effect(target: BattleMonster, item_id: String):
 
 # Retrieves moves for a monster, falling back to Group Defaults if necessary
 func get_active_moves(monster: MonsterData) -> Array:
-	if not monster.moves.is_empty():
-		return monster.moves
-	
-	# Fallback to AtomicConfig defaults
 	var moves: Array = []
-	if "group" in monster:
+	
+	# 1. Unique Signature Move (Based on Atomic Number)
+	if AtomicConfig.UNIQUE_MOVES.has(monster.atomic_number):
+		var def = AtomicConfig.UNIQUE_MOVES[monster.atomic_number]
+		moves.append(_create_move_from_dict(def))
+	
+	# 2. Add Custom/Group Moves
+	if not monster.moves.is_empty():
+		# If specific moves are assigned in Inspector, use those
+		moves.append_array(monster.moves)
+	elif "group" in monster:
+		# Fallback to Group defaults
 		var defaults = AtomicConfig.GROUP_MOVES.get(monster.group, [])
 		for def in defaults:
-			# Convert Dictionary to MoveData resource on the fly
-			var m = MoveData.new()
-			m.name = def.name
-			m.power = def.get("power", 0)
-			m.accuracy = def.get("accuracy", 100)
-			m.type = def.get("type", "Physical")
-			m.description = def.get("description", "")
-			m.is_snipe = def.get("is_snipe", false)
-			
-			var t_str = def.get("target_type", "Enemy")
-			match t_str:
-				"Self": m.target_type = MoveData.TargetType.SELF
-				"Ally": m.target_type = MoveData.TargetType.ALLY
-				_: m.target_type = MoveData.TargetType.ENEMY
-				
-			moves.append(m)
+			moves.append(_create_move_from_dict(def))
 	
 	return moves
+
+func _create_move_from_dict(def: Dictionary) -> MoveData:
+	var m = MoveData.new()
+	m.name = def.name
+	m.power = def.get("power", 0)
+	m.accuracy = def.get("accuracy", 100)
+	m.type = def.get("type", "Physical")
+	m.description = def.get("description", "")
+	m.is_snipe = def.get("is_snipe", false)
+	m.effects = def.get("effects", []) # Load generic effects
+	m.cooldown = def.get("cooldown", 1)
+	
+	var t_str = def.get("target_type", "Enemy")
+	match t_str:
+		"Self": m.target_type = MoveData.TargetType.SELF
+		"Ally": m.target_type = MoveData.TargetType.ALLY
+		_: m.target_type = MoveData.TargetType.ENEMY
+	return m
 
 # Executes a move and returns a result Dictionary describing what happened
 func execute_move(attacker: BattleMonster, defender: BattleMonster, move: MoveData) -> Dictionary:
@@ -86,7 +96,10 @@ func execute_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	if move.power > 0:
 		_calculate_damage(attacker, defender, move, result)
 
-	# 3. Apply Unique Effects defined by name
+	# 3. Apply Data-Driven Effects (New System)
+	_apply_data_driven_effects(attacker, defender, move, result)
+
+	# 4. Apply Unique Effects defined by name (Legacy/Complex Logic)
 	_apply_unique_effects(attacker, defender, move, result)
 
 	return result
@@ -145,11 +158,26 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	if attacker.data.group == AtomicConfig.Group.ACTINIDE:
 		final_damage += (attacker.max_hp * 0.1)
 	
-	# Covalent Link: Triple damage on cross-element hit
-	if defender.has_status("marked_covalent") and attacker.data.group != defender.data.group:
-		final_damage *= 3.0
-		result.messages.append("Covalent Reaction! Triple Damage!")
-		result.effects.append({ "target": defender, "effect": "remove_status", "status": "marked_covalent" })
+	# Check for damage-multiplying status effects on the defender
+	if not defender.active_effects.is_empty():
+		# Iterate backwards to safely queue removals
+		for i in range(defender.active_effects.size() - 1, -1, -1):
+			var effect = defender.active_effects[i]
+			if effect.has("damage_multiplier"):
+				var condition_met = true
+				var condition = effect.get("condition")
+				
+				if condition == "cross_element":
+					if attacker.data.group == defender.data.group:
+						condition_met = false
+				
+				if condition_met:
+					var multiplier = effect.get("damage_multiplier", 1.0)
+					final_damage *= multiplier
+					
+					var reaction_name = effect.get("reaction_name", "Reaction")
+					result.messages.append("%s! Bonus Damage!" % reaction_name)
+					result.effects.append({ "target": defender, "effect": "remove_status", "status": effect.get("status") })
 	
 	# Variance +/- 10%
 	final_damage *= randf_range(0.9, 1.1)
@@ -171,6 +199,55 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	
 	result.damage = int(final_damage)
 	result.messages.append("It dealt %d damage!" % result.damage)
+
+func _apply_data_driven_effects(attacker: BattleMonster, defender: BattleMonster, move: MoveData, result: Dictionary):
+	for effect_def in move.effects:
+		# Check chance
+		var chance = effect_def.get("chance", 1.0)
+		if randf() > chance: continue
+		
+		# Determine Target
+		var target_scope = effect_def.get("target", "Defender") # "Defender", "Attacker"
+		var target = defender if target_scope == "Defender" else attacker
+		
+		# Build effect dictionary for BattleManager
+		var effect = effect_def.duplicate()
+		
+		# Resolve relative values (e.g. "amount": 20 with "percent": true)
+		if effect.get("type") == "stat_mod":
+			if effect.get("percent", false):
+				var stat_name = effect.get("stat")
+				var base_val = target.stats.get(stat_name, 10)
+				effect["amount"] = int(base_val * (effect.get("amount") / 100.0))
+				
+		# Add specific target reference for BattleManager
+		effect["target"] = target
+		
+		# Add to result
+		result.effects.append(effect)
+		
+		# Add generic message if provided
+		if effect.has("message"):
+			var msg = effect.message
+			if "%s" in msg:
+				result.messages.append(msg % target.data.monster_name)
+			else:
+				result.messages.append(msg)
+		else:
+			# Generate generic message based on type
+			_generate_effect_message(target, effect, result)
+
+func _generate_effect_message(target: BattleMonster, effect: Dictionary, result: Dictionary):
+	var type = effect.get("type")
+	if type == "status":
+		var status = effect.get("status")
+		if status:
+			result.messages.append("%s applied %s!" % [target.data.monster_name, status.capitalize()])
+	elif type == "stat_mod":
+		var stat = effect.get("stat")
+		var amt = effect.get("amount")
+		var verb = "rose" if amt > 0 else "fell"
+		result.messages.append("%s's %s %s!" % [target.data.monster_name, stat.capitalize(), verb])
 
 func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, move: MoveData, result: Dictionary):
 	
@@ -335,10 +412,6 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			result.effects.append({ "target": defender, "stat": "speed", "amount": -reduction, "duration": 2, "type": "stat_mod" })
 			result.messages.append("%s's signals are jammed!" % defender.data.monster_name)
 			
-		"Covalent Link":
-			result.effects.append({ "target": defender, "status": "marked_covalent", "duration": 3, "type": "status" })
-			result.messages.append("%s is marked for reaction!" % defender.data.monster_name)
-			
 		"Electronegativity":
 			var reduction = int(defender.stats.speed * 0.2)
 			# Safety clamp: Ensure speed doesn't drop below 1
@@ -353,11 +426,8 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			result.messages.append("%s is magnetized!" % defender.data.monster_name)
 			
 		"Magnesium Flash":
-			var chance = 0.5
+			# Only stun if shielded (Flash relies on reflective shielding)
 			if attacker.get_meta("shield", 0) > 0:
-				chance = 1.0
-				
-			if randf() < chance:
 				result.effects.append({ "target": defender, "status": "stun", "duration": 1, "type": "status" })
 				result.messages.append("%s was blinded!" % defender.data.monster_name)
 		

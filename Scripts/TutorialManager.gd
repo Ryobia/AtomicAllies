@@ -3,45 +3,49 @@ extends CanvasLayer
 # Tutorial Steps Enum for clarity
 enum Step {
 	INTRO = 0,
-	SELECT_LITHIUM = 1,
-	CONFIRM_RUN = 2,
+	EXPLAIN_DUST = 1,
+	EXPLAIN_ENERGY = 2,
+	EXPLAIN_GEMS = 3,
+	EXPLAIN_NAVBAR = 4,
+	SELECT_LITHIUM = 5,
+	CONFIRM_RUN = 6,
 	# Battle Prep Sequence (Moved up)
-	BATTLE_PREP_INTRO = 3,
-	ASSIGN_VANGUARD = 4,
-	SELECT_HELIUM = 5,
-	INSPECT_HELIUM = 6,
-	CLOSE_INSPECT = 7,
-	ASSIGN_FLANK = 8,
-	SELECT_HYDROGEN = 9,
-	EXPLAIN_INTEL = 10,
-	EXPLAIN_LEGEND = 11,
-	START_BATTLE = 12,
+	BATTLE_PREP_INTRO = 7,
+	ASSIGN_VANGUARD = 8,
+	SELECT_HELIUM = 9,
+	INSPECT_HELIUM = 10,
+	CLOSE_INSPECT = 11,
+	ASSIGN_FLANK = 12,
+	SELECT_HYDROGEN = 13,
+	EXPLAIN_INTEL = 14,
+	EXPLAIN_LEGEND = 15,
+	START_BATTLE = 16,
 	# Battle Tutorial Sequence
-	BATTLE_INTRO = 13,
-	EXPLAIN_ATB = 14,
-	EXPLAIN_ACTIONS = 15,
-	SELECT_ATTACK = 16,
-	SELECT_MOVE = 17,
-	EXPLAIN_TARGETING = 18,
-	INSPECT_ENEMY = 19,
-	CLOSE_INSPECT_ENEMY = 20,
-	BATTLE_RESUME = 21,
+	BATTLE_INTRO = 17,
+	EXPLAIN_ATB = 18,
+	EXPLAIN_ACTIONS = 19,
+	SELECT_ATTACK = 20,
+	SELECT_MOVE = 21,
+	EXPLAIN_TARGETING = 22,
+	INSPECT_ENEMY = 23,
+	CLOSE_INSPECT_ENEMY = 24,
+	BATTLE_RESUME = 25,
 	# Rest Site Sequence
-	REST_SITE_INTRO = 22,
-	EXPLAIN_LOOT = 23,
-	SELECT_REWARD = 24,
-	EXPLAIN_HEAL = 25,
-	EXPLAIN_SWAP = 26,
-	CONTINUE_RUN = 27,
+	REST_SITE_INTRO = 26,
+	EXPLAIN_LOOT = 27,
+	SELECT_REWARD = 28,
+	EXPLAIN_HEAL = 29,
+	EXPLAIN_SWAP = 30,
+	CONTINUE_RUN = 31,
 	# Post-Run Sequence
-	COMPLETE_RUN = 28,
-	GO_TO_NEXUS = 29,
-	SELECT_PARENT_1 = 30,
-	SELECT_PARENT_2 = 31,
-	CLICK_FUSE = 32,
-	CONFIRM_FUSE = 33,
-	GO_TO_NURSERY = 34,
-	STABILIZE_CAPSULE = 35,
+	COMPLETE_RUN = 32,
+	GO_TO_NEXUS = 33,
+	SELECT_PARENT_1 = 34,
+	SELECT_PARENT_2 = 35,
+	CLICK_FUSE = 36,
+	CONFIRM_FUSE = 37,
+	GO_TO_NURSERY = 38,
+	STABILIZE_CAPSULE = 39,
 	COMPLETE = 999
 }
 
@@ -59,6 +63,7 @@ var dialog_panel: PanelContainer
 var _bounce_tween: Tween
 var _typewriter_tween: Tween
 var story_button: Button
+var skip_button: Button
 var current_intro_index: int = 0
 
 const INTRO_SCRIPT = [
@@ -158,11 +163,43 @@ func _create_ui():
 	instruction_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(instruction_label)
 	
-	# Story Button (Next)
+	# Button Container
+	var button_hbox = HBoxContainer.new()
+	button_hbox.add_theme_constant_override("separation", 20)
+	vbox.add_child(button_hbox)
+	
+	# Skip Button
+	skip_button = Button.new()
+	skip_button.text = "Skip Tutorial"
+	skip_button.custom_minimum_size = Vector2(250, 80)
+	skip_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	skip_button.add_theme_font_size_override("font_size", 36)
+	
+	var skip_btn_style = StyleBoxFlat.new()
+	skip_btn_style.bg_color = Color.TRANSPARENT
+	skip_btn_style.border_color = Color("#60fafc")
+	skip_btn_style.set_border_width_all(2)
+	skip_btn_style.set_corner_radius_all(8)
+	skip_button.add_theme_stylebox_override("normal", skip_btn_style)
+	skip_button.add_theme_stylebox_override("hover", skip_btn_style)
+	skip_button.add_theme_stylebox_override("pressed", skip_btn_style)
+	skip_button.add_theme_color_override("font_color", Color("#60fafc"))
+	
+	skip_button.pressed.connect(_on_skip_tutorial_pressed)
+	skip_button.pressed.connect(func(): _animate_button_press(skip_button))
+	skip_button.resized.connect(func(): skip_button.pivot_offset = skip_button.size / 2)
+	skip_button.visible = false
+	button_hbox.add_child(skip_button)
+	
+	var spacer = Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button_hbox.add_child(spacer)
+	
+	# Story Button (Next/Continue)
 	story_button = Button.new()
 	story_button.text = "NEXT"
 	story_button.custom_minimum_size = Vector2(250, 80)
-	story_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	story_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN # It's at the end of an HBox
 	story_button.add_theme_font_size_override("font_size", 48)
 	
 	var btn_style = StyleBoxFlat.new()
@@ -181,7 +218,7 @@ func _create_ui():
 	story_button.pressed.connect(func(): _animate_button_press(story_button))
 	story_button.resized.connect(func(): story_button.pivot_offset = story_button.size / 2)
 	story_button.visible = false
-	vbox.add_child(story_button)
+	button_hbox.add_child(story_button)
 	
 	# L.U.M.N. AI Assistant
 	var lumn_control = Control.new()
@@ -259,7 +296,60 @@ func check_tutorial_progress():
 		return
 
 	if scene.name == "PeriodicTable":
-		if step == Step.SELECT_LITHIUM:
+		if step == Step.EXPLAIN_DUST:
+			var header_node = get_tree().root.find_child("ResourceHeader", true, false)
+			var target = null
+			if header_node:
+				var lbl = header_node.find_child("DustLabel", true, false)
+				if lbl: target = lbl.get_parent()
+			
+			show_instruction("Neutron Dust is your primary currency. Earn it from failed fusions and combat to buy upgrades.", target, "talk", "bottom")
+			story_button.visible = true
+			story_button.text = "Next"
+			if not story_button.pressed.is_connected(advance_step):
+				story_button.pressed.connect(advance_step, CONNECT_ONE_SHOT)
+
+		elif step == Step.EXPLAIN_ENERGY:
+			var header_node = get_tree().root.find_child("ResourceHeader", true, false)
+			var target = null
+			if header_node:
+				var lbl = header_node.find_child("BindingLabel", true, false)
+				if lbl: target = lbl.get_parent()
+
+			show_instruction("Binding Energy powers your actions. Use it to synthesize new elements and heal units.", target, "talk", "bottom")
+			story_button.visible = true
+			story_button.text = "Next"
+			if not story_button.pressed.is_connected(advance_step):
+				story_button.pressed.connect(advance_step, CONNECT_ONE_SHOT)
+
+		elif step == Step.EXPLAIN_GEMS:
+			var header_node = get_tree().root.find_child("ResourceHeader", true, false)
+			var target = null
+			if header_node:
+				var lbl = header_node.find_child("GemLabel", true, false)
+				if not lbl: lbl = header_node.find_child("GemsLabel", true, false)
+				if lbl: target = lbl.get_parent()
+
+			show_instruction("Gems are premium currency. Use them to speed up timers or revive fallen units.", target, "talk", "bottom")
+			story_button.visible = true
+			story_button.text = "Next"
+			if not story_button.pressed.is_connected(advance_step):
+				story_button.pressed.connect(advance_step, CONNECT_ONE_SHOT)
+		elif step == Step.EXPLAIN_NAVBAR:
+			var navbar_target = null
+			if has_node("/root/NavBar"):
+				var navbar_node = get_node("/root/NavBar")
+				# The target must be a Control node. The NavBar itself is a CanvasLayer.
+				# We'll find a button inside it and target its parent container.
+				var btn = navbar_node.find_child("HomeButton", true, false)
+				if btn: navbar_target = btn.get_parent()
+			
+			show_instruction("Use the Navigation Bar to access, from left to right, Synthesis, Fusion Lab, Home, Shop and Periodic Table.", navbar_target, "talk", "top")
+			story_button.visible = true
+			story_button.text = "Understood"
+			if not story_button.pressed.is_connected(advance_step):
+				story_button.pressed.connect(advance_step, CONNECT_ONE_SHOT)
+		elif step == Step.SELECT_LITHIUM:
 			# Access _card_nodes from PeriodicTable to find Lithium (Z=3)
 			if "_card_nodes" in scene and scene._card_nodes.has(3):
 				var card = scene._card_nodes[3]
@@ -409,9 +499,11 @@ func check_tutorial_progress():
 			var deck = hud.find_child("ControlDeck", true, false) if hud else null
 			
 			# Disable buttons inside the deck to prevent premature clicks, but keep the highlight.
-			if hud and hud.has("action_buttons"):
+			var quit_btn = hud.find_child("Quit", true, false) if hud else null
+			if hud and "action_buttons" in hud:
 				for btn in hud.action_buttons:
 					if btn: btn.disabled = true
+			if quit_btn: quit_btn.disabled = true
 
 			show_instruction("When it's your turn, select an action: Attack, Swap, or Item.", deck, "talk")
 			story_button.visible = true
@@ -419,7 +511,8 @@ func check_tutorial_progress():
 			
 			var on_next = func():
 				# Re-enable buttons for the next step
-				if hud and hud.has("action_buttons"):
+				if quit_btn: quit_btn.disabled = false
+				if hud and "action_buttons" in hud:
 					for btn in hud.action_buttons:
 						if btn: btn.disabled = false
 				advance_step()
@@ -560,6 +653,7 @@ func show_story_popup():
 	overlay.visible = true
 	dialog_root.visible = true
 	story_button.visible = true
+	skip_button.visible = true
 	
 	current_target_node = null
 	current_intro_index = 0
@@ -614,7 +708,21 @@ func _on_story_start_pressed():
 func hide_tutorial():
 	overlay.visible = false
 	if dialog_root: dialog_root.visible = false
+	if skip_button: skip_button.visible = false
 	current_target_node = null
+
+func _on_skip_tutorial_pressed():
+	PlayerData.tutorial_step = Step.COMPLETE
+	PlayerData.has_seen_shop_tutorial = true
+	
+	# Give the player the items they would have received from the shop tutorial
+	PlayerData.add_item("coolant_gel", 2)
+	PlayerData.add_item("magnetic_stabilizer", 1)
+	PlayerData.add_item("adrenaline_shot", 1)
+	PlayerData.add_item("emergency_shield", 1)
+	
+	PlayerData.save_game()
+	hide_tutorial()
 
 func advance_step():
 	PlayerData.tutorial_step += 1

@@ -14,6 +14,7 @@ var stats: Dictionary = {}
 
 # List of active effects (buffs, debuffs, status ailments)
 var active_effects: Array = []
+var move_cooldowns: Dictionary = {}
 
 # --- ATB State ---
 var atb_value: float = 0.0
@@ -222,14 +223,10 @@ func apply_effect(effect: Dictionary):
 				
 	# 2. Status Effects (Flags & DoTs)
 	elif "status" in effect:
-		var new_status = {
-			"type": "status",
-			"status": effect.status,
-			"duration": effect.duration,
-			"damage": effect.get("damage", 0) # For DoT like corrosion
-		}
-		if "damage_percent" in effect:
-			new_status["damage_percent"] = effect.damage_percent
+		var new_status = effect.duplicate()
+		# Ensure it has a type if it's just a simple status application
+		if not new_status.has("type"):
+			new_status["type"] = "status"
 		active_effects.append(new_status)
 		
 	# 3. Stat Modifiers
@@ -375,6 +372,15 @@ func cleanse_negative_effects():
 	active_effects = new_effects
 
 func on_turn_start():
+	# Decrement move cooldowns
+	var moves_off_cooldown = []
+	for move_name in move_cooldowns:
+		move_cooldowns[move_name] -= 1
+		if move_cooldowns[move_name] <= 0:
+			moves_off_cooldown.append(move_name)
+	for move_name in moves_off_cooldown:
+		move_cooldowns.erase(move_name)
+		
 	for effect in active_effects:
 		if effect.type == "status" and effect.get("status") == "corrosion":
 			take_damage(effect.damage)

@@ -621,7 +621,7 @@ func _on_action_selected(action_type):
 			return
 		
 		if battle_hud:
-			battle_hud.show_moves(moves)
+			battle_hud.show_moves(moves, current_acting_unit.move_cooldowns)
 			
 		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_ATTACK:
 			TutorialManager.advance_step() # To SELECT_MOVE
@@ -774,7 +774,7 @@ func _on_target_selected(index: int):
 		return
 	
 	var defender = null
-	if selected_move.target_type == MoveData.TargetType.ALLY:
+	if selected_move.target_type == MoveData.TargetType.ALLY or selected_move.target_type == MoveData.TargetType.SELF:
 		defender = active_player_monsters[index]
 	else:
 		defender = active_enemy_monsters[index]
@@ -1171,6 +1171,9 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 								log_event.emit("Status spreads to %s!" % secondary.data.monster_name)
 	
 	# Wait for animation/text
+	if move.cooldown > 1:
+		attacker.move_cooldowns[move.name] = move.cooldown
+		
 	await get_tree().create_timer(1.0).timeout # Short final wait since we waited during messages
 	
 	end_turn()

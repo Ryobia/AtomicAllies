@@ -5,7 +5,9 @@ const STATUS_DESCRIPTIONS = {
 	"taunt": "Forced to attack the taunter.",
 	"stun": "Cannot act this turn.",
 	"silence_special": "Cannot use Special moves.",
-	"marked_covalent": "Next cross-element hit deals 3x damage.",
+	"marked_covalent": "Next cross-element hit deals 1.2x damage.",
+	"unstable": "Takes 1.2x damage from next attack.",
+	"poison": "Taking damage over time based on Max HP.",
 	"vulnerable": "Takes increased damage.",
 	"corrosion": "Taking damage over time (ignores DEF).",
 	"invulnerable": "Immune to all damage and status.",
@@ -135,7 +137,10 @@ func setup(unit: BattleMonster):
                     var s_name = effect.get("status", "Unknown")
                     var status_key = str(s_name).to_lower()
                     title_text = "%s (%d turns)" % [s_name.capitalize(), duration]
-                    if STATUS_DESCRIPTIONS.has(status_key): desc_text = STATUS_DESCRIPTIONS[status_key]
+                    if effect.has("damage_multiplier"):
+                        var mult = float(effect.get("damage_multiplier", 1.0))
+                        desc_text = "Takes %.2fx damage from next attack." % mult
+                    elif STATUS_DESCRIPTIONS.has(status_key): desc_text = STATUS_DESCRIPTIONS[status_key]
                     title_lbl.add_theme_color_override("font_color", Color.YELLOW if status_key in ["invulnerable", "taunt"] else Color.ORANGE_RED)
                 
                 title_lbl.text = title_text

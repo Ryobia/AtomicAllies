@@ -719,11 +719,12 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_272bk")
 theme_override_styles/focus = SubResource("StyleBoxFlat_jqbkq")
 text = "QUIT"
 
-[node name="MoveContainer" type="HBoxContainer" parent="BattleHUD/ControlDeck" unique_id=1033656403]
+[node name="MoveContainer" type="GridContainer" parent="BattleHUD/ControlDeck" unique_id=1092612960]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+columns = 2
 
 [node name="QuitConfirmationDialog" type="ConfirmationDialog" parent="BattleHUD" unique_id=56278763]
 dialog_text = "Are you sure you want to quit? All progress in this battle will be lost."

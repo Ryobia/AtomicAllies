@@ -66,6 +66,7 @@ var _default_columns: int = 1
 var _can_swap_state: bool = true
 
 var stat_popup_scene = preload("res://Scenes/StatPopup.tscn")
+var cooldowns: Dictionary = {}
 
 func _ready():
 	# Connect Control Deck Buttons
@@ -371,27 +372,44 @@ func _create_status_icon(effect: Dictionary) -> Control:
 	
 	var bg_color = Color("#2ecc71") # Default Green (Buff)
 	var text = "??"
+	var tooltip_text = ""
 	
 	if type == "stat_mod":
 		if effect.get("amount", 0) < 0:
 			bg_color = Color("#ff4d4d") # Red (Debuff)
 		text = effect.get("stat", "").substr(0, 3).to_upper()
+		var sign = "+" if effect.get("amount", 0) > 0 else ""
+		tooltip_text = "Stat: %s\nAmount: %s%d\nDuration: %d turns" % [effect.get("stat").capitalize(), sign, effect.get("amount"), effect.get("duration")]
 	elif type == "status":
 		var s = str(effect.get("status", "")).to_lower()
 		if s == "": return null
 		
+		var is_debuff = effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity"]
+		
 		# Known Debuffs
-		if s == "poison" or s in ["stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity"]:
+		if is_debuff:
 			bg_color = Color("#ff4d4d")
+			tooltip_text = s.capitalize()
+			if effect.has("damage_multiplier"):
+				tooltip_text += "\nDamage Taken: x%.1f" % effect.get("damage_multiplier", 1.0)
+			tooltip_text += "\nDuration: %d turns" % effect.get("duration", 0)
 		# Known Buffs/Special
 		elif s == "invulnerable":
 			bg_color = Color("#ffd700") # Gold
+			tooltip_text = "Invulnerable\nDuration: %d turns" % effect.get("duration", 0)
 		elif s == "taunt":
 			bg_color = Color("#ff9360") # Orange
+			tooltip_text = "Taunting\nDuration: %d turns" % effect.get("duration", 0)
 		elif s == "static_reflection":
 			bg_color = Color("#60fafc") # Cyan
+			tooltip_text = "Reflecting Damage\nDuration: %d turns" % effect.get("duration", 0)
 		
 		if s == "marked_covalent": text = "COV"
+		elif s == "unstable": text = "UNS"
+		elif s == "carbonized": text = "CAR"
+		elif s == "oxidized": text = "OXI"
+		elif s == "explosive": text = "EXP"
+		elif s == "overload": text = "OVL"
 		elif s == "reactive_vapor": text = "VAP"
 		elif s == "radiation": text = "RAD"
 		elif s == "invulnerable": text = "INV"
@@ -401,14 +419,19 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "insanity": text = "INS"
 		elif s == "static_reflection": text = "RFL"
 		else: text = s.substr(0, 3).to_upper()
+
 	elif type == "swap_stats":
 		bg_color = Color("#ff4d4d")
 		text = "SWP"
+		tooltip_text = "Stats Swapped\nDuration: %d turns" % effect.get("duration", 0)
 	
 	if text == "": text = "??"
 		
 	style.bg_color = bg_color
 	lbl.text = text
+	
+	if tooltip_text != "":
+		panel.tooltip_text = tooltip_text
 	
 	panel.add_theme_stylebox_override("panel", style)
 	panel.add_child(lbl)
@@ -792,7 +815,7 @@ func _on_quit_confirmed():
 	# This is called when the user clicks "OK" on the dialog
 	GlobalManager.switch_scene("main_menu")
 
-func show_moves(moves: Array):
+func show_moves(moves: Array, move_cooldowns: Dictionary = {}):
 	# Hide main actions
 	for btn in action_buttons:
 		if btn: btn.visible = false
@@ -802,6 +825,9 @@ func show_moves(moves: Array):
 	if not move_container:
 		print("BattleHUD Error: No 'MoveContainer' found to display moves.")
 		return
+		
+	if move_container is GridContainer:
+		move_container.columns = 2
 		
 	_toggle_grid_layout(true)
 	move_container.visible = true
@@ -813,15 +839,40 @@ func show_moves(moves: Array):
 	# Create new buttons
 	for move in moves:
 		var btn = Button.new()
-		var snipe_text = " [Snipe]" if move.is_snipe else ""
-		btn.text = "%s%s\n(%d Pwr)" % [move.name, snipe_text, move.power]
+
+		if move_cooldowns.has(move.name):
+			var turns_left = move_cooldowns[move.name]
+			btn.text = "%s\n(Cooldown: %d)" % [move.name, turns_left]
+			btn.disabled = true
+			
+			# Visual Cooldown Indicator (Progress Bar Overlay)
+			var progress = ProgressBar.new()
+			progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			progress.set_anchors_preset(Control.PRESET_FULL_RECT)
+			progress.show_percentage = false
+			
+			var bg_style = StyleBoxFlat.new()
+			bg_style.bg_color = Color(0, 0, 0, 0.6) # Dark background for unavailable part
+			
+			var fill_style = StyleBoxFlat.new()
+			fill_style.bg_color = Color("#60fafc") # Theme Cyan
+			fill_style.bg_color.a = 0.25 # Semi-transparent
+			
+			progress.add_theme_stylebox_override("background", bg_style)
+			progress.add_theme_stylebox_override("fill", fill_style)
+			
+			progress.max_value = float(move.cooldown)
+			progress.value = float(move.cooldown - turns_left)
+			
+			btn.add_child(progress)
+		else:
+			var snipe_text = " [Snipe]" if move.is_snipe else ""
+			btn.text = "%s%s\n(%d Pwr)" % [move.name, snipe_text, move.power]
+			btn.pressed.connect(func(): _on_move_btn_pressed(move))
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		_style_button(btn)
-		btn.pressed.connect(func(): _on_move_btn_pressed(move))
 		move_container.add_child(btn)
-		
-	# Cancel Button
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Back"
 	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -833,6 +884,10 @@ func show_move_details(move: MoveData):
 	if not move_container: return
 	_toggle_grid_layout(true)
 	move_container.visible = true
+	
+	if move_container is GridContainer:
+		move_container.columns = 1
+		
 	
 	for child in move_container.get_children():
 		child.queue_free()
@@ -899,6 +954,9 @@ func show_items(items: Dictionary):
 	if back_btn: back_btn.visible = false
 
 	if not move_container: return
+	if move_container is GridContainer:
+		move_container.columns = 1
+		
 	_toggle_grid_layout(true)
 	move_container.visible = true
 	
@@ -956,6 +1014,10 @@ func show_swap_options(monsters: Array, forced: bool = false):
 	if not move_container: return
 	_toggle_grid_layout(true)
 	move_container.visible = true
+	
+	if move_container is GridContainer:
+		move_container.columns = 1
+		
 	
 	# Clear old buttons
 	for child in move_container.get_children():
