@@ -526,22 +526,43 @@ func log_message(text: String):
 		for child in reaction_space.get_children():
 			child.queue_free()
 			
+		var panel = PanelContainer.new()
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.set_anchors_preset(Control.PRESET_CENTER)
+		panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+		
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0, 0, 0, 0.85) # High contrast background
+		style.border_width_top = 4
+		style.border_width_bottom = 4
+		style.border_color = Color("#60fafc") # Cyan accents
+		style.set_corner_radius_all(12)
+		style.content_margin_left = 40
+		style.content_margin_right = 40
+		style.content_margin_top = 15
+		style.content_margin_bottom = 15
+		panel.add_theme_stylebox_override("panel", style)
+		
 		var label = Label.new()
 		label.text = text
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.set_anchors_preset(Control.PRESET_FULL_RECT)
-		label.add_theme_font_size_override("font_size", 64)
+		label.add_theme_font_size_override("font_size", 56)
+		label.add_theme_color_override("font_color", Color("#ffd700")) # Gold text
 		label.add_theme_color_override("font_outline_color", Color.BLACK)
-		label.add_theme_constant_override("outline_size", 4)
-		reaction_space.add_child(label)
+		label.add_theme_constant_override("outline_size", 16) # Thick outline
+		
+		panel.add_child(label)
+		reaction_space.add_child(panel)
 		
 		# Animate entrance and exit
-		label.modulate.a = 0.0
+		panel.modulate.a = 0.0
 		var tween = create_tween()
-		tween.tween_property(label, "modulate:a", 1.0, 0.2)
-		tween.tween_property(label, "modulate:a", 0.0, 0.5).set_delay(2.5)
-		tween.tween_callback(label.queue_free)
+		tween.tween_property(panel, "modulate:a", 1.0, 0.15).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.tween_interval(2.0)
+		tween.tween_property(panel, "modulate:a", 0.0, 0.5)
+		tween.tween_callback(panel.queue_free)
 		return
 
 	if log_label:
@@ -676,10 +697,11 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 	if name_lbl:
 		name_lbl.text = monster.monster_name
 		name_lbl.z_index = 6 # Ensure label is above sprite (z=5)
+		name_lbl.visible = true
 		
 		var default_color = Color.WHITE
 		if slot in enemy_slots:
-			default_color = Color("#ff4d4d")
+			default_color = Color("#010813")
 		_apply_mastery_border(name_lbl, monster, default_color)
 		
 	var stats = monster.get_current_stats()

@@ -39,8 +39,9 @@ enum Step {
 	SELECT_PARENT_1 = 30,
 	SELECT_PARENT_2 = 31,
 	CLICK_FUSE = 32,
-	GO_TO_NURSERY = 33,
-	STABILIZE_CAPSULE = 34,
+	CONFIRM_FUSE = 33,
+	GO_TO_NURSERY = 34,
+	STABILIZE_CAPSULE = 35,
 	COMPLETE = 999
 }
 
@@ -92,16 +93,16 @@ func _create_ui():
 	# Create 4 rects for the spotlight effect (Top, Bottom, Left, Right)
 	var dim_color = Color(0, 0, 0, 0.5)
 	
-	dim_top = ColorRect.new(); dim_top.color = dim_color; dim_top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dim_top = ColorRect.new(); dim_top.color = dim_color; dim_top.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.add_child(dim_top)
 	
-	dim_bottom = ColorRect.new(); dim_bottom.color = dim_color; dim_bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dim_bottom = ColorRect.new(); dim_bottom.color = dim_color; dim_bottom.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.add_child(dim_bottom)
 	
-	dim_left = ColorRect.new(); dim_left.color = dim_color; dim_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dim_left = ColorRect.new(); dim_left.color = dim_color; dim_left.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.add_child(dim_left)
 	
-	dim_right = ColorRect.new(); dim_right.color = dim_color; dim_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dim_right = ColorRect.new(); dim_right.color = dim_color; dim_right.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.add_child(dim_right)
 	
 	# Highlight Box (Visual only, clicks pass through to target)
@@ -283,6 +284,11 @@ func check_tutorial_progress():
 		elif step == Step.CLICK_FUSE:
 			var btn = scene.find_child("BreedButton", true, false)
 			show_instruction("Fusion ready! Tap the button to combine them.", btn)
+		elif step == Step.CONFIRM_FUSE:
+			var popup = scene.find_child("FusionConfirmPopup", true, false)
+			if popup:
+				var btn = popup.find_child("ConfirmButton", true, false)
+				show_instruction("Confirm the fusion reaction.", btn, "talk")
 		elif step == Step.GO_TO_NURSERY:
 			# Try to find the Nursery button in the NavBar first
 			var btn = _find_nav_button("NurseryButton")
@@ -299,7 +305,7 @@ func check_tutorial_progress():
 				check_tutorial_progress()
 			else:
 				# Failed run or retreated? Send them back to table.
-				var btn = _find_nav_button("PeriodicTableButton")
+				var btn = _find_nav_button("CollectionButton")
 				show_instruction("Mission incomplete. Return to the Periodic Table to retry the Discovery Run.", btn, "warning", "top")
 		elif step == Step.GO_TO_NEXUS:
 			var btn = _find_nav_button("NexusButton")
@@ -401,11 +407,27 @@ func check_tutorial_progress():
 			# Highlight Action Deck
 			var hud = scene.find_child("BattleHUD", true, false)
 			var deck = hud.find_child("ControlDeck", true, false) if hud else null
+			
+			# Disable buttons inside the deck to prevent premature clicks, but keep the highlight.
+			if hud and hud.has("action_buttons"):
+				for btn in hud.action_buttons:
+					if btn: btn.disabled = true
+
 			show_instruction("When it's your turn, select an action: Attack, Swap, or Item.", deck, "talk")
 			story_button.visible = true
 			story_button.text = "Fight!"
-			if not story_button.pressed.is_connected(advance_step):
-				story_button.pressed.connect(advance_step, CONNECT_ONE_SHOT)
+			
+			var on_next = func():
+				# Re-enable buttons for the next step
+				if hud and hud.has("action_buttons"):
+					for btn in hud.action_buttons:
+						if btn: btn.disabled = false
+				advance_step()
+			
+			# Disconnect old signals before connecting new one
+			for conn in story_button.pressed.get_connections():
+				story_button.pressed.disconnect(conn.callable)
+			story_button.pressed.connect(on_next, CONNECT_ONE_SHOT)
 		elif step == Step.SELECT_ATTACK:
 			var hud = scene.find_child("BattleHUD", true, false)
 			var btn = hud.find_child("AttackButton", true, false) if hud else null
@@ -610,7 +632,7 @@ func _show_completion_popup():
 	popup.set_anchors_preset(Control.PRESET_CENTER)
 	popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	popup.grow_vertical = Control.GROW_DIRECTION_BOTH
-	popup.custom_minimum_size = Vector2(700, 450)
+	popup.custom_minimum_size = Vector2(700, 0)
 	popup.z_index = 100
 	
 	var style = StyleBoxFlat.new()
@@ -670,9 +692,6 @@ func _show_completion_popup():
 	
 	add_child(popup)
 	
-	# Force center position based on viewport size
-	popup.position = (get_viewport().get_visible_rect().size - popup.custom_minimum_size) / 2
-
 func _start_bounce_animation():
 	# Deprecated: Dialog is now fixed position
 	pass

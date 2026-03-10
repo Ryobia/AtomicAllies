@@ -123,7 +123,7 @@ func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bon
 	var base_duration = calculate_synthesis_duration(current_z, int(final_stability))
 	
 	# Tutorial Override: 30 seconds for the first fusion
-	if TutorialManager and PlayerData and PlayerData.tutorial_step == TutorialManager.Step.CLICK_FUSE:
+	if TutorialManager and PlayerData and PlayerData.tutorial_step == TutorialManager.Step.CONFIRM_FUSE:
 		base_duration = 30.0
 	
 	var duration = int(max(0, base_duration))

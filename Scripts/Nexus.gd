@@ -423,6 +423,12 @@ func check_breeding_status():
 
 # --- Selection Logic ---
 func _open_selection(slot: int):
+	if TutorialManager:
+		var step = PlayerData.tutorial_step
+		if step == TutorialManager.Step.SELECT_PARENT_1 or step == TutorialManager.Step.SELECT_PARENT_2:
+			# Hide the "Select Parent X" prompt to allow interaction with the panel
+			TutorialManager.hide_tutorial()
+
 	selecting_slot = slot
 	if selection_panel:
 		selection_panel.visible = true
@@ -563,6 +569,17 @@ func _populate_selection_list():
 				)
 			
 			wrapper.add_child(btn)
+
+			# Tutorial Highlight Logic
+			if TutorialManager:
+				var step = PlayerData.tutorial_step
+				if step == TutorialManager.Step.SELECT_PARENT_1:
+					if monster.atomic_number == 1: # Hydrogen
+						TutorialManager.show_instruction("Select Hydrogen as the first parent.", wrapper, "talk")
+				elif step == TutorialManager.Step.SELECT_PARENT_2:
+					# We need to fuse H(1) and He(2) to get Li(3)
+					if parent_1 and parent_1.atomic_number == 1 and monster.atomic_number == 2: # Parent 1 is H, highlight He
+						TutorialManager.show_instruction("Now select Helium.", wrapper, "talk")
 		else:
 			print("Nexus: Using Default Buttons")
 			var btn = Button.new()
@@ -590,6 +607,17 @@ func _populate_selection_list():
 			else:
 				btn.pressed.connect(func(): _on_monster_selected(monster))
 				
+			# Tutorial Highlight Logic
+			if TutorialManager:
+				var step = PlayerData.tutorial_step
+				if step == TutorialManager.Step.SELECT_PARENT_1:
+					if monster.atomic_number == 1: # Hydrogen
+						TutorialManager.show_instruction("Select Hydrogen as the first parent.", btn, "talk")
+				elif step == TutorialManager.Step.SELECT_PARENT_2:
+					# We need to fuse H(1) and He(2) to get Li(3)
+					if parent_1 and parent_1.atomic_number == 1 and monster.atomic_number == 2: # Parent 1 is H, highlight He
+						TutorialManager.show_instruction("Now select Helium.", btn, "talk")
+
 			selection_container.add_child(btn)
 			
 		count += 1
@@ -678,6 +706,9 @@ func _on_breed_pressed():
 		if popup_particles:
 			popup_particles.restart()
 			popup_particles.emitting = true
+			
+		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CLICK_FUSE:
+			TutorialManager.advance_step()
 	else:
 		# Fallback if no popup exists
 		SynthesisManager.attempt_fusion(parent_1, parent_2)
@@ -815,7 +846,7 @@ func _on_confirm_fusion_pressed():
 			SynthesisManager.attempt_fusion(parent_1, parent_2)
 			
 		# Tutorial: Advance after clicking Fuse
-		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CLICK_FUSE:
+		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CONFIRM_FUSE:
 			TutorialManager.advance_step()
 	else:
 		status_label.text = "Not enough Binding Energy!"

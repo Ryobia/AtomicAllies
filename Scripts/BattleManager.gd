@@ -28,6 +28,7 @@ var selected_move: MoveData = null
 var selected_item_id: String = ""
 var roster_hp_cache: Dictionary = {} # MonsterData -> int (HP)
 var tutorial_paused: bool = false
+var is_tutorial_battle: bool = false
 
 # --- Signals for UI Decoupling ---
 signal log_event(text)
@@ -134,6 +135,29 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	current_state = BattleState.SETUP
 	clear_battlefield()
 	active_player_monsters = [null, null, null] # Initialize fixed slots
+	is_tutorial_battle = false # Reset at start of every battle
+	
+	# Detect Tutorial Run (Lithium Discovery) - Persist across all waves
+	if TutorialManager and CampaignManager and CampaignManager.is_rogue_run and \
+	   CampaignManager.current_run_target_z == 3 and \
+	   PlayerData.tutorial_step < TutorialManager.Step.COMPLETE:
+		is_tutorial_battle = true
+		
+		# Force Null Grunt enemies for tutorial, overriding CampaignManager's generation
+		enemy_data_list.clear()
+		var count = 1
+		# Last wave gets 2 enemies
+		if CampaignManager.current_run_wave >= CampaignManager.max_run_waves:
+			count = 2
+			
+		var grunt_path = "res://data/Enemies/NullGrunt.tres"
+		if ResourceLoader.exists(grunt_path):
+			var base = load(grunt_path)
+			for k in range(count):
+				var e = base.duplicate()
+				e.stability = 50
+				enemy_data_list.append(e)
+
 	roster_hp_cache.clear()
 	_update_team_passives()
 	
@@ -266,6 +290,7 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 
 	# Tutorial Hook: Start Battle Tutorial
 	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.START_BATTLE:
+		is_tutorial_battle = true
 		# Advance from START_BATTLE (12) to BATTLE_INTRO (13)
 		TutorialManager.advance_step()
 		# Note: TutorialManager will handle the rest via advance_step calls
@@ -633,25 +658,22 @@ func _on_move_selected(move: MoveData):
 	selected_move = move
 	current_state = BattleState.TARGET_SELECTION
 	
-	# Handle Self-Targeting immediately
-	if move.target_type == MoveData.TargetType.SELF:
-		if battle_hud and battle_hud.move_container: battle_hud.move_container.visible = false
-		perform_move(current_acting_unit, current_acting_unit, move)
-		return
-	
 	# --- Calculate Valid Targets ---
 	var valid_targets = []
-	var target_allies = (move.target_type == MoveData.TargetType.ALLY)
+	var target_allies = (move.target_type == MoveData.TargetType.ALLY or move.target_type == MoveData.TargetType.SELF)
 	
 	if target_allies:
-		# Ally Targeting
-		for i in range(active_player_monsters.size()):
-			var ally = active_player_monsters[i]
-			if ally and not ally.is_dead:
-				# Optional: Prevent targeting self with ally moves if desired, 
-				# but usually "Ally" moves can target self too in many games.
-				# For now, allow all living team members.
-				valid_targets.append(i)
+		if move.target_type == MoveData.TargetType.SELF:
+			# Only the user can be the target
+			var self_index = active_player_monsters.find(current_acting_unit)
+			if self_index != -1:
+				valid_targets.append(self_index)
+		else: # It's an ALLY move
+			# Ally Targeting
+			for i in range(active_player_monsters.size()):
+				var ally = active_player_monsters[i]
+				if ally and not ally.is_dead:
+					valid_targets.append(i)
 	else:
 		# Enemy Targeting
 		# Check for Taunt
@@ -938,6 +960,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				# Reflection Check
 				if defender.has_status("static_reflection") and move.target_type == MoveData.TargetType.ENEMY:
 					var reflect_dmg = int(damage * 0.3)
+					reflect_dmg = _calculate_final_damage(attacker, reflect_dmg)
 					if reflect_dmg > 0:
 						attacker.take_damage(reflect_dmg)
 						_show_damage_number(attacker, reflect_dmg, "damage")
@@ -953,10 +976,12 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					defender.set_meta("shield", shield)
 					_check_shield_update(defender)
 				
+				damage = _calculate_final_damage(defender, damage)
+				
 				if damage > 0:
 					defender.take_damage(damage)
 					_show_damage_number(defender, damage, "damage")
-					log_event.emit("Dealt %d damage!" % result.damage)
+					log_event.emit("Dealt %d damage!" % damage)
 					await get_tree().create_timer(1.2).timeout
 			
 		# Log other messages (status effects etc)
@@ -1005,9 +1030,11 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				var amount = effect.get("amount", 0)
 				var all_units = active_player_monsters + active_enemy_monsters
 				for unit in all_units:
-					if unit != attacker and not unit.is_dead:
-						unit.take_damage(amount)
-						_show_damage_number(unit, amount, "damage")
+					if unit != attacker and unit and not unit.is_dead:
+						var final_amount = _calculate_final_damage(unit, amount)
+						if final_amount > 0:
+							unit.take_damage(final_amount)
+							_show_damage_number(unit, final_amount, "damage")
 				log_event.emit("Meltdown irradiates the battlefield!")
 				continue
 			
@@ -1084,10 +1111,12 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				var target = effect.get("target")
 				var amount = effect.get("amount", 0)
 				if target and is_instance_valid(target):
-					target.take_damage(amount)
-					_show_damage_number(target, amount, "damage")
-					log_event.emit("%s takes %d recoil damage!" % [target.data.monster_name, amount])
-					_check_shield_update(target)
+					var final_amount = _calculate_final_damage(target, amount)
+					if final_amount > 0:
+						target.take_damage(final_amount)
+						_show_damage_number(target, final_amount, "damage")
+						log_event.emit("%s takes %d recoil damage!" % [target.data.monster_name, final_amount])
+						_check_shield_update(target)
 				continue
 				
 			var target_unit = effect.get("target")
@@ -1478,9 +1507,12 @@ func _apply_turn_start_passives(unit: BattleMonster):
 				loss_pct = 0.05
 			
 			var loss = int(unit.max_hp * loss_pct)
-			unit.take_damage(loss)
-			log_event.emit("%s decays!" % unit.data.monster_name)
-			_check_shield_update(unit)
+			loss = _calculate_final_damage(unit, loss)
+			if loss > 0:
+				unit.take_damage(loss)
+				_show_damage_number(unit, loss, "poison")
+				log_event.emit("%s decays!" % unit.data.monster_name)
+				_check_shield_update(unit)
 			
 			# Apply Radiation to enemies
 			var targets = active_enemy_monsters if unit.is_player else active_player_monsters
@@ -1959,10 +1991,12 @@ func _process_radiation(unit: BattleMonster):
 	if rad_effect:
 		var pct = rad_effect.get("damage_percent", 0.05)
 		var dmg = int(unit.max_hp * pct)
-		unit.take_damage(dmg)
-		_show_damage_number(unit, dmg, "poison")
-		log_event.emit("%s takes %d radiation damage!" % [unit.data.monster_name, dmg])
-		_check_shield_update(unit)
+		dmg = _calculate_final_damage(unit, dmg)
+		if dmg > 0:
+			unit.take_damage(dmg)
+			_show_damage_number(unit, dmg, "poison")
+			log_event.emit("%s takes %d radiation damage!" % [unit.data.monster_name, dmg])
+			_check_shield_update(unit)
 		
 		# Ramp up for next turn
 		rad_effect["damage_percent"] = pct + 0.05
@@ -1998,11 +2032,28 @@ func _process_status_damage(unit: BattleMonster):
 				total_dmg += dmg
 	
 	if total_dmg > 0:
-		unit.take_damage(total_dmg)
-		_show_damage_number(unit, total_dmg, "poison")
-		log_event.emit("%s takes poison damage!" % unit.data.monster_name)
-		_check_shield_update(unit)
+		total_dmg = _calculate_final_damage(unit, total_dmg)
+		if total_dmg > 0:
+			unit.take_damage(total_dmg)
+			_show_damage_number(unit, total_dmg, "poison")
+			log_event.emit("%s takes poison damage!" % unit.data.monster_name)
+			_check_shield_update(unit)
 
+func _calculate_final_damage(target: BattleMonster, amount: int) -> int:
+	if not is_tutorial_battle or not target.is_player:
+		return amount
+		
+	if (target.current_hp - amount) <= 0:
+		var final_amount = target.current_hp - 1
+		if final_amount < 0: final_amount = 0
+		
+		# Only log if damage was actually prevented
+		if final_amount < amount:
+			log_event.emit("%s is protected by L.U.M.N.!" % target.data.monster_name)
+		
+		return final_amount
+	return amount
+	
 func _show_damage_number(unit: Node2D, amount: int, type: String = "damage"):
 	var label = Label.new()
 	label.z_index = 20 # On top of units

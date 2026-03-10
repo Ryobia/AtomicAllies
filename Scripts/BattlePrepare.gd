@@ -51,7 +51,12 @@ func _ready():
 		enemy_intel_label.text = "Enemy Intel (Stage %d)%s" % [level_val, suffix]
 		
 	var enemies = []
-	if not PlayerData.pending_enemy_team.is_empty():
+	# Tutorial Override: Check if this is the special Lithium Discovery Run
+	var is_lithium_tutorial_run = CampaignManager and CampaignManager.is_rogue_run and \
+								  CampaignManager.current_run_target_z == 3 and \
+								  PlayerData.tutorial_step < TutorialManager.Step.COMPLETE
+	
+	if not is_lithium_tutorial_run and not PlayerData.pending_enemy_team.is_empty():
 		enemies = PlayerData.pending_enemy_team
 	else:
 		enemies = _generate_preview_enemies()
@@ -75,6 +80,26 @@ func _ready():
 		TutorialManager.check_tutorial_progress()
 
 func _generate_preview_enemies() -> Array[MonsterData]:
+	# Tutorial Override: Force specific Void enemies for the Lithium Discovery run
+	var is_lithium_tutorial_run = CampaignManager and CampaignManager.is_rogue_run and \
+								  CampaignManager.current_run_target_z == 3 and \
+								  PlayerData.tutorial_step < TutorialManager.Step.COMPLETE
+								  
+	if is_lithium_tutorial_run:
+		var enemies: Array[MonsterData] = []
+		var path = "res://data/Enemies/NullGrunt.tres"
+		if ResourceLoader.exists(path):
+			var base = load(path)
+			var enemy_count = 1
+			# Last wave has 2 enemies
+			if CampaignManager.current_run_wave >= CampaignManager.max_run_waves:
+				enemy_count = 2
+			for i in range(enemy_count):
+				var enemy = base.duplicate()
+				enemy.stability = 50
+				enemies.append(enemy)
+			return enemies
+
 	if CampaignManager:
 		return CampaignManager.generate_level_encounter(PlayerData.current_campaign_level)
 	
