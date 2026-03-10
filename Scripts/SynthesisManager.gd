@@ -43,6 +43,25 @@ func calculate_stability_gain(current: int) -> int:
 	var gain = 1 + int(roll * (remaining - 1))
 	return gain
 
+func calculate_synthesis_duration(z: int, stability: int) -> float:
+	# Scale max time based on Z: 15 mins (900s) at Z=1 to 60 mins (3600s) at Z=118
+	var min_max_time = 900.0
+	var max_max_time = 3600.0
+	
+	var z_factor = clamp(float(z - 1) / float(MAX_Z - 1), 0.0, 1.0)
+	var max_time_for_z = min_max_time + (max_max_time - min_max_time) * z_factor
+	
+	# Stability reduces time: 100% stability = 0 time, 0% stability = max_time_for_z
+	var stability_factor = clamp(float(stability), 0.0, 100.0) / 100.0
+	var duration = max_time_for_z * (1.0 - stability_factor)
+	
+	# Apply Ship Upgrade: Fusion Speed (10% reduction per level)
+	if PlayerData:
+		var speed_level = PlayerData.get_upgrade_level("fusion_speed")
+		duration *= (1.0 - (speed_level * 0.10))
+	
+	return duration
+
 func attempt_fusion(parent_a: MonsterData, parent_b: MonsterData):
 	attempt_fusion_with_bonus(parent_a, parent_b, 0)
 
@@ -101,14 +120,7 @@ func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bon
 		print("Stabilized at Hydrogen (Z=1).")
 		final_stability = _calculate_result_stability(1)
 	
-	# Calculate Synthesis Time based on Stability
-	# 100% Stability = 0 minutes, 0% Stability = 60 minutes (3600 seconds)
-	var base_duration = 3600.0 * (1.0 - (clamp(final_stability, 0.0, 100.0) / 100.0))
-	
-	# Apply Ship Upgrade: Fusion Speed (10% reduction per level)
-	if PlayerData:
-		var speed_level = PlayerData.get_upgrade_level("fusion_speed")
-		base_duration *= (1.0 - (speed_level * 0.10))
+	var base_duration = calculate_synthesis_duration(current_z, int(final_stability))
 	
 	# Tutorial Override: 30 seconds for the first fusion
 	if TutorialManager and PlayerData and PlayerData.tutorial_step == TutorialManager.Step.CLICK_FUSE:
@@ -127,7 +139,7 @@ func complete_synthesis(z_num: int, incoming_stability: int = 50):
 	# Safety check for cap (handles legacy capsules > 26)
 	if z_num > MAX_Z:
 		print("Synthesis failed: Z%d exceeds ship capacity." % z_num)
-		var dust = z_num * 5
+		var dust = _calculate_dust_reward(z_num * 5)
 		if PlayerData:
 			PlayerData.add_resource("neutron_dust", dust)
 		fusion_completed.emit(z_num, false, dust)
@@ -151,7 +163,7 @@ func complete_synthesis(z_num: int, incoming_stability: int = 50):
 		var existing = PlayerData.get_owned_monster(monster_res.monster_name)
 		
 		# Always award dust for duplicates
-		var dust_amount = z_num * 10
+		var dust_amount = _calculate_dust_reward(z_num * 10)
 		if PlayerData:
 			PlayerData.add_resource("neutron_dust", dust_amount)
 			
@@ -182,6 +194,11 @@ func complete_synthesis(z_num: int, incoming_stability: int = 50):
 		print("New Monster Z%d added to collection! Stability: %d%%" % [z_num, new_monster.stability])
 		fusion_completed.emit(z_num, true, 0)
 
+func _calculate_dust_reward(base_amount: int) -> int:
+	if not PlayerData: return base_amount
+	var siphon_level = PlayerData.get_upgrade_level("dust_efficiency")
+	return int(base_amount * (1.0 + (siphon_level * 0.10)))
+
 func _calculate_result_stability(z: int) -> int:
 	var current_val = 0 # Base floor (so min result is 1% for new/low elements)
 	
@@ -200,8 +217,15 @@ func _calculate_result_stability(z: int) -> int:
 	
 	# Weighted random: Bias heavily towards min_val (current stability)
 	# Power of 4 makes high rolls much less likely
+	var exponent = 4.0
+	
+	# Apply Isotope Scanner Upgrade
+	if PlayerData:
+		var scanner_level = PlayerData.get_upgrade_level("scanner_range")
+		exponent = max(1.0, 4.0 - (scanner_level * 0.3))
+	
 	var range_size = 100 - min_val
-	var roll = pow(randf(), 4.0)
+	var roll = pow(randf(), exponent)
 	var added = int(roll * range_size)
 	
 	return min_val + added

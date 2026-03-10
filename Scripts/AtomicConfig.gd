@@ -215,9 +215,18 @@ const GROUP_MOVES = {
 
 # Calculates final stats based on Group Baseline, Atomic Number (Z), and Stability.
 static func calculate_stats(group: Group, atomic_number: int, stability: int = 0) -> Dictionary:
+	var result = calculate_stats_with_breakdown(group, atomic_number, stability)
+	return result["final_stats"]
+
+static func calculate_stats_with_breakdown(group: Group, atomic_number: int, stability: int = 0) -> Dictionary:
 	var base = BASELINES.get(group, BASELINES[Group.UNKNOWN])
 	
-	var final_stats = {}
+	var breakdown = {
+		"hp": {"base": base.hp * 10.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
+		"atk": {"base": base.atk * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
+		"def": {"base": base.def * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
+		"spd": {"base": base.spd * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
+	}
 	
 	# 1. Resonance Bonus (Set Bonus): Scales based on total owned elements of this group
 	var resonance_count = 0
@@ -232,23 +241,27 @@ static func calculate_stats(group: Group, atomic_number: int, stability: int = 0
 	
 	# Ship Upgrades (Combat)
 	if PlayerData:
-		hp_mult += PlayerData.get_upgrade_level("combat_hull") * 0.05
-		atk_mult += PlayerData.get_upgrade_level("combat_optics") * 0.05
-		def_mult += PlayerData.get_upgrade_level("combat_shielding") * 0.05
+		breakdown.hp.ship_upgrade = PlayerData.get_upgrade_level("combat_hull") * 0.05
+		breakdown.atk.ship_upgrade = PlayerData.get_upgrade_level("combat_optics") * 0.05
+		breakdown.def.ship_upgrade = PlayerData.get_upgrade_level("combat_shielding") * 0.05
+		hp_mult += breakdown.hp.ship_upgrade
+		atk_mult += breakdown.atk.ship_upgrade
+		def_mult += breakdown.def.ship_upgrade
 	
 	match group:
 		Group.ALKALINE_EARTH:
-			def_mult += (resonance_count * 0.05) # +5% Def per element
+			breakdown.def.resonance = (resonance_count * 0.05) # +5% Def per element
+			def_mult += breakdown.def.resonance
 		Group.NOBLE_GAS:
-			hp_mult += (resonance_count * 0.05) # +5% HP per element
+			breakdown.hp.resonance = (resonance_count * 0.05) # +5% HP per element
+			hp_mult += breakdown.hp.resonance
 		Group.ACTINIDE:
-			spd_mult += (resonance_count * 0.01) # +1% Speed per element
+			breakdown.spd.resonance = (resonance_count * 0.01) # +1% Speed per element
+			spd_mult += breakdown.spd.resonance
 		Group.LANTHANIDE:
 			var bonus = resonance_count * 0.01 # +1% All Stats per element
-			hp_mult += bonus
-			atk_mult += bonus
-			def_mult += bonus
-			spd_mult += bonus
+			breakdown.hp.resonance = bonus; breakdown.atk.resonance = bonus; breakdown.def.resonance = bonus; breakdown.spd.resonance = bonus
+			hp_mult += bonus; atk_mult += bonus; def_mult += bonus; spd_mult += bonus
 	
 	# Lanthanide Full Set Bonus: +10% All Stats to ALL elements
 	if PlayerData:
@@ -260,18 +273,25 @@ static func calculate_stats(group: Group, atomic_number: int, stability: int = 0
 					total_lanth += 1
 		
 		if lanth_count >= total_lanth and total_lanth > 0:
-			hp_mult += 0.10
-			atk_mult += 0.10
-			def_mult += 0.10
-			spd_mult += 0.10
+			breakdown.hp.lanthanide_set = 0.10; breakdown.atk.lanthanide_set = 0.10;
+			breakdown.def.lanthanide_set = 0.10; breakdown.spd.lanthanide_set = 0.10;
+			hp_mult += 0.10; atk_mult += 0.10; def_mult += 0.10; spd_mult += 0.10
 	
 	# 2. Stability Bonus: Scales stats up to +50% at 100 stability
 	var stability_multiplier = 1.0 + (float(stability) / 200.0)
+	var stability_bonus = stability_multiplier - 1.0
 	
 	# 3. Mastery Buff: At 100% Stability, unlock Class Potential (+10% extra stats)
 	if stability >= 100:
 		stability_multiplier += 0.1
-		
+		stability_bonus += 0.1
+	
+	breakdown.hp.stability = stability_bonus
+	breakdown.atk.stability = stability_bonus
+	breakdown.def.stability = stability_bonus
+	breakdown.spd.stability = stability_bonus
+	
+	var final_stats = {}
 	# Simplified Linear Scaling
 	# HP: Base (1-10)
 	# Example: Base 5 -> 50 HP
@@ -283,7 +303,7 @@ static func calculate_stats(group: Group, atomic_number: int, stability: int = 0
 	final_stats["defense"] = int((base.def * 2.0) * stability_multiplier * def_mult)
 	final_stats["speed"] = int((base.spd * 2.0) * stability_multiplier * spd_mult)
 	
-	return final_stats
+	return { "final_stats": final_stats, "breakdown": breakdown }
 
 # Calculates the Binding Energy cost to fuse a new element
 static func calculate_fusion_cost(target_z: int) -> int:

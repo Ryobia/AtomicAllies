@@ -33,6 +33,8 @@ var buy_stabilizer_btn: Button
 var catalyst_checkbox: CheckBox
 var buy_catalyst_btn: Button
 
+var synthesis_complete_popup
+
 # Stability UI
 var stability_bar
 var stability_label
@@ -149,6 +151,25 @@ func _ready():
 	fusion_failure_popup = find_child("FusionFailurePopup", true, false)
 	if fusion_failure_popup:
 		fusion_failure_popup.visible = false
+	
+	synthesis_complete_popup = find_child("SynthesisCompletePopup", true, false)
+	if synthesis_complete_popup:
+		synthesis_complete_popup.visible = false
+		var ok_btn = synthesis_complete_popup.find_child("OkButton", true, false)
+		if ok_btn:
+			ok_btn.pressed.connect(func(): synthesis_complete_popup.visible = false)
+			
+		var nursery_btn = synthesis_complete_popup.find_child("NurseryButton", true, false)
+		if nursery_btn:
+			nursery_btn.pressed.connect(func(): GlobalManager.switch_scene("nursery"))
+	
+	var capsule_node = find_child("Capsule", true, false)
+	if capsule_node:
+		capsule_node.visible = false
+	
+	var flare_node = find_child("Flare", true, false)
+	if flare_node:
+		flare_node.visible = false
 	
 	selection_panel = find_child("SelectionPanel", true, false)
 	if selection_panel:
@@ -282,12 +303,76 @@ func _on_search_text_changed(new_text: String):
 	_populate_selection_list()
 
 func _on_fusion_error(message: String):
-	var popup = find_child("ErrorPopup", true, false)
-	if popup:
-		popup.dialog_text = message
-		popup.popup_centered()
-	else:
-		print("Fusion Error: ", message)
+	# Remove old AcceptDialog usage and create a custom styled popup
+	var popup = PanelContainer.new()
+	popup.name = "CustomErrorPopup"
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	popup.grow_vertical = Control.GROW_DIRECTION_BOTH
+	popup.custom_minimum_size = Vector2(600, 0)
+	popup.z_index = 100
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	popup.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 30)
+	margin.add_theme_constant_override("margin_right", 30)
+	margin.add_theme_constant_override("margin_top", 30)
+	margin.add_theme_constant_override("margin_bottom", 30)
+	popup.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 25)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "FUSION ERROR"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color("#ff4d4d"))
+	vbox.add_child(title)
+	
+	var lbl = Label.new()
+	lbl.text = message
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.add_theme_font_size_override("font_size", 32)
+	lbl.add_theme_color_override("font_color", Color("#ffffff"))
+	vbox.add_child(lbl)
+	
+	var btn = Button.new()
+	btn.text = "OK"
+	btn.custom_minimum_size = Vector2(200, 70)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	
+	var btn_style = StyleBoxFlat.new()
+	btn_style.bg_color = Color("#60fafc")
+	btn_style.set_corner_radius_all(8)
+	
+	var hover_style = btn_style.duplicate()
+	hover_style.bg_color = Color("#a0fcfd")
+	
+	btn.add_theme_stylebox_override("normal", btn_style)
+	btn.add_theme_stylebox_override("hover", hover_style)
+	btn.add_theme_stylebox_override("pressed", btn_style)
+	btn.add_theme_color_override("font_color", Color("#010813"))
+	btn.add_theme_font_size_override("font_size", 36)
+	
+	btn.pressed.connect(popup.queue_free)
+	vbox.add_child(btn)
+	
+	add_child(popup)
+	
+	# Animate
+	popup.scale = Vector2.ZERO
+	var tween = create_tween()
+	tween.tween_property(popup, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _on_capsule_created(capsule_data):
 	# Reset Data
@@ -309,6 +394,9 @@ func _on_capsule_created(capsule_data):
 	
 	check_breeding_status()
 	_update_success_rate_preview()
+	
+	# Show popup after animation finishes (approx 1.6s)
+	get_tree().create_timer(3.0).timeout.connect(_show_synthesis_complete_popup)
 
 func _process(_delta):
 	# Update the timer label in real-time
@@ -690,9 +778,26 @@ func _on_confirm_fusion_pressed():
 		fusion_confirm_popup.visible = false
 	
 	var target_z = parent_1.atomic_number + parent_2.atomic_number
+	
+	# Validation Checks before spending resources
+	if PlayerData.get_first_empty_chamber_index() == -1:
+		_on_fusion_error("No empty Synthesis Chambers available!")
+		return
+
+	if target_z > PlayerData.get_max_unlocked_z():
+		_on_fusion_error("Blueprint Required: Complete Discovery Run for Z-%d." % target_z)
+		return
+
+	if target_z > SynthesisManager.MAX_Z:
+		_on_fusion_error("Ship Upgrade Required: Cannot synthesize elements beyond Oganesson (118).")
+		return
+
 	var cost = AtomicConfig.calculate_fusion_cost(target_z)
 	
 	if PlayerData.spend_resource("binding_energy", cost):
+		# Play animation
+		_play_fusion_animation()
+		
 		# Consume boosters if checked
 		var bonus = 0
 		if stabilizer_checkbox and stabilizer_checkbox.button_pressed:
@@ -767,15 +872,18 @@ func _update_slot_visuals(slot_idx: int, monster: MonsterData):
 		icon_rect = slot_node.find_child("IconTexture" + str(slot_idx), true, false)
 		if not icon_rect:
 			icon_rect = slot_node.find_child("IconTexture", true, false)
-	else:
+	
+	if not icon_rect:
 		# 2. Fallback: Look for IconTextureX directly
 		icon_rect = find_child("IconTexture" + str(slot_idx), true, false)
 		if not icon_rect:
 			icon_rect = find_child(prefix + "Icon", true, false)
-	
+
 	if not icon_rect:
 		print("Nexus Warning: Could not find IconTexture for ", prefix)
 		return
+		
+	icon_rect.visible = true
 		
 	# Force the container to expand to fill its parent
 	icon_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1028,3 +1136,120 @@ func _apply_font_override(node: Node, size: int):
 	
 	for child in node.get_children():
 		_apply_font_override(child, size)
+
+func _play_fusion_animation():
+	if not atom_p1 or not atom_p2: return
+	
+	# Create global copies for animation to escape UI layout constraints
+	var p1_proxy = _create_visual_proxy(atom_p1)
+	var p2_proxy = _create_visual_proxy(atom_p2)
+	
+	# Hide originals (they will be cleaned up by _on_capsule_created shortly anyway)
+	atom_p1.visible = false
+	atom_p2.visible = false
+	
+	# Target: Center of screen
+	var target_pos = size / 2
+	target_pos.y -= 250 # Meet higher up
+	
+	# Flare setup
+	var flare = find_child("Flare", true, false)
+	if flare:
+		flare.visible = true
+		flare.z_index = 20 # Ensure it renders on top of everything
+		flare.scale = Vector2.ZERO
+		flare.modulate.a = 0.0
+		flare.position = target_pos
+
+	# Capsule setup
+	var capsule = find_child("Capsule", true, false)
+	if capsule:
+		capsule.visible = true
+		capsule.scale = Vector2.ZERO
+		capsule.position = target_pos
+		capsule.z_index = 21 # Render above flare
+		
+		var anim_path = "res://Assets/Animations/CapsuleStabilizing.tres"
+		if ResourceLoader.exists(anim_path):
+			var frames = load(anim_path)
+			if capsule is AnimatedSprite2D:
+				capsule.sprite_frames = frames
+				capsule.play("energycapsule")
+			elif capsule is Sprite2D:
+				if frames is SpriteFrames and frames.has_animation("energycapsule"):
+					capsule.texture = frames.get_frame_texture("energycapsule", 0)
+	
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+	
+	# Move to center
+	tween.tween_property(p1_proxy, "global_position", target_pos, 0.8)
+	tween.tween_property(p2_proxy, "global_position", target_pos, 0.8)
+	
+	# Scale down/fade out as they merge
+	tween.tween_property(p1_proxy, "scale", Vector2.ZERO, 0.2).set_delay(0.75)
+	tween.tween_property(p2_proxy, "scale", Vector2.ZERO, 0.2).set_delay(0.75)
+	
+	# Flare Animation
+	if flare:
+		# Ignite
+		tween.tween_property(flare, "scale", Vector2(4.0, 4.0), 0.4).set_delay(0.7).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		tween.tween_property(flare, "modulate:a", 1.0, 0.1).set_delay(0.7)
+		
+		# Screen Shake
+		tween.tween_callback(func(): _shake_screen(0.5, 20.0)).set_delay(0.7)
+		
+		# Fade out
+		tween.tween_property(flare, "modulate:a", 0.0, 0.5).set_delay(1.1)
+		tween.tween_property(flare, "scale", Vector2(0.0, 0.0), 0.5).set_delay(1.1)
+
+	# Capsule Animation
+	if capsule:
+		tween.tween_property(capsule, "scale", Vector2(1.0, 1.0), 0.5).set_delay(1.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
+		# Move to bottom left (Synthesis Chamber nav button location)
+		var exit_pos = Vector2(100, size.y - 100)
+		
+		tween.chain()
+		tween.tween_property(capsule, "global_position", exit_pos, 0.8).set_delay(0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		tween.tween_property(capsule, "scale", Vector2(0.0, 0.0), 0.8).set_delay(0.3)
+	
+	# Cleanup and Hide Icons
+	var icon1 = find_child("IconTexture1", true, false)
+	var icon2 = find_child("IconTexture2", true, false)
+	
+	tween.chain().tween_callback(func():
+		if is_instance_valid(p1_proxy): p1_proxy.queue_free()
+		if is_instance_valid(p2_proxy): p2_proxy.queue_free()
+		if icon1: icon1.visible = false
+		if icon2: icon2.visible = false
+	)
+
+func _create_visual_proxy(original: Node2D) -> Node2D:
+	var proxy = original.duplicate()
+	add_child(proxy)
+	proxy.global_position = original.global_position
+	proxy.scale = original.global_scale
+	return proxy
+
+func _shake_screen(duration: float, intensity: float):
+	var original_pos = position
+	var shake_tween = create_tween()
+	
+	var steps = int(duration / 0.05)
+	for i in range(steps):
+		var offset = Vector2(randf_range(-intensity, intensity), randf_range(-intensity, intensity))
+		shake_tween.tween_property(self, "position", original_pos + offset, 0.05)
+	
+	shake_tween.tween_property(self, "position", original_pos, 0.05)
+
+func _show_synthesis_complete_popup():
+	if synthesis_complete_popup:
+		synthesis_complete_popup.visible = true
+		synthesis_complete_popup.move_to_front()
+		
+		# Animate in
+		synthesis_complete_popup.scale = Vector2.ZERO
+		var tween = create_tween()
+		tween.tween_property(synthesis_complete_popup, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

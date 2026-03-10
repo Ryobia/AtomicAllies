@@ -57,6 +57,36 @@ func _on_continue_pressed():
 		TutorialManager.advance_step() # To COMPLETE_RUN (Wait for run finish)
 		
 	if CampaignManager:
+		# Check for dead units in active slots (0-2) while living units exist in bench (3+)
+		var roster = PlayerData.active_team
+		if roster.is_empty(): roster = PlayerData.owned_monsters
+		
+		var dead_in_front = false
+		var living_in_bench = false
+		
+		for i in range(roster.size()):
+			var m = roster[i]
+			if not m: continue
+			
+			var hp = m.get_current_stats().max_hp
+			if CampaignManager.run_team_state.has(m):
+				var state = CampaignManager.run_team_state[m]
+				if typeof(state) == TYPE_INT: hp = state
+				elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", hp)
+			
+			if i < 3:
+				if hp <= 0: dead_in_front = true
+			else:
+				if hp > 0: living_in_bench = true
+		
+		if dead_in_front and living_in_bench:
+			if title_label:
+				title_label.text = "Swap out fallen units!"
+				var tween = create_tween()
+				tween.tween_property(title_label, "modulate", Color.RED, 0.2)
+				tween.tween_property(title_label, "modulate", Color.WHITE, 0.2)
+			return
+
 		CampaignManager.start_next_wave()
 
 func _on_full_heal_pressed():
@@ -72,14 +102,17 @@ func _on_full_heal_pressed():
 		
 		var current_hp = monster.get_current_stats().max_hp
 		if CampaignManager.run_team_state.has(monster):
-			current_hp = CampaignManager.run_team_state[monster]
+			var state = CampaignManager.run_team_state[monster]
+			if typeof(state) == TYPE_INT: current_hp = state
+			elif typeof(state) == TYPE_DICTIONARY: current_hp = state.get("hp", current_hp)
+			
 		var max_hp = monster.get_current_stats().max_hp
 		
 		if current_hp > 0 and current_hp < max_hp:
 			var cost = max(1, int(CampaignManager.current_run_energy * 0.1))
 			if CampaignManager.current_run_energy >= cost:
 				CampaignManager.current_run_energy -= cost
-				CampaignManager.run_team_state[monster] = max_hp
+				_update_monster_hp(monster, max_hp)
 				healed_monsters.append(monster)
 			else:
 				break # Ran out of energy
@@ -108,7 +141,10 @@ func _populate_monster_grid(flashing_monsters: Array = []):
 	for m in roster:
 		if not m: continue
 		var chp = m.get_current_stats().max_hp
-		if CampaignManager and CampaignManager.run_team_state.has(m): chp = CampaignManager.run_team_state[m]
+		if CampaignManager and CampaignManager.run_team_state.has(m):
+			var state = CampaignManager.run_team_state[m]
+			if typeof(state) == TYPE_INT: chp = state
+			elif typeof(state) == TYPE_DICTIONARY: chp = state.get("hp", chp)
 		if chp > 0 and chp < m.get_current_stats().max_hp:
 			var c = max(1, int(sim_energy * 0.1))
 			if sim_energy >= c:
@@ -125,7 +161,9 @@ func _populate_monster_grid(flashing_monsters: Array = []):
 		
 		var current_hp = monster.get_current_stats().max_hp
 		if CampaignManager.run_team_state.has(monster):
-			current_hp = CampaignManager.run_team_state[monster]
+			var state = CampaignManager.run_team_state[monster]
+			if typeof(state) == TYPE_INT: current_hp = state
+			elif typeof(state) == TYPE_DICTIONARY: current_hp = state.get("hp", current_hp)
 		var max_hp = monster.get_current_stats().max_hp
 			
 		var is_dead = (current_hp <= 0)
@@ -246,7 +284,7 @@ func _heal_monster(monster: MonsterData, cost: int):
 		if CampaignManager.current_run_energy >= cost:
 			CampaignManager.current_run_energy -= cost
 			var max_hp = monster.get_current_stats().max_hp
-			CampaignManager.run_team_state[monster] = max_hp
+			_update_monster_hp(monster, max_hp)
 			print("Rest Site: Healed %s for %d energy" % [monster.monster_name, cost])
 	_update_loot_label()
 	_populate_monster_grid([monster])
@@ -256,7 +294,7 @@ func _revive_monster(monster: MonsterData):
 		if PlayerData.spend_resource("gems", PlayerData.REVIVE_COST):
 			if CampaignManager:
 				var max_hp = monster.get_current_stats().max_hp
-				CampaignManager.run_team_state[monster] = max_hp
+				_update_monster_hp(monster, max_hp)
 				print("Rest Site: Revived ", monster.monster_name)
 			_populate_monster_grid([monster])
 		else:
@@ -450,13 +488,15 @@ func _select_reward(reward: Dictionary):
 				var max_hp = m.get_current_stats().max_hp
 				var current = max_hp
 				if CampaignManager and CampaignManager.run_team_state.has(m):
-					current = CampaignManager.run_team_state[m]
+					var state = CampaignManager.run_team_state[m]
+					if typeof(state) == TYPE_INT: current = state
+					elif typeof(state) == TYPE_DICTIONARY: current = state.get("hp", current)
 				
 				if current > 0: # Don't revive
 					var heal_amt = int(max_hp * reward.amount)
 					var new_hp = min(max_hp, current + heal_amt)
 					if CampaignManager:
-						CampaignManager.run_team_state[m] = new_hp
+						_update_monster_hp(m, new_hp)
 		_populate_monster_grid()
 
 	_update_loot_label()
@@ -490,6 +530,7 @@ func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable
 	lbl.text = "Spend %d Gem(s) to %s?" % [cost, action_name]
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.custom_minimum_size.x = 460
 	lbl.add_theme_font_size_override("font_size", 32)
 	vbox.add_child(lbl)
 	
@@ -515,3 +556,12 @@ func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable
 	
 	add_child(popup)
 	popup.position = (get_viewport_rect().size - popup.custom_minimum_size) / 2
+
+func _update_monster_hp(monster: MonsterData, new_hp: int):
+	if not CampaignManager: return
+	var state = CampaignManager.run_team_state.get(monster, {})
+	if typeof(state) == TYPE_INT:
+		state = { "hp": new_hp, "stats": {} }
+	elif typeof(state) == TYPE_DICTIONARY:
+		state["hp"] = new_hp
+	CampaignManager.run_team_state[monster] = state

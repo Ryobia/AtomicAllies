@@ -45,6 +45,7 @@ var seen_enemies: Dictionary = {} # Enemy Name (String) -> bool
 var settings: Dictionary = {} # Volume, Fullscreen, etc.
 var quest_data: Dictionary = { "z": 3, "stage": 0 } # z: Atomic Number, stage: 0=Run, 1=Fuse
 var tutorial_step: int = 0 # 0: Not started, 1+: In progress, 999: Complete
+var has_seen_shop_tutorial: bool = false
 
 # Resources
 var resources = {
@@ -186,7 +187,8 @@ func save_game():
 		"ship_upgrades": ship_upgrades,
 		"seen_enemies": seen_enemies,
 		"settings": settings,
-		"quest_data": quest_data
+		"quest_data": quest_data,
+		"has_seen_shop_tutorial": has_seen_shop_tutorial
 	}
 	
 	# Serialize Monsters
@@ -270,6 +272,9 @@ func load_game():
 		if "tutorial_step" in save_data:
 			tutorial_step = int(save_data["tutorial_step"])
 
+		if "has_seen_shop_tutorial" in save_data:
+			has_seen_shop_tutorial = save_data["has_seen_shop_tutorial"]
+
 		if "monsters" in save_data:
 			owned_monsters.clear()
 			for m_data in save_data["monsters"]:
@@ -305,12 +310,13 @@ func reset_save():
 	unlocked_blueprints.clear()
 	class_resonance.clear()
 	tutorial_step = 0
+	has_seen_shop_tutorial = false
 	ship_upgrades.clear()
 	seen_enemies.clear()
 	inventory.clear()
 	quest_data = { "z": 3, "stage": 0 }
 	resources = {
-		"neutron_dust": 0,
+		"neutron_dust": 200,
 		"gems": 10,
 		"binding_energy": 500
 	}
@@ -345,8 +351,8 @@ func reset_save():
 func get_upgrade_level(id: String) -> int:
 	return ship_upgrades.get(id, 0)
 
-func purchase_ship_upgrade(id: String, cost: int) -> bool:
-	if spend_resource("neutron_dust", cost):
+func purchase_ship_upgrade(id: String, cost: int, currency: String = "neutron_dust") -> bool:
+	if spend_resource(currency, cost):
 		if not ship_upgrades.has(id): ship_upgrades[id] = 0
 		ship_upgrades[id] += 1
 		save_game()

@@ -133,13 +133,18 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	print("BattleManager: Initializing battle...")
 	current_state = BattleState.SETUP
 	clear_battlefield()
+	active_player_monsters = [null, null, null] # Initialize fixed slots
 	roster_hp_cache.clear()
 	_update_team_passives()
 	
 	# Load initial state from CampaignManager if rogue run
 	if CampaignManager and CampaignManager.is_rogue_run:
 		for m in CampaignManager.run_team_state:
-			roster_hp_cache[m] = CampaignManager.run_team_state[m]
+			var data = CampaignManager.run_team_state[m]
+			if typeof(data) == TYPE_INT:
+				roster_hp_cache[m] = { "hp": data, "stats": {} }
+			elif typeof(data) == TYPE_DICTIONARY:
+				roster_hp_cache[m] = data.duplicate(true)
 	
 	# 1. Spawn Player Team
 	# Use active_team if set, otherwise fallback to owned_monsters
@@ -158,14 +163,31 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	for i in range(player_roster.size()):
 		var unit_data = player_roster[i]
 		if unit_data == null: continue
+
+		var is_dead = false
+		if roster_hp_cache.has(unit_data):
+			var state = roster_hp_cache[unit_data]
+			var hp: int = 0
+			if typeof(state) == TYPE_INT:
+				hp = state
+			elif typeof(state) == TYPE_DICTIONARY:
+				var val = state.get("hp", 0)
+				if typeof(val) == TYPE_INT or typeof(val) == TYPE_FLOAT:
+					hp = int(val)
+			if hp <= 0:
+				is_dead = true
 		
 		if i < 3:
+			if is_dead:
+				benched_player_monsters.append(unit_data)
+				continue
+
 			var spawn_idx = i
 			if player_spawn_points.size() >= 3:
 				spawn_idx = spawn_map[i]
 			
 			if spawn_idx < player_spawn_points.size():
-				spawn_unit(unit_data, player_spawn_points[spawn_idx], true)
+				spawn_unit(unit_data, player_spawn_points[spawn_idx], true, i)
 		else:
 			benched_player_monsters.append(unit_data)
 		
@@ -197,6 +219,7 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	# Mastery: Alkali Metals (100% Stability) -> Free Turn at Start
 	var all_units = active_player_monsters + active_enemy_monsters
 	for unit in all_units:
+		if not unit: continue
 		if unit.data.group == AtomicConfig.Group.ALKALI_METAL and unit.data.stability >= 100:
 			unit.atb_value = 100.0
 			_show_mastery_trigger(unit, "Mastery: Free Turn!")
@@ -222,20 +245,24 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	
 	# Setup the HUD with the monster data
 	if battle_hud:
-		var player_data_list = []
+		var player_data = []
 		for unit in active_player_monsters:
-			player_data_list.append(unit.data)
+			if unit: player_data.append(unit.data)
+			else: player_data.append(null)
 		# The setup_ui function expects a list of MonsterData, not BattleMonster nodes
-		battle_hud.setup_ui(player_data_list, enemy_data_list)
+		battle_hud.setup_ui(player_data, enemy_data_list)
 		
 		# Force update HUD with actual HP values (since setup_ui defaults to Max HP)
 		for i in range(active_player_monsters.size()):
 			var unit = active_player_monsters[i]
-			hud_update_hp.emit(true, i, unit.current_hp, unit.max_hp)
+			if unit:
+				hud_update_hp.emit(true, i, unit.current_hp, unit.max_hp)
+				_refresh_unit_status(unit)
 			
 		for i in range(active_enemy_monsters.size()):
 			var unit = active_enemy_monsters[i]
 			hud_update_hp.emit(false, i, unit.current_hp, unit.max_hp)
+			_refresh_unit_status(unit)
 
 	# Tutorial Hook: Start Battle Tutorial
 	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.START_BATTLE:
@@ -246,7 +273,7 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	# Start the clock
 	current_state = BattleState.COUNTING
 
-func spawn_unit(data: MonsterData, spawn_marker: Marker2D, is_player: bool):
+func spawn_unit(data: MonsterData, spawn_marker: Marker2D, is_player: bool, slot_index: int = -1):
 	if not monster_scene:
 		push_error("BattleManager: Monster Scene is not assigned in Inspector!")
 		return
@@ -263,13 +290,29 @@ func spawn_unit(data: MonsterData, spawn_marker: Marker2D, is_player: bool):
 		if is_player:
 			# Apply cached HP if exists (Persistence)
 			if roster_hp_cache.has(data):
-				var cached_hp = roster_hp_cache[data]
-				unit.current_hp = cached_hp
-				if cached_hp <= 0:
+				var state = roster_hp_cache[data]
+				if typeof(state) == TYPE_INT:
+					unit.current_hp = state
+				elif typeof(state) == TYPE_DICTIONARY:
+					var hp_val = state.get("hp", unit.max_hp)
+					unit.current_hp = hp_val if (typeof(hp_val) == TYPE_INT or typeof(hp_val) == TYPE_FLOAT) else 0
+					var saved_stats = state.get("stats", {})
+					for stat in saved_stats:
+						if unit.stats.has(stat):
+							unit.stats[stat] = saved_stats[stat]
+					
+					var saved_meta = state.get("meta", {})
+					for key in saved_meta:
+						unit.set_meta(key, saved_meta[key])
+					
+					var saved_effects = state.get("effects", [])
+					if not saved_effects.is_empty():
+						unit.active_effects = saved_effects.duplicate(true)
+						if unit.has_signal("effects_changed"): unit.effects_changed.emit(unit.active_effects)
+				
+				if unit.current_hp <= 0:
 					unit.is_dead = true
 					# If unit spawns dead, BattleManager logic will handle forcing a swap/loss
-			else:
-				roster_hp_cache[data] = unit.max_hp
 			
 			# Apply Rogue Run Buffs
 			if CampaignManager and CampaignManager.is_rogue_run:
@@ -285,7 +328,13 @@ func spawn_unit(data: MonsterData, spawn_marker: Marker2D, is_player: bool):
 		push_warning("BattleManager: Spawned unit is missing 'setup' method.")
 	
 	if is_player:
-		active_player_monsters.append(unit)
+		if slot_index != -1:
+			# Ensure array is large enough (safeguard against shrinking)
+			while active_player_monsters.size() <= slot_index:
+				active_player_monsters.append(null)
+			active_player_monsters[slot_index] = unit
+		else:
+			active_player_monsters.append(unit)
 	else:
 		active_enemy_monsters.append(unit)
 		# Track encounter for Codex
@@ -361,12 +410,22 @@ func start_turn():
 	if current_acting_unit.is_dead:
 		if current_acting_unit.is_player:
 			var available_replacements = benched_player_monsters.filter(func(m):
-				if roster_hp_cache.has(m) and roster_hp_cache[m] <= 0:
-					return false
+				if roster_hp_cache.has(m):
+					var state = roster_hp_cache[m]
+					var hp: int = 0
+					if typeof(state) == TYPE_INT:
+						hp = state
+					elif typeof(state) == TYPE_DICTIONARY:
+						var val = state.get("hp", 0)
+						if typeof(val) == TYPE_INT or typeof(val) == TYPE_FLOAT:
+							hp = int(val)
+					if hp <= 0:
+						return false
 				return true
 			)
 			
 			if available_replacements.is_empty():
+				_force_bench_dead_unit(current_acting_unit)
 				end_turn()
 				return
 			
@@ -391,8 +450,17 @@ func start_turn():
 	# Check if unit died from start-of-turn effects (like Corrosion)
 	if current_acting_unit.is_dead:
 		var available_replacements = benched_player_monsters.filter(func(m):
-			if roster_hp_cache.has(m) and roster_hp_cache[m] <= 0:
-				return false
+			if roster_hp_cache.has(m):
+				var state = roster_hp_cache[m]
+				var hp: int = 0
+				if typeof(state) == TYPE_INT:
+					hp = state
+				elif typeof(state) == TYPE_DICTIONARY:
+					var val = state.get("hp", 0)
+					if typeof(val) == TYPE_INT or typeof(val) == TYPE_FLOAT:
+						hp = int(val)
+				if hp <= 0:
+					return false
 			return true
 		)
 		
@@ -401,6 +469,8 @@ func start_turn():
 			if battle_hud:
 				battle_hud.show_swap_options(_get_swap_options(), true)
 			return
+		elif current_acting_unit.is_player:
+			_force_bench_dead_unit(current_acting_unit)
 		end_turn()
 		return
 		
@@ -424,7 +494,19 @@ func start_turn():
 		if battle_hud:
 			var can_swap = false
 			for m in benched_player_monsters:
-				if not (roster_hp_cache.has(m) and roster_hp_cache[m] <= 0):
+				var hp = 1
+				if roster_hp_cache.has(m):
+					var state = roster_hp_cache[m]
+					if typeof(state) == TYPE_INT:
+						hp = state
+					elif typeof(state) == TYPE_DICTIONARY:
+						var val = state.get("hp", 1)
+						if typeof(val) == TYPE_INT or typeof(val) == TYPE_FLOAT:
+							hp = int(val)
+						else:
+							hp = 0
+				
+				if hp > 0:
 					can_swap = true
 					break
 			
@@ -463,7 +545,7 @@ func execute_ai_turn():
 		return
 	
 	# Enemy Targeting (Player Team)
-	var potential_targets = active_player_monsters.filter(func(m): return not m.is_dead)
+	var potential_targets = active_player_monsters.filter(func(m): return m and not m.is_dead)
 	
 	if potential_targets.is_empty():
 		end_battle(false)
@@ -565,7 +647,7 @@ func _on_move_selected(move: MoveData):
 		# Ally Targeting
 		for i in range(active_player_monsters.size()):
 			var ally = active_player_monsters[i]
-			if not ally.is_dead:
+			if ally and not ally.is_dead:
 				# Optional: Prevent targeting self with ally moves if desired, 
 				# but usually "Ally" moves can target self too in many games.
 				# For now, allow all living team members.
@@ -620,7 +702,7 @@ func _on_item_selected(item_id: String):
 	# Items currently only target allies (healing/buffs)
 	if target_allies:
 		for i in range(active_player_monsters.size()):
-			if not active_player_monsters[i].is_dead:
+			if active_player_monsters[i] and not active_player_monsters[i].is_dead:
 				valid_targets.append(i)
 	
 	battle_hud.move_container.visible = false
@@ -675,6 +757,10 @@ func _on_target_selected(index: int):
 	else:
 		defender = active_enemy_monsters[index]
 	
+	if not defender:
+		log_event.emit("Invalid target!")
+		return
+	
 	# --- Target Validation ---
 	if defender.is_dead:
 		log_event.emit("Target is already defeated!")
@@ -718,7 +804,13 @@ func _on_swap_selected(index: int):
 		
 	var new_monster_data = benched_player_monsters[index]
 	
-	if roster_hp_cache.has(new_monster_data) and roster_hp_cache[new_monster_data] <= 0:
+	var is_dead = false
+	if roster_hp_cache.has(new_monster_data):
+		var state = roster_hp_cache[new_monster_data]
+		var hp = state if typeof(state) == TYPE_INT else state.get("hp", 0)
+		if hp <= 0: is_dead = true
+		
+	if is_dead:
 		log_event.emit("That unit is unable to battle!")
 		if battle_hud: battle_hud.show_actions()
 		return
@@ -756,21 +848,23 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	var marker = active_unit.get_parent()
 	var index = active_player_monsters.find(active_unit)
 	
+	if index == -1:
+		push_error("BattleManager: Active unit not found in roster during swap!")
+		return
+	
+	# Save state of retreating unit
+	_strip_temporary_buffs(active_unit)
+	roster_hp_cache[active_unit.data] = { "hp": active_unit.current_hp, "stats": active_unit.stats.duplicate(), "effects": active_unit.active_effects.duplicate(true), "meta": _get_persistent_meta(active_unit) }
+	
 	all_monsters.erase(active_unit)
 	active_unit.queue_free()
 	
 	log_event.emit("Go! %s!" % new_data.monster_name)
 		
-	spawn_unit(new_data, marker, true)
+	spawn_unit(new_data, marker, true, index)
 	
 	# The new unit is the last added to active_player_monsters by spawn_unit
-	var new_unit = active_player_monsters.pop_back()
-	
-	# Place new unit in the correct index to maintain formation (Vanguard/Flank)
-	if index != -1:
-		active_player_monsters[index] = new_unit
-	else:
-		active_player_monsters.append(new_unit)
+	var new_unit = active_player_monsters[index]
 	
 	new_unit.atb_value = 0 # Start fresh
 	new_unit.play_move() # Play enter animation
@@ -781,7 +875,8 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	if battle_hud:
 		var player_data_list = []
 		for unit in active_player_monsters:
-			player_data_list.append(unit.data)
+			if unit: player_data_list.append(unit.data)
+			else: player_data_list.append(null)
 		var enemy_data_list = []
 		for unit in active_enemy_monsters:
 			enemy_data_list.append(unit.data)
@@ -791,9 +886,10 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 		# Restore HP/ATB values on HUD since setup_ui resets them to max/zero
 		for i in range(active_player_monsters.size()):
 			var u = active_player_monsters[i]
-			battle_hud.update_hp(true, i, u.current_hp, u.max_hp)
-			_refresh_unit_status(u)
-			battle_hud.update_speed_bar(true, i, u.atb_value)
+			if u:
+				battle_hud.update_hp(true, i, u.current_hp, u.max_hp)
+				_refresh_unit_status(u)
+				battle_hud.update_speed_bar(true, i, u.atb_value)
 			
 		for i in range(active_enemy_monsters.size()):
 			var u = active_enemy_monsters[i]
@@ -1027,7 +1123,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 		for effect in result.effects:
 			if effect.get("effect") == "chain_reaction":
 				var enemies = active_enemy_monsters if attacker.is_player else active_player_monsters
-				var living = enemies.filter(func(m): return not m.is_dead and m != defender)
+				var living = enemies.filter(func(m): return m and not m.is_dead and m != defender)
 				if not living.is_empty():
 					var secondary = living.pick_random()
 					_play_chain_reaction_effect(defender.global_position, secondary.global_position)
@@ -1132,6 +1228,12 @@ func end_battle(player_won: bool):
 			for unit in active_enemy_monsters:
 				# Binding Energy: Base 10 + (Atomic Number * 2)
 				total_be += 10 + (unit.data.atomic_number * 2)
+		
+		# Save state of surviving active units
+		for unit in active_player_monsters:
+			if unit:
+				_strip_temporary_buffs(unit)
+				roster_hp_cache[unit.data] = { "hp": unit.current_hp, "stats": unit.stats.duplicate(), "effects": unit.active_effects.duplicate(true), "meta": _get_persistent_meta(unit) }
 
 		rewards["binding_energy"] = total_be
 		# Add to global pool
@@ -1162,7 +1264,7 @@ func _on_monster_death(dead_unit: BattleMonster):
 	# Lanthanide Passive: Absorb 10% of stats of fallen enemies
 	var all_active = active_player_monsters + active_enemy_monsters
 	for unit in all_active:
-		if not unit.is_dead and unit.data.group == AtomicConfig.Group.LANTHANIDE:
+		if unit and not unit.is_dead and unit.data.group == AtomicConfig.Group.LANTHANIDE:
 			var should_absorb = false
 			# Default: Absorb from enemies
 			if unit.is_player != dead_unit.is_player:
@@ -1183,9 +1285,31 @@ func _on_monster_death(dead_unit: BattleMonster):
 				
 				log_event.emit("%s absorbs power from %s!" % [unit.data.monster_name, dead_unit.data.monster_name])
 	
-	# If player unit dies, fill ATB to trigger immediate swap turn
+	# If player unit dies, handle replacement or removal
 	if dead_unit.is_player:
-		dead_unit.atb_value = 100.0
+		# If dying during start-of-turn checks, let start_turn handle it to avoid crashes
+		if dead_unit == current_acting_unit and current_state == BattleState.ACTION_SELECTION:
+			pass
+		else:
+			var available_replacements = benched_player_monsters.filter(func(m):
+				if roster_hp_cache.has(m):
+					var state = roster_hp_cache[m]
+					var hp: int = 0
+					if typeof(state) == TYPE_INT:
+						hp = state
+					elif typeof(state) == TYPE_DICTIONARY:
+						var val = state.get("hp", 0)
+						if typeof(val) == TYPE_INT or typeof(val) == TYPE_FLOAT:
+							hp = int(val)
+					if hp <= 0:
+						return false
+				return true
+			)
+			
+			if available_replacements.is_empty():
+				_force_bench_dead_unit(dead_unit)
+			else:
+				dead_unit.atb_value = 100.0
 	
 	check_win_condition()
 
@@ -1194,14 +1318,25 @@ func check_win_condition():
 
 	var player_team_defeated = true
 	for m in active_player_monsters:
-		if not m.is_dead:
+		if m and not m.is_dead:
 			player_team_defeated = false
 			break
 			
 	var bench_has_living = false
 	for m in benched_player_monsters:
 		# If not in cache, assume alive (fresh). If in cache and > 0, alive.
-		if not (roster_hp_cache.has(m) and roster_hp_cache[m] <= 0):
+		var hp = 1
+		if roster_hp_cache.has(m):
+			var state = roster_hp_cache[m]
+			if typeof(state) == TYPE_INT:
+				hp = state
+			else:
+				var val = state.get("hp", 1)
+				if typeof(val) == TYPE_INT or typeof(val) == TYPE_FLOAT:
+					hp = val
+				else:
+					hp = 0
+		if hp > 0:
 			bench_has_living = true
 			break
 			
@@ -1227,7 +1362,10 @@ func _on_unit_hp_changed(unit: BattleMonster, new_hp: int, max_hp: int):
 		hud_update_hp.emit(unit.is_player, index, new_hp, max_hp)
 		
 	if unit.is_player:
-		roster_hp_cache[unit.data] = new_hp
+		if not roster_hp_cache.has(unit.data) or typeof(roster_hp_cache[unit.data]) == TYPE_INT:
+			roster_hp_cache[unit.data] = { "hp": new_hp, "stats": unit.stats.duplicate(), "effects": unit.active_effects.duplicate(true), "meta": _get_persistent_meta(unit) }
+		else:
+			roster_hp_cache[unit.data]["hp"] = new_hp
 
 func _check_shield_update(unit: BattleMonster):
 	var index = active_player_monsters.find(unit) if unit.is_player else active_enemy_monsters.find(unit)
@@ -1251,8 +1389,11 @@ func _get_swap_options() -> Array:
 	var options = []
 	for m in benched_player_monsters:
 		var is_dead = false
-		if roster_hp_cache.has(m) and roster_hp_cache[m] <= 0:
-			is_dead = true
+		if roster_hp_cache.has(m):
+			var state = roster_hp_cache[m]
+			var hp = state if typeof(state) == TYPE_INT else state.get("hp", 1)
+			if typeof(hp) != TYPE_INT and typeof(hp) != TYPE_FLOAT: hp = 0
+			if hp <= 0: is_dead = true
 		options.append({ "monster": m, "is_dead": is_dead })
 	return options
 
@@ -1260,22 +1401,49 @@ func _update_team_passives():
 	# Apply Team Auras (Passives)
 	var nonmetal_count_p = 0
 	for u in active_player_monsters:
-		if not u.is_dead:
-			if u.data.group == AtomicConfig.Group.NONMETAL: nonmetal_count_p += 1
+		if u and not u.is_dead and u.data.group == AtomicConfig.Group.NONMETAL:
+			nonmetal_count_p += 1
 			
 	for u in active_player_monsters:
+		if not u: continue
+		# First, remove any existing nonmetal passive to prevent incorrect stacking on re-calc
+		if "active_effects" in u:
+			for i in range(u.active_effects.size() - 1, -1, -1):
+				var effect = u.active_effects[i]
+				if effect.get("source") == "nonmetal_passive":
+					if u.stats.has(effect.get("stat")):
+						u.stats[effect.get("stat")] -= effect.get("amount", 0)
+					u.active_effects.remove_at(i)
+		
 		# Nonmetal Aura: Allies gain 5% attack per Nonmetal
 		if nonmetal_count_p > 0:
-			u.apply_effect({ "target": u, "stat": "attack", "amount": int(u.stats.attack * (0.05 * nonmetal_count_p)), "duration": 99, "type": "stat_mod" })
+			var buff_id = "persist_nonmetal_atk_fraction"
+			var existing_fraction = u.get_meta(buff_id, 0.0)
+			
+			# Calculate buff based on base stats to prevent compounding with other in-battle buffs
+			var base_attack = u.data.get_current_stats().attack
+			var buff_value = (base_attack * (0.05 * nonmetal_count_p)) + existing_fraction
+			
+			var integer_part = int(buff_value)
+			var fractional_part = buff_value - float(integer_part)
+			
+			u.set_meta(buff_id, fractional_part)
+			
+			if integer_part > 0:
+				u.apply_effect({ "target": u, "stat": "attack", "amount": integer_part, "duration": 99, "type": "stat_mod", "source": "nonmetal_passive" })
 
 	var nonmetal_count_e = 0
 	for u in active_enemy_monsters:
-		if not u.is_dead:
-			if u.data.group == AtomicConfig.Group.NONMETAL: nonmetal_count_e += 1
+		if not u.is_dead and u.data.group == AtomicConfig.Group.NONMETAL:
+			nonmetal_count_e += 1
 			
 	for u in active_enemy_monsters:
+		# Enemies don't persist, so no need for fractional logic, but we fix the compounding.
 		if nonmetal_count_e > 0:
-			u.apply_effect({ "target": u, "stat": "attack", "amount": int(u.stats.attack * (0.05 * nonmetal_count_e)), "duration": 99, "type": "stat_mod" })
+			var base_attack = u.data.get_current_stats().attack
+			var amount = int(base_attack * (0.05 * nonmetal_count_e))
+			if amount > 0:
+				u.apply_effect({ "target": u, "stat": "attack", "amount": amount, "duration": 99, "type": "stat_mod", "source": "nonmetal_passive" })
 
 func _apply_turn_start_passives(unit: BattleMonster):
 	var group = unit.data.group
@@ -1318,7 +1486,7 @@ func _apply_turn_start_passives(unit: BattleMonster):
 			var targets = active_enemy_monsters if unit.is_player else active_player_monsters
 			var applied = false
 			for target in targets:
-				if not target.is_dead:
+				if target and not target.is_dead:
 					# Only apply if not already present (to avoid resetting the ramp-up)
 					var has_rad = false
 					if "active_effects" in target:
@@ -1355,7 +1523,7 @@ func _apply_mastery_turn_start(unit: BattleMonster):
 
 func _apply_post_transition_mastery_damage(attacker: BattleMonster, amount: int):
 	var enemies = active_enemy_monsters if attacker.is_player else active_player_monsters
-	var living = enemies.filter(func(m): return not m.is_dead)
+	var living = enemies.filter(func(m): return m and not m.is_dead)
 	
 	if not living.is_empty():
 		var target = living.pick_random()
@@ -1376,6 +1544,7 @@ func _scramble_team(is_player: bool):
 	
 	for i in range(team.size()):
 		var unit = team[i]
+		if unit == null: continue
 		var spawn_idx = i
 		if i < 3 and spawn_points.size() >= 3:
 			spawn_idx = spawn_map[i]
@@ -1391,7 +1560,9 @@ func _scramble_team(is_player: bool):
 	# Update HUD to reflect new order
 	if battle_hud:
 		var player_data = []
-		for u in active_player_monsters: player_data.append(u.data)
+		for u in active_player_monsters: 
+			if u: player_data.append(u.data)
+			else: player_data.append(null)
 		var enemy_data = []
 		for u in active_enemy_monsters: enemy_data.append(u.data)
 		
@@ -1400,10 +1571,11 @@ func _scramble_team(is_player: bool):
 		# Restore Bars and Status for the shuffled team
 		for i in range(team.size()):
 			var u = team[i]
-			hud_update_hp.emit(is_player, i, u.current_hp, u.max_hp)
-			hud_update_atb.emit(is_player, i, u.atb_value)
-			_refresh_unit_status(u)
-			_check_shield_update(u)
+			if u:
+				hud_update_hp.emit(is_player, i, u.current_hp, u.max_hp)
+				hud_update_atb.emit(is_player, i, u.atb_value)
+				_refresh_unit_status(u)
+				_check_shield_update(u)
 
 func _handle_reinforcements(caller: BattleMonster):
 	if caller.is_player: return # Only enemies call reinforcements for now
@@ -1522,12 +1694,57 @@ func _handle_cleanse(unit: BattleMonster):
 					var v2 = unit.stats.get(s2, 0)
 					unit.stats[s1] = v2
 					unit.stats[s2] = v1
+			
+			unit.active_effects.remove_at(i)
 	
 	if cleaned_count > 0:
 		log_event.emit("Cleansed %d debuffs from %s!" % [cleaned_count, unit.data.monster_name])
 		_refresh_unit_status(unit)
 	else:
 		log_event.emit("%s is already stable." % unit.data.monster_name)
+
+func _get_persistent_meta(unit: BattleMonster) -> Dictionary:
+	var meta_to_save = {}
+	var all_meta = unit.get_meta_list()
+	for key in all_meta:
+		if key.begins_with("persist_"):
+			meta_to_save[key] = unit.get_meta(key)
+	return meta_to_save
+
+func _force_bench_dead_unit(unit: BattleMonster):
+	log_event.emit("%s retreats to the bench!" % unit.data.monster_name)
+	
+	var index = active_player_monsters.find(unit)
+	if index != -1:
+		active_player_monsters[index] = null
+	
+	benched_player_monsters.append(unit.data)
+	
+	# Save state
+	_strip_temporary_buffs(unit)
+	roster_hp_cache[unit.data] = { "hp": 0, "stats": unit.stats.duplicate(), "effects": [], "meta": _get_persistent_meta(unit) }
+	
+	all_monsters.erase(unit)
+	unit.queue_free()
+	
+	# Update HUD
+	if battle_hud:
+		var player_data = []
+		for u in active_player_monsters: 
+			if u: player_data.append(u.data)
+			else: player_data.append(null)
+		var enemy_data = []
+		for u in active_enemy_monsters: enemy_data.append(u.data)
+		
+		battle_hud.setup_ui(player_data, enemy_data)
+		
+		# Restore Bars for remaining units
+		for i in range(active_player_monsters.size()):
+			var u = active_player_monsters[i]
+			if u:
+				hud_update_hp.emit(true, i, u.current_hp, u.max_hp)
+				hud_update_atb.emit(true, i, u.atb_value)
+				_refresh_unit_status(u)
 
 func _handle_swap_stats(effect: Dictionary):
 	var target = effect.get("target")
@@ -1583,7 +1800,7 @@ func _handle_team_status(attacker: BattleMonster, effect: Dictionary):
 	var applied_count = 0
 	
 	for unit in targets:
-		if not unit.is_dead:
+		if unit and not unit.is_dead:
 			if unit.has_status("invulnerable"):
 				log_event.emit("%s is invulnerable!" % unit.data.monster_name)
 				continue
@@ -1825,3 +2042,29 @@ func _show_damage_number(unit: Node2D, amount: int, type: String = "damage"):
 	tween.tween_property(label, "scale", Vector2(scale_factor, scale_factor), 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	tween.chain().tween_callback(label.queue_free)
+
+func _strip_temporary_buffs(unit: BattleMonster):
+	if not "active_effects" in unit: return
+	
+	# Iterate backwards to safely remove or revert
+	for i in range(unit.active_effects.size() - 1, -1, -1):
+		var effect = unit.active_effects[i]
+		var duration = effect.get("duration", 0)
+		
+		# Assume duration >= 50 is "permanent" for the run (like 99)
+		if duration < 50:
+			if effect.get("type") == "stat_mod":
+				var stat = effect.get("stat")
+				var amount = effect.get("amount", 0)
+				if unit.stats.has(stat):
+					unit.stats[stat] -= amount
+			elif effect.get("type") == "swap_stats":
+				# Revert swap
+				var stats_swapped = effect.get("stats", [])
+				if stats_swapped.size() == 2:
+					var s1 = stats_swapped[0]
+					var s2 = stats_swapped[1]
+					var v1 = unit.stats.get(s1, 0)
+					var v2 = unit.stats.get(s2, 0)
+					unit.stats[s1] = v2
+					unit.stats[s2] = v1

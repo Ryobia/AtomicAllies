@@ -16,6 +16,7 @@ var stability_bar
 var hp_label
 var attack_label
 var defense_label
+var stats_label
 var speed_label
 var icon_texture
 var moves_container
@@ -45,6 +46,7 @@ func _ready():
 	hp_label = find_child("HPLabel", true, false)
 	attack_label = find_child("AttackLabel", true, false)
 	defense_label = find_child("DefenseLabel", true, false)
+	stats_label = find_child("StatsLabel", true, false)
 	speed_label = find_child("SpeedLabel", true, false)
 	icon_texture = find_child("IconTexture", true, false)
 	moves_container = find_child("MovesContainer", true, false)
@@ -81,6 +83,11 @@ func _ready():
 		class_bonus_label.mouse_filter = Control.MOUSE_FILTER_STOP
 		if not class_bonus_label.gui_input.is_connected(_on_class_bonus_input):
 			class_bonus_label.gui_input.connect(_on_class_bonus_input)
+			
+	if stats_label:
+		stats_label.mouse_filter = Control.MOUSE_FILTER_STOP
+		if not stats_label.gui_input.is_connected(_on_stats_label_input):
+			stats_label.gui_input.connect(_on_stats_label_input)
 
 	if not fatigue_label and name_label:
 		# Create dynamically if not found in scene
@@ -535,6 +542,89 @@ func _on_help_icon_input(event):
 func _on_class_bonus_input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_show_tooltip_popup(class_bonus_label.tooltip_text)
+
+func _on_stats_label_input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_show_detailed_stats_popup()
+
+func _show_detailed_stats_popup():
+	if not current_monster: return
+
+	var result = AtomicConfig.calculate_stats_with_breakdown(current_monster.group, current_monster.atomic_number, current_monster.stability)
+	var breakdown = result.breakdown
+	var final_stats = result.final_stats
+
+	var text = ""
+	text += _format_stat_breakdown("HP", breakdown.hp, final_stats.max_hp)
+	text += _format_stat_breakdown("Attack", breakdown.atk, final_stats.attack)
+	text += _format_stat_breakdown("Defense", breakdown.def, final_stats.defense)
+	text += _format_stat_breakdown("Speed", breakdown.spd, final_stats.speed)
+	
+	# Create a custom popup
+	var popup = PanelContainer.new()
+	popup.name = "DetailedStatsPopup"
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.custom_minimum_size = Vector2(900, 0)
+	popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	popup.grow_vertical = Control.GROW_DIRECTION_BOTH
+	popup.z_index = 100
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	popup.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 40); margin.add_theme_constant_override("margin_right", 40)
+	margin.add_theme_constant_override("margin_top", 40); margin.add_theme_constant_override("margin_bottom", 40)
+	popup.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 30)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "Stat Breakdown"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", Color("#60fafc"))
+	vbox.add_child(title)
+	
+	var sep = HSeparator.new()
+	sep.modulate = Color("#60fafc")
+	vbox.add_child(sep)
+	
+	var rtl = RichTextLabel.new()
+	rtl.bbcode_enabled = true
+	rtl.text = text
+	rtl.fit_content = true
+	rtl.add_theme_font_size_override("normal_font_size", 36)
+	rtl.add_theme_font_size_override("bold_font_size", 36)
+	vbox.add_child(rtl)
+	
+	var close_btn = Button.new()
+	close_btn.text = "Close"
+	close_btn.custom_minimum_size.y = 80
+	close_btn.add_theme_font_size_override("font_size", 40)
+	close_btn.pressed.connect(popup.queue_free)
+	vbox.add_child(close_btn)
+	
+	add_child(popup)
+
+func _format_stat_breakdown(stat_name: String, data: Dictionary, final_value: int) -> String:
+	var str = "[color=#60fafc][b]%s: %d[/b][/color]\n" % [stat_name, final_value]
+	str += "[color=#cccccc]  • Base: %d[/color]\n" % int(data.base)
+	
+	var total_mult = 1.0 + data.stability + data.resonance + data.ship_upgrade + data.lanthanide_set
+	if data.stability > 0: str += "[color=#ffd700]  • Stability: +%d%%[/color]\n" % int(data.stability * 100)
+	if data.resonance > 0: str += "[color=#a0a0a0]  • Resonance: +%d%%[/color]\n" % int(data.resonance * 100)
+	if data.ship_upgrade > 0: str += "[color=#a0a0a0]  • Ship Upgrade: +%d%%[/color]\n" % int(data.ship_upgrade * 100)
+	if data.lanthanide_set > 0: str += "[color=#a0a0a0]  • Lanthanide Set: +%d%%[/color]\n" % int(data.lanthanide_set * 100)
+		
+	str += "[color=#888888]  • Total Multiplier: x%.2f[/color]\n\n" % total_mult
+	return str
 
 func _on_stability_bar_input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:

@@ -23,14 +23,14 @@ signal swap_selected(index)
 ]
 
 @onready var player_slots = [
-	find_child("PlayerSlot2", true, false),
-	find_child("PlayerSlot1", true, false),
+	find_child("PlayerSlot2", true, false), # Vanguard (Center)
+	find_child("PlayerSlot1", true, false), # Flank (Left)
 	find_child("PlayerSlot3", true, false)  # Flank (Right)
 ]
 
 @onready var stat_cards = [
-	find_child("StatCard2", true, false),
-	find_child("StatCard1", true, false),
+	find_child("StatCard2", true, false), # Vanguard (Center)
+	find_child("StatCard1", true, false), # Flank (Left)
 	find_child("StatCard3", true, false)  # Flank (Right)
 ]
 
@@ -46,7 +46,6 @@ signal swap_selected(index)
 @onready var move_container = find_child("MoveContainer", true, false)
 
 @onready var back_btn = find_child("Quit", true, false)
-@onready var quit_dialog = find_child("QuitConfirmationDialog", true, false)
 
 # Cache for UI nodes to avoid find_child every frame
 var _ui_cache = { "player": [], "enemy": [] }
@@ -81,9 +80,6 @@ func _ready():
 	if log_label:
 		log_label.mouse_filter = MOUSE_FILTER_IGNORE
 			
-	if quit_dialog:
-		quit_dialog.confirmed.connect(_on_quit_confirmed)
-
 	# Ensure move container is hidden initially
 	if move_container:
 		move_container.visible = false
@@ -597,47 +593,58 @@ func set_targeting_mode(enabled: bool, valid_indices: Array = [], target_allies:
 			tween.tween_property(slot, "modulate", color, 0.1)
 
 func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = false):
-	var icon = slot.find_child("IconTexture", true, false)
-	
+	var icon_rect = slot.find_child("IconTexture", true, false)
+	if not icon_rect: return
+
 	# Fix layout collapse when texture is null
-	if icon:
+	if icon_rect:
 		# Ensure it has a reasonable minimum size to push other elements down
-		if icon.custom_minimum_size.y < 150:
-			icon.custom_minimum_size = Vector2(max(icon.custom_minimum_size.x, 150), 150)
-		if icon is TextureRect:
-			icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		if icon_rect.custom_minimum_size.y < 150:
+			icon_rect.custom_minimum_size = Vector2(max(icon_rect.custom_minimum_size.x, 150), 150)
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 
-	# 1. Cleanup existing animation if we are refreshing the slot
-	if icon:
-		for child in icon.get_children():
-			if child.name.begins_with("UIAnimSprite"):
-				icon.remove_child(child)
-				child.queue_free()
-	
-	# 2. Reset static texture
-	if icon: icon.texture = null
+	# Cleanup old container from previous fix attempt
+	var old_center = icon_rect.find_child("SpriteCenter", false, false)
+	if old_center: old_center.queue_free()
 
-	if icon and monster:
-		# 3. Try to load the animation resource
+	# 1. Find or create a pivot control to center the sprite
+	# We use a Control node anchored to the center (0.5, 0.5)
+	var sprite_pivot = icon_rect.find_child("SpritePivot", false, false)
+	if not sprite_pivot:
+		sprite_pivot = Control.new()
+		sprite_pivot.name = "SpritePivot"
+		sprite_pivot.set_anchors_preset(Control.PRESET_CENTER)
+		sprite_pivot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon_rect.add_child(sprite_pivot)
+
+	# 2. Cleanup existing sprite from the pivot
+	for child in sprite_pivot.get_children():
+		child.queue_free()
+
+	# 3. Reset static texture on the parent
+	icon_rect.texture = null
+
+	if monster:
+		# 4. Try to load the animation resource
 		var anim_name = monster.monster_name.replace(" ", "")
 		if "animation_override" in monster and monster.animation_override != "":
 			anim_name = monster.animation_override
-			
+
 		var anim_path = "res://Assets/Animations/" + anim_name + ".tres"
 		var anim_frames = null
-		
+
 		if ResourceLoader.exists(anim_path):
 			anim_frames = load(anim_path)
 		else:
 			print("BattleHUD: Animation NOT found at: ", anim_path)
-			
+
 		if anim_frames:
 			# Create an AnimatedSprite2D for the UI
 			var sprite = AnimatedSprite2D.new()
 			sprite.name = "UIAnimSprite"
 			sprite.sprite_frames = anim_frames
-			
+
 			# Robust animation playing: Check for 'idle', then 'default', then first available
 			var anim_to_play = "idle"
 			if not anim_frames.has_animation(anim_to_play):
@@ -647,21 +654,20 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 					var anims = anim_frames.get_animation_names()
 					if anims.size() > 0:
 						anim_to_play = anims[0]
-			
-			# Use custom_minimum_size for layout calculation if the node hasn't resized yet
-			var display_size = icon.size
-			if display_size.y < icon.custom_minimum_size.y:
-				display_size = icon.custom_minimum_size
-			
+
 			sprite.z_index = 5 # Ensure sprite renders above health bars
 			sprite.play(anim_to_play)
-			sprite.position = display_size / 2 # Center it
-			_scale_sprite_to_fit(sprite, display_size.y)
-			icon.add_child(sprite)
+
+			var target_height = icon_rect.size.y
+			if target_height <= 0:
+				target_height = icon_rect.custom_minimum_size.y
+
+			_scale_sprite_to_fit(sprite, target_height)
+			sprite_pivot.add_child(sprite)
 		elif monster.icon:
 			# Fallback to static icon
-			icon.texture = monster.icon
-	
+			icon_rect.texture = monster.icon
+
 	var shield = slot.find_child("VanguardShield", true, false)
 	if shield:
 		shield.visible = is_vanguard
@@ -669,21 +675,29 @@ func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = f
 	var name_lbl = slot.find_child("NameLabel", true, false)
 	if name_lbl:
 		name_lbl.text = monster.monster_name
-		_apply_mastery_border(name_lbl, monster)
+		name_lbl.z_index = 6 # Ensure label is above sprite (z=5)
+		
+		var default_color = Color.WHITE
+		if slot in enemy_slots:
+			default_color = Color("#ff4d4d")
+		_apply_mastery_border(name_lbl, monster, default_color)
 		
 	var stats = monster.get_current_stats()
 	var hp_bar = slot.find_child("HPBar", true, false)
 	if hp_bar:
 		hp_bar.max_value = stats.max_hp
 		hp_bar.value = stats.max_hp
+		hp_bar.z_index = 6
 		_update_hp_bar_style(hp_bar, stats.max_hp, stats.max_hp)
 	var hp_lbl = slot.find_child("HPLabel", true, false)
 	if hp_lbl:
 		hp_lbl.text = "%d/%d" % [int(stats.max_hp), int(stats.max_hp)]
+		hp_lbl.z_index = 6
 		
 	var speed_bar = slot.find_child("SpeedBar", true, false)
 	if speed_bar:
 		speed_bar.value = 0
+		speed_bar.z_index = 6
 
 func _scale_sprite_to_fit(sprite: AnimatedSprite2D, target_height: float):
 	# Helper to ensure the sprite fits in the UI slot
@@ -707,7 +721,7 @@ func _set_stat_card(card: Control, monster: MonsterData):
 	
 	if name_lbl: 
 		name_lbl.text = monster.monster_name
-		_apply_mastery_border(name_lbl, monster)
+		_apply_mastery_border(name_lbl, monster, Color.WHITE)
 		
 	var stats = monster.get_current_stats()
 	if hp_bar:
@@ -722,7 +736,7 @@ func _set_stat_card(card: Control, monster: MonsterData):
 	if speed_bar:
 		speed_bar.value = 0
 
-func _apply_mastery_border(label: Label, monster: MonsterData):
+func _apply_mastery_border(label: Label, monster: MonsterData, default_color: Color = Color.WHITE):
 	if monster and monster.stability >= 100:
 		var style = StyleBoxFlat.new()
 		style.bg_color = Color(0, 0, 0, 0.5) # Semi-transparent background
@@ -738,7 +752,7 @@ func _apply_mastery_border(label: Label, monster: MonsterData):
 		label.add_theme_color_override("font_color", Color("#ffd700"))
 	else:
 		label.remove_theme_stylebox_override("normal")
-		label.remove_theme_color_override("font_color")
+		label.add_theme_color_override("font_color", default_color)
 
 func _connect_btn(name: String, action: String):
 	var btn = find_child(name, true, false)
@@ -750,12 +764,7 @@ func _emit_action(action: String):
 	action_selected.emit(action)
 
 func _on_back_pressed():
-	if quit_dialog:
-		quit_dialog.popup_centered()
-	else:
-		# Fallback if no dialog is found
-		print("No quit dialog found, returning to main menu directly.")
-		GlobalManager.switch_scene("main_menu")
+	_show_quit_confirmation()
 
 func _on_quit_confirmed():
 	# This is called when the user clicks "OK" on the dialog
@@ -1184,3 +1193,83 @@ func show_stat_popup(unit: BattleMonster):
 		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CLOSE_INSPECT_ENEMY:
 			TutorialManager.advance_step() # To BATTLE_RESUME
 	)
+
+func _show_quit_confirmation():
+	var popup = PanelContainer.new()
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	popup.grow_vertical = Control.GROW_DIRECTION_BOTH
+	popup.custom_minimum_size = Vector2(600, 0)
+	popup.z_index = 100
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	popup.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 30)
+	margin.add_theme_constant_override("margin_right", 30)
+	margin.add_theme_constant_override("margin_top", 30)
+	margin.add_theme_constant_override("margin_bottom", 30)
+	popup.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 25)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "RETREAT?"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color("#ff4d4d"))
+	vbox.add_child(title)
+	
+	var lbl = Label.new()
+	lbl.text = "Are you sure you want to flee?\nAny progress in this battle will be lost."
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.add_theme_font_size_override("font_size", 32)
+	vbox.add_child(lbl)
+	
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 20)
+	vbox.add_child(hbox)
+	
+	var btn_style = StyleBoxFlat.new()
+	btn_style.bg_color = Color("#60fafc")
+	btn_style.set_corner_radius_all(8)
+	
+	var hover_style = btn_style.duplicate()
+	hover_style.bg_color = Color("#a0fcfd")
+	
+	var confirm_btn = Button.new()
+	confirm_btn.text = "Retreat"
+	confirm_btn.custom_minimum_size = Vector2(200, 70)
+	confirm_btn.add_theme_stylebox_override("normal", btn_style)
+	confirm_btn.add_theme_stylebox_override("hover", hover_style)
+	confirm_btn.add_theme_stylebox_override("pressed", btn_style)
+	confirm_btn.add_theme_color_override("font_color", Color("#010813"))
+	confirm_btn.add_theme_font_size_override("font_size", 36)
+	confirm_btn.pressed.connect(func():
+		_on_quit_confirmed()
+		popup.queue_free()
+	)
+	hbox.add_child(confirm_btn)
+	
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.custom_minimum_size = Vector2(200, 70)
+	cancel_btn.add_theme_stylebox_override("normal", btn_style)
+	cancel_btn.add_theme_stylebox_override("hover", hover_style)
+	cancel_btn.add_theme_stylebox_override("pressed", btn_style)
+	cancel_btn.add_theme_color_override("font_color", Color("#010813"))
+	cancel_btn.add_theme_font_size_override("font_size", 36)
+	cancel_btn.pressed.connect(popup.queue_free)
+	hbox.add_child(cancel_btn)
+	
+	add_child(popup)

@@ -76,69 +76,106 @@ func _process(_delta):
 						update_ui()
 
 func update_ui():
-	# Rebuild Chambers Grid
 	if chambers_grid:
-		for child in chambers_grid.get_children():
-			chambers_grid.remove_child(child)
-			child.queue_free()
+		# If the grid is empty (first run or dynamic), populate it. 
+		# If it has children (from editor), reuse them.
+		var existing_slots = chambers_grid.get_children()
+		
+		# Ensure we have enough slots for the data (fallback if not set up in editor)
+		while existing_slots.size() < PlayerData.synthesis_chambers.size():
+			var slot = Control.new()
+			slot.name = "ChamberSlot_%d" % existing_slots.size()
+			slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			chambers_grid.add_child(slot)
+			existing_slots.append(slot)
 			
 		for i in range(PlayerData.synthesis_chambers.size()):
 			var chamber_data = PlayerData.synthesis_chambers[i]
-			var slot = _create_chamber_slot(i, chamber_data)
-			chambers_grid.add_child(slot)
+			var slot = existing_slots[i]
+			_update_chamber_slot(slot, i, chamber_data)
 
-func _create_chamber_slot(index: int, data: Dictionary) -> Control:
-	var container = VBoxContainer.new()
-	container.name = "ChamberSlot_%d" % index
-	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	container.alignment = BoxContainer.ALIGNMENT_CENTER
+func _update_chamber_slot(slot: Control, index: int, data: Dictionary):
+	# 1. Ensure Internal Structure Exists
+	var container = slot.find_child("ContentBox", false, false)
+	if not container:
+		container = VBoxContainer.new()
+		container.name = "ContentBox"
+		container.set_anchors_preset(Control.PRESET_FULL_RECT)
+		slot.add_child(container)
+		
+		# Visual placeholder (Expands to push buttons down)
+		var visual = CenterContainer.new()
+		visual.name = "CapsuleVisual"
+		visual.size_flags_vertical = Control.SIZE_EXPAND_FILL 
+		container.add_child(visual)
+		
+		var pivot = Control.new()
+		visual.add_child(pivot)
+		
+		var sprite = AnimatedSprite2D.new()
+		sprite.name = "CapsuleSprite"
+		sprite.position = Vector2(0, -50)
+		pivot.add_child(sprite)
+		
+		# Bottom Container for Title and Buttons
+		var bottom_box = VBoxContainer.new()
+		bottom_box.name = "BottomBox"
+		bottom_box.alignment = BoxContainer.ALIGNMENT_END
+		bottom_box.add_theme_constant_override("separation", 10)
+		container.add_child(bottom_box)
+		
+		var status_row = HBoxContainer.new()
+		status_row.name = "StatusRow"
+		status_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		bottom_box.add_child(status_row)
+		
+		var label = Label.new()
+		label.name = "StatusLabel"
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		
+		var lbl_style = StyleBoxFlat.new()
+		lbl_style.bg_color = Color("#010813")
+		lbl_style.content_margin_left = 10
+		lbl_style.content_margin_right = 10
+		lbl_style.content_margin_top = 5
+		lbl_style.content_margin_bottom = 5
+		label.add_theme_stylebox_override("normal", lbl_style)
+		label.add_theme_color_override("font_color", Color("#60fafc"))
+		label.add_theme_font_size_override("font_size", 32)
+		status_row.add_child(label)
+		
+		var btn = Button.new()
+		btn.name = "ActionButton"
+		btn.custom_minimum_size = Vector2(0, 50)
+		bottom_box.add_child(btn)
+		_style_button(btn)
+		btn.add_theme_font_size_override("font_size", 32)
+
+	# 2. Get References
+	var visual = container.find_child("CapsuleVisual", true, false)
+	var sprite = container.find_child("CapsuleSprite", true, false)
+	var label = container.find_child("StatusLabel", true, false)
+	var btn = container.find_child("ActionButton", true, false)
+	var status_row = container.find_child("StatusRow", true, false)
 	
-	# Visual placeholder for the capsule animation
-	var visual = CenterContainer.new()
-	visual.name = "CapsuleVisual"
-	visual.custom_minimum_size = Vector2(0, 250)
-	container.add_child(visual)
-	
-	var pivot = Control.new()
-	visual.add_child(pivot)
-	
-	var sprite = AnimatedSprite2D.new()
-	sprite.name = "CapsuleSprite"
-	sprite.position = Vector2(0, -50)
-	pivot.add_child(sprite)
-	
-	var status_row = HBoxContainer.new()
-	status_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	status_row.add_theme_constant_override("separation", 15)
-	container.add_child(status_row)
-	
-	var label = Label.new()
-	label.name = "StatusLabel"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	
-	var lbl_style = StyleBoxFlat.new()
-	lbl_style.bg_color = Color("#010813")
-	lbl_style.content_margin_left = 10
-	lbl_style.content_margin_right = 10
-	lbl_style.content_margin_top = 5
-	lbl_style.content_margin_bottom = 5
-	label.add_theme_stylebox_override("normal", lbl_style)
-	label.add_theme_color_override("font_color", Color("#60fafc"))
-	label.add_theme_font_size_override("font_size", 32)
-	status_row.add_child(label)
-	
-	var btn = Button.new()
-	btn.name = "ActionButton"
-	btn.custom_minimum_size = Vector2(0, 40)
-	container.add_child(btn)
-	_style_button(btn)
-	btn.add_theme_font_size_override("font_size", 32)
-	
+	# Clear old speed up button if it exists (it's added dynamically)
+	for child in status_row.get_children():
+		if child is Button: child.queue_free()
+
+	# Clear old signals on main button
+	if btn.pressed.is_connected(_on_unlock_pressed): btn.pressed.disconnect(_on_unlock_pressed)
+	# Since we use lambdas/binds, we must clear all connections to be safe
+	for conn in btn.pressed.get_connections():
+		btn.pressed.disconnect(conn.callable)
+
+	# 3. Update Content
 	if not data.is_unlocked:
 		label.text = "Chamber Locked"
 		visual.visible = false
 		btn.text = "Unlock (500 Dust)"
+		btn.visible = true
+		btn.disabled = false
 		btn.pressed.connect(func(): _on_unlock_pressed(index))
 	elif data.capsule == null:
 		label.text = "Empty Chamber"
@@ -146,6 +183,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 		btn.visible = false
 	else:
 		# Busy or Ready
+		btn.visible = true
 		var finish_time = data.capsule.get("finish_time", 0)
 		var current_time = int(Time.get_unix_time_from_system())
 		var time_left = max(0, finish_time - current_time)
@@ -174,7 +212,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 			_start_bobbing_tween(sprite)
 			
 			var speed_btn = Button.new()
-			speed_btn.text = "Speed Up (1)"
+			speed_btn.text = "Speed (1)"
 			if icon_gem:
 				speed_btn.icon = icon_gem
 				speed_btn.expand_icon = true
@@ -195,6 +233,7 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 		else:
 			label.text = "Isotope Stable!"
 			btn.text = "Stabilize"
+			btn.disabled = false
 			btn.pressed.connect(func(): _on_stabilize_pressed(index))
 			
 			# Load the resource for the ready state
@@ -215,8 +254,6 @@ func _create_chamber_slot(index: int, data: Dictionary) -> Control:
 
 			visual.visible = true
 			_start_bobbing_tween(sprite)
-			
-	return container
 
 func _on_unlock_pressed(index):
 	var cost = 500 # Fixed cost for now
@@ -270,11 +307,14 @@ func _on_synthesis_completed(z_num, success, reward):
 					dissolve_label.text = "Ship Capacity Exceeded!\nZ-%d is too unstable.\nDissolved into %d Neutron Dust." % [z_num, reward]
 				else:
 					dissolve_label.text = "Duplicate Z-%d found!\nDissolved into %d Neutron Dust." % [z_num, reward]
-		if dissolve_popup: dissolve_popup.visible = true
+		if dissolve_popup: 
+			dissolve_popup.visible = true
+			dissolve_popup.move_to_front()
 	else:
 		# New Monster
 		if fusion_result_popup:
 			fusion_result_popup.visible = true # Show first so UI layout updates size
+			fusion_result_popup.move_to_front()
 			
 			var new_monster = PlayerData.owned_monsters.back()
 			var name_lbl = fusion_result_popup.find_child("NameLabel", true, false)
@@ -336,8 +376,13 @@ func _create_atom(monster: MonsterData) -> Node2D:
 	return atom
 
 func _start_bobbing_tween(node: Node2D):
+	if node.has_meta("bob_tween"):
+		var t = node.get_meta("bob_tween")
+		if t and t.is_valid(): t.kill()
+		
 	var start_y = node.position.y
 	var tween = node.create_tween()
+	node.set_meta("bob_tween", tween)
 	tween.set_loops()
 	tween.tween_property(node, "position:y", start_y - 10, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(node, "position:y", start_y, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
@@ -364,6 +409,7 @@ func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable
 	lbl.text = "Spend %d Gem(s) to %s?" % [cost, action_name]
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.custom_minimum_size.x = 460
 	lbl.add_theme_font_size_override("font_size", 32)
 	vbox.add_child(lbl)
 	

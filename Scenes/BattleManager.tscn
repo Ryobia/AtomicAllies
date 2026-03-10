@@ -113,7 +113,7 @@ icon_gem = ExtResource("7_wivlx")
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
-anchor_bottom = 0.699
+anchor_bottom = 0.788
 offset_bottom = -0.36010742
 grow_horizontal = 2
 
@@ -164,6 +164,7 @@ position = Vector2(170, 176)
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Theater/EnemyRow/Enemy1" unique_id=1801825748]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxFlat_l362f")
 horizontal_alignment = 1
@@ -241,6 +242,7 @@ position = Vector2(176, 178)
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Theater/EnemyRow/Enemy2" unique_id=2060434665]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxFlat_l362f")
 horizontal_alignment = 1
@@ -330,6 +332,7 @@ position = Vector2(174, 175)
 
 [node name="NameLabel" type="Label" parent="BattleHUD/Theater/EnemyRow/Enemy3" unique_id=776755335]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxFlat_l362f")
 horizontal_alignment = 1
@@ -382,7 +385,7 @@ alignment = 1
 [node name="PlayerSlot1" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=1940847232]
 custom_minimum_size = Vector2(340, 150)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 4
 expand_mode = 1
 stretch_mode = 5
 
@@ -413,7 +416,7 @@ grow_vertical = 2
 [node name="PlayerSlot2" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=1169970424]
 custom_minimum_size = Vector2(340, 150)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 4
 expand_mode = 1
 stretch_mode = 5
 
@@ -444,7 +447,7 @@ grow_vertical = 2
 [node name="PlayerSlot3" type="TextureRect" parent="BattleHUD/Theater/PlayerRow" unique_id=2038432426]
 custom_minimum_size = Vector2(340, 150)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 4
 expand_mode = 1
 stretch_mode = 5
 
@@ -472,52 +475,46 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Dashboard" type="HBoxContainer" parent="BattleHUD" unique_id=284010607]
-layout_mode = 1
-anchors_preset = -1
-anchor_top = 0.702
-anchor_right = 1.0
-anchor_bottom = 0.78700006
-offset_top = -0.44006348
-offset_bottom = -0.9301758
-grow_horizontal = 2
-grow_vertical = 0
+[node name="Dashboard" type="HBoxContainer" parent="BattleHUD/Theater" unique_id=284010607]
+layout_mode = 2
+size_flags_horizontal = 4
 alignment = 1
 
-[node name="StatCard1" type="PanelContainer" parent="BattleHUD/Dashboard" unique_id=1821628063]
+[node name="StatCard1" type="PanelContainer" parent="BattleHUD/Theater/Dashboard" unique_id=1821628063]
+custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_wivlx")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard1" unique_id=308187073]
+[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Theater/Dashboard/StatCard1" unique_id=308187073]
 layout_mode = 2
 
-[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1852077598]
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard1/VBoxContainer" unique_id=1852077598]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
 theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
 show_percentage = false
 
-[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1132351999]
+[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Theater/Dashboard/StatCard1/VBoxContainer" unique_id=1132351999]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
-[node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1616180284]
+[node name="NameLabel" type="Label" parent="BattleHUD/Theater/Dashboard/StatCard1/VBoxContainer" unique_id=1616180284]
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HPBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=2019981953]
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard1/VBoxContainer" unique_id=2019981953]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
 
-[node name="HPLabel" type="Label" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer/HPBar" unique_id=47095353]
+[node name="HPLabel" type="Label" parent="BattleHUD/Theater/Dashboard/StatCard1/VBoxContainer/HPBar" unique_id=47095353]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -531,39 +528,40 @@ theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard1/VBoxContainer" unique_id=1140169995]
+[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard1/VBoxContainer" unique_id=1140169995]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
 
-[node name="StatCard2" type="PanelContainer" parent="BattleHUD/Dashboard" unique_id=1976389665]
+[node name="StatCard2" type="PanelContainer" parent="BattleHUD/Theater/Dashboard" unique_id=1976389665]
+custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_mj6kv")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard2" unique_id=17070277]
+[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Theater/Dashboard/StatCard2" unique_id=17070277]
 layout_mode = 2
 
-[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=412822927]
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard2/VBoxContainer" unique_id=412822927]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
 theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
 show_percentage = false
 
-[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=930924566]
+[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Theater/Dashboard/StatCard2/VBoxContainer" unique_id=930924566]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
-[node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=1472754783]
+[node name="NameLabel" type="Label" parent="BattleHUD/Theater/Dashboard/StatCard2/VBoxContainer" unique_id=1472754783]
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="VanguardShield" type="TextureRect" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer/NameLabel" unique_id=357773155]
+[node name="VanguardShield" type="TextureRect" parent="BattleHUD/Theater/Dashboard/StatCard2/VBoxContainer/NameLabel" unique_id=357773155]
 self_modulate = Color(1, 1, 1, 0.69411767)
 layout_mode = 1
 anchors_preset = 15
@@ -575,14 +573,14 @@ texture = SubResource("AtlasTexture_l362f")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="HPBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=865316148]
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard2/VBoxContainer" unique_id=865316148]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
 
-[node name="HPLabel" type="Label" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer/HPBar" unique_id=1051136931]
+[node name="HPLabel" type="Label" parent="BattleHUD/Theater/Dashboard/StatCard2/VBoxContainer/HPBar" unique_id=1051136931]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -596,46 +594,47 @@ theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard2/VBoxContainer" unique_id=784228649]
+[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard2/VBoxContainer" unique_id=784228649]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
 
-[node name="StatCard3" type="PanelContainer" parent="BattleHUD/Dashboard" unique_id=1186658118]
+[node name="StatCard3" type="PanelContainer" parent="BattleHUD/Theater/Dashboard" unique_id=1186658118]
+custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_f42mu")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Dashboard/StatCard3" unique_id=937547351]
+[node name="VBoxContainer" type="VBoxContainer" parent="BattleHUD/Theater/Dashboard/StatCard3" unique_id=937547351]
 layout_mode = 2
 
-[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=1562555143]
+[node name="SpeedBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard3/VBoxContainer" unique_id=1562555143]
 custom_minimum_size = Vector2(0, 5)
 layout_mode = 2
 theme_override_styles/background = SubResource("StyleBoxEmpty_wd8r5")
 theme_override_styles/fill = SubResource("StyleBoxFlat_jkk6h")
 show_percentage = false
 
-[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=1058397322]
+[node name="StatusContainer" type="HBoxContainer" parent="BattleHUD/Theater/Dashboard/StatCard3/VBoxContainer" unique_id=1058397322]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
-[node name="NameLabel" type="Label" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=40486499]
+[node name="NameLabel" type="Label" parent="BattleHUD/Theater/Dashboard/StatCard3/VBoxContainer" unique_id=40486499]
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HPBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=1006324208]
+[node name="HPBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard3/VBoxContainer" unique_id=1006324208]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 32
 theme_override_styles/background = SubResource("StyleBoxFlat_hoy3w")
 theme_override_styles/fill = SubResource("StyleBoxFlat_r3dt2")
 
-[node name="HPLabel" type="Label" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer/HPBar" unique_id=467160823]
+[node name="HPLabel" type="Label" parent="BattleHUD/Theater/Dashboard/StatCard3/VBoxContainer/HPBar" unique_id=467160823]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -649,7 +648,7 @@ theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Dashboard/StatCard3/VBoxContainer" unique_id=712019293]
+[node name="StabilityBar" type="ProgressBar" parent="BattleHUD/Theater/Dashboard/StatCard3/VBoxContainer" unique_id=712019293]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
