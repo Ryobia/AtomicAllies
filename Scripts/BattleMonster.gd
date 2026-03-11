@@ -220,6 +220,10 @@ func apply_effect(effect: Dictionary):
 				cleanse_negative_effects()
 			"swap_stats":
 				_apply_stat_swap(effect)
+			"damage_percent":
+				var amount = int(max_hp * float(effect.amount))
+				var color = Color(effect.get("color", "#ff4d4d"))
+				take_damage(amount, color)
 				
 	# 2. Status Effects (Flags & DoTs)
 	elif "status" in effect:

@@ -403,12 +403,17 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "static_reflection":
 			bg_color = Color("#60fafc") # Cyan
 			tooltip_text = "Reflecting Damage\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "physical_resist":
+			bg_color = Color("#a0a0a0") # Silver/Grey
+			tooltip_text = "Physical Resist\nDuration: %d turns" % effect.get("duration", 0)
 		
 		if s == "marked_covalent": text = "COV"
 		elif s == "unstable": text = "UNS"
 		elif s == "carbonized": text = "CAR"
+		elif s == "guarded": text = "GRD"
 		elif s == "oxidized": text = "OXI"
 		elif s == "explosive": text = "EXP"
+		elif s == "physical_resist": text = "PHY"
 		elif s == "overload": text = "OVL"
 		elif s == "reactive_vapor": text = "VAP"
 		elif s == "radiation": text = "RAD"

@@ -957,9 +957,22 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 			else:
 				var damage = result.damage
 				
+				var is_guarded = false
+				if defender.has_status("guarded"):
+					damage = 0
+					is_guarded = true
+					log_event.emit("Blocked by Octet!")
+					result.effects.append({ "target": defender, "effect": "remove_status", "status": "guarded" })
+				
 				# Reflection Check
-				if defender.has_status("static_reflection") and move.target_type == MoveData.TargetType.ENEMY:
-					var reflect_dmg = int(damage * 0.3)
+				if not is_guarded and defender.has_status("static_reflection") and move.target_type == MoveData.TargetType.ENEMY:
+					var reflect_pct = 0.3
+					# Check for custom reflection percent
+					for eff in defender.active_effects:
+						if eff.get("status") == "static_reflection":
+							reflect_pct = eff.get("damage_percent", 0.3)
+							break
+					var reflect_dmg = int(damage * reflect_pct)
 					reflect_dmg = _calculate_final_damage(attacker, reflect_dmg)
 					if reflect_dmg > 0:
 						attacker.take_damage(reflect_dmg)
@@ -967,22 +980,40 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 						log_event.emit("Static discharge hits %s!" % attacker.data.monster_name)
 						_check_shield_update(attacker)
 				
-				var shield = defender.get_meta("shield", 0)
+				# Handle Multi-Hit
+				var hits = move.hit_count
+				var base_damage = damage
+				var total_damage_dealt = 0
 				
-				if shield > 0:
-					var absorbed = min(damage, shield)
-					shield -= absorbed
-					damage -= absorbed
-					defender.set_meta("shield", shield)
-					_check_shield_update(defender)
+				for i in range(hits):
+					if defender.is_dead: break
+					
+					var current_hit_damage = base_damage
+					var shield = defender.get_meta("shield", 0)
+					
+					if shield > 0:
+						var absorbed = min(current_hit_damage, shield)
+						shield -= absorbed
+						current_hit_damage -= absorbed
+						defender.set_meta("shield", shield)
+						_check_shield_update(defender)
+					
+					current_hit_damage = _calculate_final_damage(defender, current_hit_damage)
+					
+					if current_hit_damage > 0:
+						defender.take_damage(current_hit_damage)
+						_show_damage_number(defender, current_hit_damage, "damage")
+						total_damage_dealt += current_hit_damage
+						
+					if i < hits - 1:
+						await get_tree().create_timer(0.3).timeout
 				
-				damage = _calculate_final_damage(defender, damage)
-				
-				if damage > 0:
-					defender.take_damage(damage)
-					_show_damage_number(defender, damage, "damage")
-					log_event.emit("Dealt %d damage!" % damage)
-					await get_tree().create_timer(1.2).timeout
+				if hits > 1:
+					log_event.emit("Hit %d times! (%d total)" % [hits, total_damage_dealt])
+				else:
+					log_event.emit("Dealt %d damage!" % total_damage_dealt)
+					
+				await get_tree().create_timer(1.0).timeout
 			
 		# Log other messages (status effects etc)
 		for i in range(result.messages.size()):
@@ -1092,7 +1123,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				continue
 			
 			if effect.get("effect") == "cleanse":
-				_handle_cleanse(effect.get("target"))
+				_handle_cleanse(effect)
 				continue
 			
 			if effect.get("effect") == "swap_stats":
@@ -1687,14 +1718,18 @@ func _play_chain_reaction_effect(start_pos: Vector2, end_pos: Vector2):
 	tween.parallel().tween_property(line, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(line.queue_free)
 
-func _handle_cleanse(unit: BattleMonster):
-	if not "active_effects" in unit: return
+func _handle_cleanse(effect_data: Dictionary):
+	var unit = effect_data.get("target")
+	if not unit or not "active_effects" in unit: return
 	
+	var cleanse_amount = effect_data.get("amount", 99) # Default to a high number to cleanse all
 	var effects = unit.active_effects
 	var cleaned_count = 0
 	
 	# Iterate backwards to safely remove
 	for i in range(effects.size() - 1, -1, -1):
+		if cleaned_count >= cleanse_amount: break
+		
 		var effect = effects[i]
 		var is_debuff = false
 		
@@ -1703,37 +1738,33 @@ func _handle_cleanse(unit: BattleMonster):
 				is_debuff = true
 		elif effect.has("status"):
 			var s = effect.get("status")
-			if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion"]:
+			# Check for known debuff names or if it's a damage multiplier debuff
+			if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "radiation", "refracted", "insanity"]:
 				is_debuff = true
 		elif effect.get("type") == "swap_stats":
 			is_debuff = true
 		
 		if is_debuff:
-			effects.remove_at(i)
 			cleaned_count += 1
 			
 			# Revert Stat Mods immediately
 			if effect.get("type") == "stat_mod":
 				var stat = effect.get("stat")
 				var amount = effect.get("amount", 0)
-				if unit.stats.has(stat):
-					unit.stats[stat] -= amount
+				if unit.stats.has(stat): unit.stats[stat] -= amount
 			
 			# Revert Swap Stats immediately
 			if effect.get("type") == "swap_stats":
 				var stats_swapped = effect.get("stats", [])
 				if stats_swapped.size() == 2:
-					var s1 = stats_swapped[0]
-					var s2 = stats_swapped[1]
-					var v1 = unit.stats.get(s1, 0)
-					var v2 = unit.stats.get(s2, 0)
-					unit.stats[s1] = v2
-					unit.stats[s2] = v1
+					var s1 = stats_swapped[0]; var s2 = stats_swapped[1]
+					var v1 = unit.stats.get(s1, 0); var v2 = unit.stats.get(s2, 0)
+					unit.stats[s1] = v2; unit.stats[s2] = v1
 			
 			unit.active_effects.remove_at(i)
 	
 	if cleaned_count > 0:
-		log_event.emit("Cleansed %d debuffs from %s!" % [cleaned_count, unit.data.monster_name])
+		log_event.emit("Cleansed %d debuff(s) from %s!" % [cleaned_count, unit.data.monster_name])
 		_refresh_unit_status(unit)
 	else:
 		log_event.emit("%s is already stable." % unit.data.monster_name)

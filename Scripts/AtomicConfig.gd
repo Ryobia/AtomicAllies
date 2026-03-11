@@ -135,24 +135,24 @@ const MASTERY_BONUSES = {
 # Default Movesets based on Group
 const GROUP_MOVES = {
 	Group.ALKALI_METAL: [
-		{"name": "Electron Jettison", "power": 40, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn.", "cooldown": 3},
-		{"name": "Reactive Spark", "power": 30, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Quick strike. Can hit any enemy."}
+		{"name": "Electron Jettison", "power": 35, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": -100, "percent": true, "duration": 2, "target": "Attacker"}]},
+		{"name": "Reactive Spark", "power": 30, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Quick strike. Can hit any enemy.", "cooldown": 2}
 	],
 	Group.ALKALINE_EARTH: [
-		{"name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense for 3 turns."},
-		{"name": "Magnesium Flash", "power": 25, "accuracy": 95, "type": "Physical", "description": "Shield bash. Stuns the enemy if unit is currently shielded."}
+		{"name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense for 3 turns.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 50, "percent": true, "duration": 3, "target": "Self"}]},
+		{"name": "Magnesium Flash", "power": 25, "accuracy": 95, "type": "Physical", "description": "Shield bash. Stuns the enemy if unit is currently shielded.", "cooldown": 2}
 	],
 	Group.TRANSITION_METAL: [
-		{"name": "Metallic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Raises attack of self and target ally by 20 Percent for 1 turn"},
-		{"name": "Heavy Impact", "power": 30, "accuracy": 90, "type": "Physical", "description": "Reliable, high-damage physical strike that scales with current HP."}
+		{"name": "Metallic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Raises attack of self and target ally by 20 Percent for 1 turn", "cooldown": 3},
+		{"name": "Heavy Impact", "power": 30, "accuracy": 90, "type": "Physical", "description": "Reliable, high-damage physical strike that scales with current HP.", "cooldown": 2}
 	],
 	Group.POST_TRANSITION: [
-		{"name": "Thermal Conduction", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Cleanses all debuffs from target ally."},
-		{"name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Heals target ally, scales with attack. Excess healing becomes a shield."}
+		{"name": "Thermal Conduction", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Cleanses 1 debuff from target ally.", "cooldown": 3, "effects": [{"effect": "cleanse", "target": "Ally", "amount": 1}]},
+		{"name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Heals target ally, scales with attack. Excess healing becomes a shield.", "cooldown": 2}
 	],
 	Group.METALLOID: [
-		{"name": "Semiconductor Flip", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Swaps the target's Attack and Defense for 2 turns."},
-		{"name": "Signal Scramble", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns."}
+		{"name": "Semiconductor Flip", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Swaps the target's Attack and Defense for 2 turns.", "cooldown": 2, "effects": [{"effect": "swap_stats", "stats": ["attack", "defense"], "duration": 2}]},
+		{"name": "Signal Scramble", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
 	],
 	Group.NONMETAL: [
 		{
@@ -163,25 +163,26 @@ const GROUP_MOVES = {
 			"description": "Marks enemy. Next attack from a different element deals bonus damage.",
 			"effects": [ {
 				"type": "status", "status": "marked_covalent", "duration": 3, "damage_multiplier": 1.2, "condition": "cross_element", "reaction_name": "Covalent Reaction", "message": "%s is marked for reaction!"
-			}]
+			}],
+			"cooldown": 2
 		},
-		{"name": "Electronegativity", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns."}
+		{"name": "Electronegativity", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
 	],
 	Group.HALOGEN: [
-		{"name": "Fluorine Acid", "power": 10, "accuracy": 90, "type": "Special", "is_snipe": true, "description": "Corrosive blast that triggers Halogen poison."},
-		{"name": "Reactivity", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Speed for 3 turns.", "effects": [{"type": "stat_mod", "stat": "speed", "amount": 25, "percent": true, "duration": 3}]}
+		{"name": "Fluorine Acid", "power": 10, "accuracy": 90, "type": "Special", "is_snipe": true, "description": "Corrosive blast that triggers Halogen poison.", "cooldown": 2},
+		{"name": "Reactivity", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Speed for 3 turns.", "effects": [{"type": "stat_mod", "stat": "speed", "amount": 25, "percent": true, "duration": 3}], "cooldown": 3}
 	],
 	Group.NOBLE_GAS: [
-		{"name": "Full Octet", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Immune to all damage/status for 1 turn. But cannot act for 1 turn.", "cooldown": 4},
-		{"name": "Neon Glow", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Draws enemy aggro (Taunt) and raises Defense by 20%."}
+		{"name": "Full Octet", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Blocks the next instance of damage. Consumed on hit.", "cooldown": 3, "effects": [{"type": "status", "status": "guarded", "duration": 3}]},
+		{"name": "Neon Glow", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Raises Defense by 20%.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 2}]}
 	],
 	Group.ACTINIDE: [
-		{"name": "Supercritical Blast", "power": 120, "accuracy": 85, "type": "Special", "description": "Deals massive damage but reduces HP by 10% after use.", "cooldown": 3},
-		{"name": "Radioactive Decay", "power": 0, "accuracy": 0, "type": "Passive", "description": "Lose 10% HP but apply radiation debuff to enemies."}
+		{"name": "Supercritical Blast", "power": 80, "accuracy": 85, "type": "Special", "description": "Deals massive damage but reduces HP by 10% after use.", "cooldown": 3},
+		{"name": "Radioactive Decay", "power": 0, "accuracy": 100, "type": "Status_Hostile", "is_snipe": true, "description": "Irradiates a specific target.", "effects": [{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}], "cooldown": 2}
 	],
 	Group.LANTHANIDE: [
-		{"name": "Optical Refraction", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Reduces enemy accuracy by 20% for 2 turns."},
-		{"name": "Rare Resonance", "power": 20, "accuracy": 100, "type": "Special", "description": "Deals damage multiplied by the number of different element groups on the team."}
+		{"name": "Optical Refraction", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Reduces enemy accuracy by 20% for 2 turns.", "cooldown": 2, "effects": [{"type": "status", "status": "refracted", "duration": 2}]},
+		{"name": "Rare Resonance", "power": 10, "accuracy": 100, "type": "Special", "description": "Deals damage multiplied by the number of different element groups on the team.", "cooldown": 2}
 	],
 	Group.UNKNOWN: [],
 	
@@ -189,8 +190,8 @@ const GROUP_MOVES = {
 	# Void
 	Group.VOID_GRUNT: [ {"name": "Void Scratch", "power": 20, "accuracy": 100, "type": "Physical", "description": "Basic void attack."}],
 	Group.VOID_ASSASSIN: [ {"name": "Shadow Strike", "power": 40, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Snipe attack that bypasses the frontline."}],
-	Group.VOID_BRUTE: [ {"name": "Void Harden", "power": 0, "type": "Status_Friendly", "target_type": "Self"}, {"name": "Heavy Slam", "power": 50, "accuracy": 90, "type": "Physical"}],
-	Group.VOID_COMMANDER: [ {"name": "Void Command", "power": 0, "type": "Status_Friendly", "target_type": "Ally"}, {"name": "Obliterate", "power": 80, "accuracy": 85, "type": "Special"}],
+	Group.VOID_BRUTE: [ {"name": "Void Harden", "power": 0, "type": "Status_Friendly", "target_type": "Self", "effects": [{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3}]}, {"name": "Heavy Slam", "power": 50, "accuracy": 90, "type": "Physical"}],
+	Group.VOID_COMMANDER: [ {"name": "Void Command", "power": 0, "type": "Status_Friendly", "target_type": "Ally", "effects": [{"type": "stat_mod", "stat": "attack", "amount": 20, "percent": true, "duration": 3}, {"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 3}]}, {"name": "Obliterate", "power": 80, "accuracy": 85, "type": "Special"}],
 	Group.VOID_KING: [ {"name": "Entropy", "power": 100, "accuracy": 100, "type": "Special", "description": "Deals massive damage."}],
 	
 	# Eldritch
@@ -235,43 +236,47 @@ const UNIQUE_MOVES = {
 		"cooldown": 2
 	},
 	2: { # Helium
-		"name": "Noble Rise",
+		"name": "Atmospheric Veil",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"target_type": "Self",
-		"description": "Floats above danger. Increases Evasion (Speed) by 20%.",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 3}],
+		"target_type": "Ally",
+		"description": "Grants a shield equal to User's Defense to an ally.",
+		"effects": [ {"effect": "add_shield", "scale_stat": "defense", "scale_factor": 1.0}],
 		"cooldown": 2
 	},
 	3: { # Lithium
-		"name": "Lithium Lunge",
-		"power": 50,
+		"name": "Alkali Burst",
+		"power": 15,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "A swift, aggressive strike.",
+		"description": "A quick double strike.",
 		"target_type": "Enemy",
+		"hit_count": 2,
 		"effects": [],
 		"cooldown": 2
 	},
 	4: { # Beryllium
-		"name": "Beryllium Barrier",
+		"name": "Emerald Fortify",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Raises Defense for 2 turns.",
+		"description": "Doubles Defense and reflects 10% of incoming damage.",
 		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "defense", "amount": 15, "percent": true, "duration": 2}],
-		"cooldown": 2
+		"effects": [ 
+			{"type": "stat_mod", "stat": "defense", "amount": 100, "percent": true, "duration": 3},
+			{"type": "status", "status": "static_reflection", "damage_percent": 0.1, "duration": 3}
+		],
+		"cooldown": 3
 	},
 	5: { # Boron
 		"name": "Boron Blast",
-		"power": 60,
-		"accuracy": 95,
+		"power": 40,
+		"accuracy": 100,
 		"type": "Special",
-		"description": "Fires a concentrated energy blast.",
+		"description": "Deals damage and reduces Defense by 20%.",
 		"target_type": "Enemy",
-		"effects": [],
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": -20, "percent": true, "duration": 2}],
 		"cooldown": 2
 	},
 	6: { # Carbon
@@ -305,63 +310,74 @@ const UNIQUE_MOVES = {
 		"cooldown": 2
 	},
 	9: { # Fluorine
-		"name": "Fluorine Fury",
-		"power": 55,
-		"accuracy": 90,
+		"name": "Reactive Corrosive",
+		"power": 20,
+		"accuracy": 100,
 		"type": "Special",
-		"description": "A corrosive attack with a chance to poison.",
+		"description": "Deals damage and applies a strong corrosive poison.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "poison", "damage_percent": 0.05, "duration": 3, "chance": 0.25}],
+		"effects": [ 
+			{"type": "status", "status": "poison", "damage_percent": 0.1, "duration": 3, "message": "%s is corroding!"},
+			{"effect": "damage_percent", "amount": 0.1, "color": "#802680"}
+		],
 		"cooldown": 2
 	},
 	10: { # Neon
-		"name": "Neon Nova",
-		"power": 70,
-		"accuracy": 85,
-		"type": "Special",
-		"description": "A bright, explosive attack.",
-		"target_type": "Enemy",
-		"effects": [],
-		"cooldown": 2
+		"name": "Neon Distraction",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Taunts all enemies and increases Defense by 10%.",
+		"target_type": "Self",
+		"effects": [
+			{"type": "status", "status": "taunt", "duration": 2},
+			{"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 2}
+		],
+		"cooldown": 3
 	},
 	11: { # Sodium
-		"name": "Sodium Surge",
-		"power": 40,
+		"name": "Saline Surge",
+		"power": 35,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "A quick, electrifying strike.",
+		"description": "Deals damage and increases Speed by 10%.",
 		"target_type": "Enemy",
-		"effects": [],
+		"effects": [
+			{"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 2, "target": "Attacker"}
+		],
 		"cooldown": 2
 	},
 	12: { # Magnesium
-		"name": "Magnesium Might",
+		"name": "Magnesium Flare",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Increases Attack for 2 turns.",
+		"description": "Grants a shield equal to 30% of Max HP.",
 		"target_type": "Self",
-		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": 15, "percent": true, "duration": 2}],
-		"cooldown": 2
+		"effects": [ {"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.3}],
+		"cooldown": 3
 	},
 	13: { # Aluminum
-		"name": "Aluminum Armor",
+		"name": "Alloy Coating",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Grants a small shield.",
-		"target_type": "Self",
-		"effects": [ {"type": "add_shield", "amount": 0.15}],
-		"cooldown": 2
+		"description": "Cleanses 1 debuff and grants 20% physical resistance for 3 turns.",
+		"target_type": "Ally",
+		"effects": [
+			{"effect": "cleanse", "amount": 1},
+			{"type": "status", "status": "physical_resist", "reduction_amount": 0.2, "duration": 3}
+		],
+		"cooldown": 3
 	},
 	14: { # Silicon
 		"name": "Silicon Spike",
-		"power": 55,
-		"accuracy": 95,
+		"power": 40,
+		"accuracy": 100,
 		"type": "Physical",
-		"description": "Impales the enemy with sharp crystals.",
+		"description": "Deals damage and reduces enemy Attack by 20%.",
 		"target_type": "Enemy",
-		"effects": [],
+		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": -20, "percent": true, "duration": 2}],
 		"cooldown": 2
 	},
 	15: { # Phosphorus

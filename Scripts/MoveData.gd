@@ -11,5 +11,7 @@ enum TargetType { ENEMY, SELF, ALLY }
 @export_multiline var description: String = ""
 @export var target_type: TargetType = TargetType.ENEMY
 @export var cooldown: int = 1
+@export var hit_count: int = 1
+@export var damage_scale: float = 1.0
 # Data-driven effects (e.g. [{"type": "status", "status": "poison", "chance": 0.5}])
 @export var effects: Array = []

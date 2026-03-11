@@ -6,6 +6,7 @@ const STATUS_DESCRIPTIONS = {
 	"stun": "Cannot act this turn.",
 	"silence_special": "Cannot use Special moves.",
 	"marked_covalent": "Next cross-element hit deals 1.2x damage.",
+	"guarded": "Blocks the next instance of damage.",
 	"unstable": "Takes 1.2x damage from next attack.",
 	"poison": "Taking damage over time based on Max HP.",
 	"vulnerable": "Takes increased damage.",
@@ -15,7 +16,8 @@ const STATUS_DESCRIPTIONS = {
 	"radiation": "Taking increasing damage each turn.",
 	"refracted": "Accuracy reduced by 20%.",
 	"insanity": "Accuracy reduced by 20%.",
-	"static_reflection": "Reflects 30% of incoming damage."
+	"static_reflection": "Reflects 30% of incoming damage.",
+	"physical_resist": "Reduces incoming Physical damage."
 }
 
 func setup(unit: BattleMonster):
@@ -140,6 +142,12 @@ func setup(unit: BattleMonster):
                     if effect.has("damage_multiplier"):
                         var mult = float(effect.get("damage_multiplier", 1.0))
                         desc_text = "Takes %.2fx damage from next attack." % mult
+                    elif status_key == "static_reflection":
+                        var pct = int(float(effect.get("damage_percent", 0.3)) * 100)
+                        desc_text = "Reflects %d%% of incoming damage." % pct
+                    elif status_key == "physical_resist":
+                        var pct = int(float(effect.get("reduction_amount", 0.2)) * 100)
+                        desc_text = "Reduces incoming Physical damage by %d%%." % pct
                     elif STATUS_DESCRIPTIONS.has(status_key): desc_text = STATUS_DESCRIPTIONS[status_key]
                     title_lbl.add_theme_color_override("font_color", Color.YELLOW if status_key in ["invulnerable", "taunt"] else Color.ORANGE_RED)
                 
