@@ -94,7 +94,6 @@ func take_damage(amount: int, color: Color = Color("#ff4d4d")):
 	var tween = create_tween()
 	tween.tween_property(sprite, "modulate", Color(10, 10, 10), 0.05)
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.05)
-	_spawn_damage_number(amount, color)
 	
 	if current_hp <= 0:
 		if not is_dead: # Prevent die() from being called multiple times
@@ -204,7 +203,6 @@ func heal(amount: int):
 	if is_dead: return
 	current_hp = min(max_hp, current_hp + amount)
 	hp_changed.emit(current_hp, max_hp)
-	_spawn_damage_number(amount, Color("#2ecc71")) # Green for heals
 
 # --- Effect Management ---
 

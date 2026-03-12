@@ -17,7 +17,13 @@ const STATUS_DESCRIPTIONS = {
 	"refracted": "Accuracy reduced by 20%.",
 	"insanity": "Accuracy reduced by 20%.",
 	"static_reflection": "Reflects 30% of incoming damage.",
-	"physical_resist": "Reduces incoming Physical damage."
+	"physical_resist": "Reduces incoming Physical damage.",
+	"mirror_coat": "Reflects the next incoming attack.",
+	"toxic_feedback": "Reduces attacker's ATK when hit.",
+	"reflective_shell": "Negates next hit and reflects 30% damage.",
+	"absorb_shield": "Absorbs next hit, healing for 30% of damage.",
+	"special_resist": "Reduces incoming Special damage.",
+	"regeneration": "Restores HP at the start of each turn."
 }
 
 func setup(unit: BattleMonster):
@@ -46,6 +52,10 @@ func setup(unit: BattleMonster):
     var spd_lbl = find_child("SpeedLabel", true, false)
     if spd_lbl:
         spd_lbl.text = "Speed: %d" % unit.stats.get("speed", 0)
+        
+    var crit_lbl = find_child("CritLabel", true, false)
+    if crit_lbl:
+        crit_lbl.text = "Crit: %d%%" % unit.stats.get("crit_chance", 5)
 
     # --- Active Effects ---
     # If you decide to add an EffectsContainer later, this will handle it.
@@ -148,6 +158,19 @@ func setup(unit: BattleMonster):
                     elif status_key == "physical_resist":
                         var pct = int(float(effect.get("reduction_amount", 0.2)) * 100)
                         desc_text = "Reduces incoming Physical damage by %d%%." % pct
+                    elif status_key == "special_resist":
+                        var pct = int(float(effect.get("reduction_amount", 0.2)) * 100)
+                        desc_text = "Reduces incoming Special damage by %d%%." % pct
+                    elif status_key == "absorb_shield":
+                        var pct = int(float(effect.get("absorb_percent", 0.3)) * 100)
+                        desc_text = "Absorbs next hit, healing for %d%% of damage." % pct
+                    elif status_key == "regeneration":
+                        var pct = int(float(effect.get("heal_percent", 0.1)) * 100)
+                        desc_text = "Restores %d%% HP each turn." % pct
+                    elif status_key == "toxic_feedback":
+                        var pct = abs(int(effect.get("debuff_amount", 40)))
+                        var stat = effect.get("debuff_stat", "attack").capitalize()
+                        desc_text = "Reduces attacker's %s by %d%% when hit." % [stat, pct]
                     elif STATUS_DESCRIPTIONS.has(status_key): desc_text = STATUS_DESCRIPTIONS[status_key]
                     title_lbl.add_theme_color_override("font_color", Color.YELLOW if status_key in ["invulnerable", "taunt"] else Color.ORANGE_RED)
                 

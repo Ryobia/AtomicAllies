@@ -69,53 +69,53 @@ const GROUP_COLORS = {
 
 # Baseline Stats (Scale 1-10) from the Design Document
 const BASELINES = {
-	Group.ALKALI_METAL: {"hp": 2, "atk": 8, "def": 2, "spd": 8}, # Glass Cannons
-	Group.ALKALINE_EARTH: {"hp": 6, "atk": 4, "def": 7, "spd": 3}, # Sturdy Tanks
-	Group.TRANSITION_METAL: {"hp": 6, "atk": 5, "def": 5, "spd": 4}, # Bruisers
-	Group.POST_TRANSITION: {"hp": 5, "atk": 5, "def": 5, "spd": 5}, # Utility
-	Group.METALLOID: {"hp": 4, "atk": 6, "def": 4, "spd": 6}, # Disrupters
-	Group.NONMETAL: {"hp": 4, "atk": 4, "def": 4, "spd": 7}, # Combo Primers
-	Group.HALOGEN: {"hp": 3, "atk": 5, "def": 3, "spd": 8}, # DoT Assailants
-	Group.NOBLE_GAS: {"hp": 5, "atk": 1, "def": 10, "spd": 4}, # Pure Walls
-	Group.ACTINIDE: {"hp": 8, "atk": 10, "def": 5, "spd": 2}, # The Nukes
-	Group.LANTHANIDE: {"hp": 7, "atk": 9, "def": 5, "spd": 3}, # Rare Earths (Similar to Actinides)
-	Group.UNKNOWN: {"hp": 5, "atk": 5, "def": 5, "spd": 5},
+	Group.ALKALI_METAL: {"hp": 2, "atk": 8, "def": 2, "spd": 8, "crit": 10}, # Glass Cannons
+	Group.ALKALINE_EARTH: {"hp": 6, "atk": 4, "def": 7, "spd": 3, "crit": 5}, # Sturdy Tanks
+	Group.TRANSITION_METAL: {"hp": 6, "atk": 5, "def": 5, "spd": 4, "crit": 5}, # Bruisers
+	Group.POST_TRANSITION: {"hp": 5, "atk": 5, "def": 5, "spd": 5, "crit": 5}, # Utility
+	Group.METALLOID: {"hp": 4, "atk": 6, "def": 4, "spd": 6, "crit": 5}, # Disrupters
+	Group.NONMETAL: {"hp": 4, "atk": 4, "def": 4, "spd": 7, "crit": 5}, # Combo Primers
+	Group.HALOGEN: {"hp": 3, "atk": 5, "def": 3, "spd": 8, "crit": 10}, # DoT Assailants
+	Group.NOBLE_GAS: {"hp": 5, "atk": 1, "def": 10, "spd": 4, "crit": 0}, # Pure Walls
+	Group.ACTINIDE: {"hp": 8, "atk": 10, "def": 5, "spd": 2, "crit": 5}, # The Nukes
+	Group.LANTHANIDE: {"hp": 7, "atk": 9, "def": 5, "spd": 3, "crit": 5}, # Rare Earths (Similar to Actinides)
+	Group.UNKNOWN: {"hp": 5, "atk": 5, "def": 5, "spd": 5, "crit": 5},
 	
 	# Enemy Baselines (Grunt=Low, King=Boss)
 	# Void: Balanced
-	Group.VOID_GRUNT: {"hp": 4, "atk": 4, "def": 4, "spd": 4},
-	Group.VOID_ASSASSIN: {"hp": 3, "atk": 7, "def": 2, "spd": 8},
-	Group.VOID_BRUTE: {"hp": 8, "atk": 5, "def": 8, "spd": 2},
-	Group.VOID_COMMANDER: {"hp": 7, "atk": 7, "def": 6, "spd": 6},
-	Group.VOID_KING: {"hp": 10, "atk": 9, "def": 9, "spd": 5},
+	Group.VOID_GRUNT: {"hp": 4, "atk": 4, "def": 4, "spd": 4, "crit": 5},
+	Group.VOID_ASSASSIN: {"hp": 3, "atk": 7, "def": 2, "spd": 8, "crit": 15},
+	Group.VOID_BRUTE: {"hp": 8, "atk": 5, "def": 8, "spd": 2, "crit": 0},
+	Group.VOID_COMMANDER: {"hp": 7, "atk": 7, "def": 6, "spd": 6, "crit": 5},
+	Group.VOID_KING: {"hp": 10, "atk": 9, "def": 9, "spd": 5, "crit": 5},
 	
 	# Eldritch: High Special/Status (Simulated via Atk/Spd)
-	Group.ELDRITCH_GRUNT: {"hp": 3, "atk": 5, "def": 3, "spd": 5},
-	Group.ELDRITCH_ASSASSIN: {"hp": 4, "atk": 8, "def": 3, "spd": 7},
-	Group.ELDRITCH_BRUTE: {"hp": 9, "atk": 4, "def": 6, "spd": 3},
-	Group.ELDRITCH_COMMANDER: {"hp": 6, "atk": 9, "def": 5, "spd": 6},
-	Group.ELDRITCH_KING: {"hp": 10, "atk": 10, "def": 8, "spd": 4},
+	Group.ELDRITCH_GRUNT: {"hp": 3, "atk": 5, "def": 3, "spd": 5, "crit": 5},
+	Group.ELDRITCH_ASSASSIN: {"hp": 4, "atk": 8, "def": 3, "spd": 7, "crit": 10},
+	Group.ELDRITCH_BRUTE: {"hp": 9, "atk": 4, "def": 6, "spd": 3, "crit": 5},
+	Group.ELDRITCH_COMMANDER: {"hp": 6, "atk": 9, "def": 5, "spd": 6, "crit": 5},
+	Group.ELDRITCH_KING: {"hp": 10, "atk": 10, "def": 8, "spd": 4, "crit": 5},
 	
 	# Chaos: High Variance/Speed
-	Group.CHAOS_GRUNT: {"hp": 2, "atk": 6, "def": 2, "spd": 7},
-	Group.CHAOS_ASSASSIN: {"hp": 3, "atk": 9, "def": 1, "spd": 9},
-	Group.CHAOS_BRUTE: {"hp": 8, "atk": 6, "def": 5, "spd": 4},
-	Group.CHAOS_COMMANDER: {"hp": 6, "atk": 8, "def": 4, "spd": 8},
-	Group.CHAOS_KING: {"hp": 9, "atk": 10, "def": 5, "spd": 10},
+	Group.CHAOS_GRUNT: {"hp": 2, "atk": 6, "def": 2, "spd": 7, "crit": 10},
+	Group.CHAOS_ASSASSIN: {"hp": 3, "atk": 9, "def": 1, "spd": 9, "crit": 20},
+	Group.CHAOS_BRUTE: {"hp": 8, "atk": 6, "def": 5, "spd": 4, "crit": 5},
+	Group.CHAOS_COMMANDER: {"hp": 6, "atk": 8, "def": 4, "spd": 8, "crit": 10},
+	Group.CHAOS_KING: {"hp": 9, "atk": 10, "def": 5, "spd": 10, "crit": 15},
 	
 	# Fission: High Damage/Low Health
-	Group.FISSION_GRUNT: {"hp": 3, "atk": 7, "def": 2, "spd": 5},
-	Group.FISSION_ASSASSIN: {"hp": 4, "atk": 9, "def": 2, "spd": 7},
-	Group.FISSION_BRUTE: {"hp": 7, "atk": 6, "def": 8, "spd": 3},
-	Group.FISSION_COMMANDER: {"hp": 6, "atk": 9, "def": 4, "spd": 6},
-	Group.FISSION_KING: {"hp": 9, "atk": 10, "def": 6, "spd": 5},
+	Group.FISSION_GRUNT: {"hp": 3, "atk": 7, "def": 2, "spd": 5, "crit": 5},
+	Group.FISSION_ASSASSIN: {"hp": 4, "atk": 9, "def": 2, "spd": 7, "crit": 10},
+	Group.FISSION_BRUTE: {"hp": 7, "atk": 6, "def": 8, "spd": 3, "crit": 5},
+	Group.FISSION_COMMANDER: {"hp": 6, "atk": 9, "def": 4, "spd": 6, "crit": 5},
+	Group.FISSION_KING: {"hp": 9, "atk": 10, "def": 6, "spd": 5, "crit": 10},
 	
 	# Brood: Swarm/Regen (High HP, Low Def)
-	Group.BROOD_GRUNT: {"hp": 5, "atk": 4, "def": 2, "spd": 6},
-	Group.BROOD_ASSASSIN: {"hp": 4, "atk": 7, "def": 2, "spd": 8},
-	Group.BROOD_BRUTE: {"hp": 10, "atk": 5, "def": 4, "spd": 3},
-	Group.BROOD_COMMANDER: {"hp": 8, "atk": 6, "def": 5, "spd": 6},
-	Group.BROOD_KING: {"hp": 12, "atk": 8, "def": 6, "spd": 5}
+	Group.BROOD_GRUNT: {"hp": 5, "atk": 4, "def": 2, "spd": 6, "crit": 5},
+	Group.BROOD_ASSASSIN: {"hp": 4, "atk": 7, "def": 2, "spd": 8, "crit": 10},
+	Group.BROOD_BRUTE: {"hp": 10, "atk": 5, "def": 4, "spd": 3, "crit": 0},
+	Group.BROOD_COMMANDER: {"hp": 8, "atk": 6, "def": 5, "spd": 6, "crit": 5},
+	Group.BROOD_KING: {"hp": 12, "atk": 8, "def": 6, "spd": 5, "crit": 10}
 }
 
 # Mastery Bonus Descriptions (100% Stability)
@@ -136,7 +136,7 @@ const MASTERY_BONUSES = {
 const GROUP_MOVES = {
 	Group.ALKALI_METAL: [
 		{"name": "Electron Jettison", "power": 35, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": -100, "percent": true, "duration": 2, "target": "Attacker"}]},
-		{"name": "Reactive Spark", "power": 30, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Quick strike. Can hit any enemy.", "cooldown": 2}
+		{"name": "Reactive Spark", "power": 30, "accuracy": 100, "type": "Physical", "description": "A quick, reactive strike.", "cooldown": 2}
 	],
 	Group.ALKALINE_EARTH: [
 		{"name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense for 3 turns.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 50, "percent": true, "duration": 3, "target": "Self"}]},
@@ -151,7 +151,7 @@ const GROUP_MOVES = {
 		{"name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Heals target ally, scales with attack. Excess healing becomes a shield.", "cooldown": 2}
 	],
 	Group.METALLOID: [
-		{"name": "Semiconductor Flip", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Swaps the target's Attack and Defense for 2 turns.", "cooldown": 2, "effects": [{"effect": "swap_stats", "stats": ["attack", "defense"], "duration": 2}]},
+		{"name": "Thermal Transistor", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Reduces enemy Attack and Defense by 20%.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "attack", "amount": -20, "percent": true, "duration": 2}, {"type": "stat_mod", "stat": "defense", "amount": -20, "percent": true, "duration": 2}]},
 		{"name": "Signal Scramble", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
 	],
 	Group.NONMETAL: [
@@ -401,31 +401,31 @@ const UNIQUE_MOVES = {
 		"cooldown": 2
 	},
 	17: { # Chlorine
-		"name": "Chlorine Cloud",
+		"name": "Bleach Cloud",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Hostile",
-		"description": "Applies a corrosive debuff.",
+		"description": "Creates a hazardous cloud. Enemies take damage when attacking.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "corrosion", "damage_percent": 0.05, "duration": 3}],
-		"cooldown": 2
+		"effects": [ {"effect": "team_status", "status": "reactive_vapor", "duration": 3, "message": "The air turns toxic!"}],
+		"cooldown": 3
 	},
 	18: { # Argon
-		"name": "Argon Aura",
+		"name": "Inert Gas Barrier",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Increases ally Defense for 2 turns.",
-		"target_type": "Ally",
-		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 2}],
-		"cooldown": 2
+		"description": "Grants a shield to all allies.",
+		"target_type": "Self",
+		"effects": [ {"effect": "add_team_shield", "scale_stat": "max_hp", "scale_factor": 0.2}],
+		"cooldown": 3
 	},
 	19: { # Potassium
-		"name": "Potassium Power",
-		"power": 60,
-		"accuracy": 90,
-		"type": "Physical",
-		"description": "A powerful, explosive strike.",
+		"name": "Violet Flare",
+		"power": 15,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Deals extra damage for every debuff on the enemy.",
 		"target_type": "Enemy",
 		"effects": [],
 		"cooldown": 2
@@ -435,128 +435,136 @@ const UNIQUE_MOVES = {
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Grants a significant shield.",
+		"description": "Grants a shield equal to 35% of Max HP.",
 		"target_type": "Self",
-		"effects": [ {"type": "add_shield", "amount": 0.25}],
+		"effects": [ {"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.35}],
 		"cooldown": 2
 	},
 	21: { # Scandium
-		"name": "Scandium Slash",
-		"power": 50,
+		"name": "Light-Alloy Strike",
+		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "A quick, precise attack.",
+		"description": "Deals damage and raises Defense by 10%.",
 		"target_type": "Enemy",
-		"effects": [],
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}],
 		"cooldown": 2
 	},
 	22: { # Titanium
-		"name": "Titanium Tackle",
-		"power": 70,
-		"accuracy": 85,
+		"name": "Hardened Bash",
+		"power": 30,
+		"accuracy": 100,
 		"type": "Physical",
-		"description": "Charges and slams into the enemy.",
+		"description": "Deals damage and raises Defense by 10%.",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}]
 	},
 	23: { # Vanadium
-		"name": "Vanadium Volley",
-		"power": 40,
+		"name": "Refined Edge",
+		"power": 30,
 		"accuracy": 100,
-		"type": "Special",
-		"description": "Fires multiple small projectiles.",
+		"type": "Physical",
+		"description": "Deals damage and raises Attack by 10%.",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}]
 	},
 	24: { # Chromium
-		"name": "Chromium Crush",
-		"power": 65,
-		"accuracy": 90,
-		"type": "Physical",
-		"description": "A heavy, crushing blow.",
-		"target_type": "Enemy",
-		"effects": []
+		"name": "Mirror Finish",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Reflects the next incoming attack.",
+		"target_type": "Self",
+		"effects": [ {"type": "status", "status": "mirror_coat", "duration": 3}],
+		"cooldown": 3
 	},
 	25: { # Manganese
-		"name": "Manganese Mangle",
-		"power": 55,
-		"accuracy": 95,
+		"name": "Ferro-Impact",
+		"power": 30,
+		"accuracy": 100,
 		"type": "Physical",
-		"description": "Tears at the enemy with sharp claws.",
+		"description": "Deals damage and raises Attack by 10%.",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}]
 	},
 	26: { # Iron
-		"name": "Ironclad Impact",
-		"power": 75,
-		"accuracy": 80,
+		"name": "Magnetic Slam",
+		"power": 30,
+		"accuracy": 100,
 		"type": "Physical",
-		"description": "A devastating, armor-piercing attack.",
+		"description": "Deals damage and grants a shield (25% of damage dealt).",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"effect": "add_shield", "scale_stat": "damage_dealt", "scale_factor": 0.25, "target": "Attacker"}]
 	},
 	27: { # Cobalt
-		"name": "Cobalt Coil",
-		"power": 0,
+		"name": "Blue-Steel Guard",
+		"power": 30,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Increases ally Speed for 2 turns.",
-		"target_type": "Ally",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 2}]
+		"type": "Physical",
+		"description": "Deals damage and grants a shield (25% of damage dealt).",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "add_shield", "scale_stat": "damage_dealt", "scale_factor": 0.25, "target": "Attacker"}]
 	},
 	28: { # Nickel
-		"name": "Nickel Nuke",
-		"power": 80,
-		"accuracy": 75,
-		"type": "Special",
-		"description": "A powerful, unstable energy burst.",
+		"name": "Plated Guard",
+		"power": 30,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and lowers enemy Defense by 10%.",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": -10, "percent": true, "duration": 1}]
 	},
 	29: { # Copper
-		"name": "Copper Current",
-		"power": 45,
+		"name": "Conductive Whip",
+		"power": 30,
 		"accuracy": 100,
-		"type": "Special",
-		"description": "Electrifies the enemy.",
+		"type": "Physical",
+		"description": "Deals damage and raises Speed by 10%.",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}]
 	},
 	30: { # Zinc
-		"name": "Zinc Zone",
+		"name": "Galvanized Shield",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Creates a defensive zone, raising ally Defense.",
-		"target_type": "Ally",
-		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 2}]
+		"description": "Reflects the next incoming attack.",
+		"target_type": "Self",
+		"effects": [ {"type": "status", "status": "mirror_coat", "duration": 3}],
+		"cooldown": 3
 	},
 	31: { # Gallium
-		"name": "Gallium Goo",
+		"name": "Liquid Metal Shift",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Swaps position with an ally and increases their Speed.",
+		"target_type": "Ally",
+		"effects": [
+			{"effect": "swap_position"},
+			{"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 2}
+		],
+		"cooldown": 2
+	},
+	32: { # Germanium
+		"name": "Semiconductor Flip",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Hostile",
-		"description": "Slows enemy Speed for 2 turns.",
+		"description": "Swaps the target's Attack and Defense for 2 turns.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": - 10, "percent": true, "duration": 2}]
-	},
-	32: { # Germanium
-		"name": "Germanium Glitch",
-		"power": 50,
-		"accuracy": 90,
-		"type": "Special",
-		"description": "A disruptive energy attack with a chance to stun.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "stun", "duration": 1, "chance": 0.15}]
+		"effects": [ {"effect": "swap_stats", "stats": ["attack", "defense"], "duration": 2}],
+		"cooldown": 2
 	},
 	33: { # Arsenic
-		"name": "Arsenic Arrow",
-		"power": 60,
-		"accuracy": 95,
-		"type": "Special",
-		"description": "Fires a toxic projectile.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "poison", "damage_percent": 0.06, "duration": 3, "chance": 0.3}]
+		"name": "Toxic Feedback",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "For 3 turns, any enemy that attacks this unit has their Attack reduced by 40%.",
+		"target_type": "Self",
+		"effects": [ {"type": "status", "status": "toxic_feedback", "duration": 3, "debuff_stat": "attack", "debuff_amount": -40, "debuff_percent": true, "debuff_duration": 2}],
+		"cooldown": 3
 	},
 	34: { # Selenium
 		"name": "Photonic Overload",
@@ -569,345 +577,369 @@ const UNIQUE_MOVES = {
 		"cooldown": 2
 	},
 	35: { # Bromine
-		"name": "Bromine Barrage",
-		"power": 55,
-		"accuracy": 90,
+		"name": "Sedative Vapor",
+		"power": 30,
+		"accuracy": 100,
 		"type": "Special",
-		"description": "Unleashes a volley of corrosive energy.",
+		"description": "Deals damage. 30% chance to Stun if target is Poisoned.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "corrosion", "damage_percent": 0.06, "duration": 3}]
+		"effects": [ {"type": "status", "status": "stun", "duration": 1, "chance": 0.3, "condition_status": "poison"}],
+		"cooldown": 2
 	},
 	36: { # Krypton
-		"name": "Krypton Cloak",
+		"name": "Laser Refraction",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Increases Evasion (Speed) for 2 turns.",
+		"description": "Grants a 25% HP shield and reflects 40% damage for 1 turn.",
 		"target_type": "Self",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 2}]
+		"effects": [
+			{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.25},
+			{"type": "status", "status": "static_reflection", "damage_percent": 0.4, "duration": 1}
+		],
+		"cooldown": 3
 	},
 	37: { # Rubidium
-		"name": "Rubidium Rupture",
-		"power": 65,
-		"accuracy": 85,
-		"type": "Physical",
-		"description": "A devastating, high-impact attack.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	38: { # Strontium
-		"name": "Strontium Stance",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Greatly raises Defense for 2 turns.",
-		"target_type": "Self",
-		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 2}]
-	},
-	39: { # Yttrium
-		"name": "Yttrium Yield",
-		"power": 50,
-		"accuracy": 100,
-		"type": "Physical",
-		"description": "A balanced offensive move.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	40: { # Zirconium
-		"name": "Zirconium Zone",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Creates a protective field, granting a shield to all allies.",
-		"target_type": "Ally",
-		"effects": [ {"type": "add_shield", "amount": 0.1}]
-	},
-	41: { # Niobium
-		"name": "Niobium Nullify",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Reduces enemy Attack and Defense for 2 turns.",
-		"target_type": "Enemy",
-		"effects": [ 
-			{"type": "stat_mod", "stat": "attack", "amount": - 10, "percent": true, "duration": 2}, 
-			{"type": "stat_mod", "stat": "defense", "amount": - 10, "percent": true, "duration": 2}
-		]
-	},
-	42: { # Molybdenum
-		"name": "Molybdenum Maelstrom",
-		"power": 70,
-		"accuracy": 85,
-		"type": "Special",
-		"description": "Unleashes a swirling vortex of energy.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	43: { # Technetium
-		"name": "Technetium Tangle",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Applies a debuff that reduces enemy Speed.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": - 15, "percent": true, "duration": 2}]
-	},
-	44: { # Ruthenium
-		"name": "Ruthenium Rush",
-		"power": 60,
-		"accuracy": 95,
-		"type": "Physical",
-		"description": "A rapid, piercing attack.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	45: { # Rhodium
-		"name": "Rhodium Radiance",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Heals a moderate amount of HP to an ally.",
-		"target_type": "Ally",
-		"effects": [ {"type": "heal", "amount": 40}]
-	},
-	46: { # Palladium
-		"name": "Palladium Pulse",
-		"power": 50,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Emits a wave of energy that can stun.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "stun", "duration": 1, "chance": 0.2}]
-	},
-	47: { # Silver
-		"name": "Silver Shard",
-		"power": 55,
-		"accuracy": 90,
-		"type": "Physical",
-		"description": "Hurls a sharp, reflective shard.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	48: { # Cadmium
-		"name": "Cadmium Cage",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Traps an enemy, preventing them from acting for 1 turn.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "stun", "duration": 1}]
-	},
-	49: { # Indium
-		"name": "Indium Infusion",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Increases ally Defense and Speed for 2 turns.",
-		"target_type": "Ally",
-		"effects": [ 
-			{"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 2}, 
-			{"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 2}
-		]
-	},
-	50: { # Tin
-		"name": "Tin Tangle",
+		"name": "Red-Shift Dash",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "A sticky, slowing attack.",
+		"description": "Deals 40 damage with high armor penetration.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": - 10, "percent": true, "duration": 2, "chance": 0.5}]
+		"effects": [],
+		"cooldown": 2
 	},
-	51: { # Antimony
-		"name": "Antimony Aura",
-		"power": 0,
+	38: { # Strontium
+		"name": "Crimson Lockdown",
+		"power": 40,
 		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Reduces enemy Attack for 2 turns.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": - 15, "percent": true, "duration": 2}]
-	},
-	52: { # Tellurium
-		"name": "Tellurium Tremor",
-		"power": 60,
-		"accuracy": 90,
-		"type": "Special",
-		"description": "Causes a localized tremor, damaging all enemies.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	53: { # Iodine
-		"name": "Iodine Implosion",
-		"power": 70,
-		"accuracy": 85,
-		"type": "Special",
-		"description": "A powerful, corrosive explosion.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "corrosion", "damage_percent": 0.08, "duration": 3}]
-	},
-	54: { # Xenon
-		"name": "Xenon X-Ray",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Reveals enemy weaknesses, increasing damage taken.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "vulnerable", "duration": 2}]
-	},
-	55: { # Cesium
-		"name": "Cesium Cascade",
-		"power": 80,
-		"accuracy": 80,
 		"type": "Physical",
-		"description": "A highly volatile, chain reaction attack.",
+		"description": "Deals damage and reduces Speed of all enemies.",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [
+			{"effect": "aoe_stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2, "message": "The enemy team is slowed!"}
+		],
+		"cooldown": 3
 	},
-	56: { # Barium
-		"name": "Barium Bulwark",
+	39: { # Yttrium
+		"name": "Luminescent Arc",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and increases Crit Chance by 15%.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "stat_mod", "stat": "crit_chance", "amount": 15, "duration": 2, "target": "Attacker"}],
+		"cooldown": 2
+	},
+	40: { # Zirconium
+		"name": "Gemstone Guard",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and raises Defense by 15% for 1 turn.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 15, "percent": true, "duration": 1, "target": "Attacker"}],
+		"cooldown": 2
+	},
+	41: { # Niobium
+		"name": "Super-Conduct",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and raises Speed by 15% for 1 turn.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 15, "percent": true, "duration": 1, "target": "Attacker"}],
+		"cooldown": 2
+	},
+	42: { # Molybdenum
+		"name": "Heat-Sink Bash",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and lowers enemy Defense by 15%.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": -15, "percent": true, "duration": 2}],
+		"cooldown": 2
+	},
+	43: { # Technetium
+		"name": "Isotope Pulse",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and increases Crit Chance by 15%.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "stat_mod", "stat": "crit_chance", "amount": 15, "duration": 2, "target": "Attacker"}],
+		"cooldown": 2
+	},
+	44: { # Ruthenium
+		"name": "Catalytic Blast",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and lowers enemy Defense by 15%.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": -15, "percent": true, "duration": 2}],
+		"cooldown": 2
+	},
+	45: { # Rhodium
+		"name": "Reflective Shell",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Grants a massive shield to an ally.",
-		"target_type": "Ally",
-		"effects": [ {"type": "add_shield", "amount": 0.35}]
+		"description": "Negates next hit and reflects 30% damage.",
+		"target_type": "Self",
+		"effects": [ {"type": "status", "status": "reflective_shell", "duration": 3}],
+		"cooldown": 3
 	},
-	57: { # Lanthanum
-		"name": "Lanthanum Lure",
+	46: { # Palladium
+		"name": "H-Absorb Shield",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Absorbs next hit, healing for 30% of damage.",
+		"target_type": "Self",
+		"effects": [ {"type": "status", "status": "absorb_shield", "duration": 3}],
+		"cooldown": 3
+	},
+	47: { # Silver
+		"name": "Sterling Flash",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and raises Speed by 15% for 1 turn.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 15, "percent": true, "duration": 1, "target": "Attacker"}],
+		"cooldown": 2
+	},
+	48: { # Cadmium Transition Metal
+		"name": "Neutron Dampener",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and reduces enemy Attack by 15%.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": -15, "percent": true, "duration": 2}],
+		"cooldown": 2
+	},
+	49: { # Indium Post-Transition Metal
+		"name": "Soft-Metal Pulse",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Increases Speed of all allies by 10% for 1 turn.",
+		"target_type": "Self",
+		"effects": [
+			{"effect": "aoe_stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 1, "target_team": "ally", "message": "Allies accelerate!"}
+		],
+		"cooldown": 2
+	},
+	50: { # Tin Post-Transition Metal
+		"name": "Casing Reinforce",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Grants a 30% HP shield that deals damage when broken.",
+		"target_type": "Self",
+		"effects": [ {"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.3, "explode_on_break": true}],
+		"cooldown": 3
+	},
+	51: { # Antimony Metalloid
+		"name": "Inhibitor Wave",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Hostile",
-		"description": "Draws enemy attention (Taunt) to a target.",
+		"description": "Reduces Attack of all enemies by 20%.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "taunt", "duration": 2}]
+		"effects": [ {"effect": "aoe_stat_mod", "stat": "attack", "amount": -20, "percent": true, "duration": 2, "message": "Enemy Attack weakened!"}],
+		"cooldown": 2
 	},
-	58: { # Cerium
-		"name": "Cerium Charge",
-		"power": 60,
-		"accuracy": 95,
+	52: { # Tellurium Metalloid
+		"name": "Solar Flare",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Deals damage and blinds the enemy.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "status", "status": "refracted", "duration": 2}],
+		"cooldown": 2
+	},
+	53: { # Iodine Halogen
+		"name": "Antiseptic Burn",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Heals an ally for 10% Max HP every turn for 3 turns.",
+		"target_type": "Ally",
+		"effects": [ {"type": "status", "status": "regeneration", "heal_percent": 0.1, "duration": 3}],
+		"cooldown": 3
+	},
+	54: { # Xenon Noble Gas
+		"name": "Stasis Flash",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Absorbs the next hit, converting 60% of damage to Health.",
+		"target_type": "Self",
+		"effects": [ {"type": "status", "status": "absorb_shield", "duration": 3, "absorb_percent": 0.6}],
+		"cooldown": 3
+	},
+	55: { # Cesium Alkali Metal
+		"name": "Atomic Clock",
+		"power": 50,
+		"accuracy": 90,
 		"type": "Physical",
-		"description": "A strong, direct attack.",
+		"description": "A quick attack that increases the users's speed",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 15, "percent": true, "duration": 1, "target": "Attacker"}]
 	},
-	59: { # Praseodymium
-		"name": "Praseodymium Pierce",
-		"power": 55,
+	56: { # Barium Alkaline Earth Metal
+		"name": "Barium Bulwark",
+		"power": 50,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Pierces enemy defenses.",
+		"description": "Bashes enemy and grants the user a 25% HP shield.",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.25, "target": "Attacker"}]
+	},
+	57: { # Lanthanum Lanthanide
+		"name": "Lanth-Lens",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Next attack on target cannot miss.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "status", "status": "illuminated", "duration": 2}]
+	},
+	58: { # Cerium
+		"name": "Cerous Spark",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "+5% team Crit chance permanent.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "aoe_stat_mod", "stat": "crit_chance", "amount": 5, "duration": 99, "target_team": "ally", "message": "Team Crit Chance increased!"}]
+	},
+	59: { # Praseodymium
+		"name": "Didymium Flash",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "40 power AoE damage.",
+		"target_type": "Enemy", # Targets one to cast, hits all via effect
+		"effects": [ {"effect": "aoe_power_attack", "power": 40}]
 	},
 	60: { # Neodymium
-		"name": "Neodymium Nova",
-		"power": 70,
-		"accuracy": 85,
+		"name": "Magnetic Pull",
+		"power": 40,
+		"accuracy": 100,
 		"type": "Special",
-		"description": "Unleashes a powerful energy burst.",
+		"description": "A precise snipe attack.",
+		"is_snipe": true,
 		"target_type": "Enemy",
 		"effects": []
 	},
 	61: { # Promethium
-		"name": "Promethium Pulse",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Heals all allies for a small amount.",
-		"target_type": "Ally",
-		"effects": [ {"type": "heal", "amount": 25, "target": "All_Allies"}]
-	},
-	62: { # Samarium
-		"name": "Samarium Smash",
-		"power": 80,
-		"accuracy": 80,
-		"type": "Physical",
-		"description": "A heavy, concussive blow.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	63: { # Europium
-		"name": "Europium Embrace",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Grants invulnerability for 1 turn.",
-		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "invulnerable", "duration": 1}],
-		"cooldown": 4
-	},
-	64: { # Gadolinium
-		"name": "Gadolinium Glare",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Reduces enemy accuracy.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "refracted", "duration": 2}]
-	},
-	65: { # Terbium
-		"name": "Terbium Torrent",
-		"power": 65,
-		"accuracy": 90,
-		"type": "Special",
-		"description": "A continuous stream of damaging energy.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	66: { # Dysprosium
-		"name": "Dysprosium Drain",
+		"name": "Lume-Decay",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Drains HP from the enemy.",
+		"description": "Lowers target Evasion.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "heal", "amount": 20, "target": "Attacker"}]
+		"effects": [ {"type": "status", "status": "illuminated", "duration": 2, "message": "%s is illuminated!"}]
 	},
-	67: { # Holmium
-		"name": "Holmium Hammer",
-		"power": 75,
-		"accuracy": 85,
-		"type": "Physical",
-		"description": "A crushing, powerful attack.",
-		"target_type": "Enemy",
-		"effects": []
-	},
-	68: { # Erbium
-		"name": "Erbium Echo",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Copies a positive status effect from an ally.",
-		"target_type": "Ally",
-		"effects": []
-	},
-	69: { # Thulium
-		"name": "Thulium Thrust",
+	62: { # Samarium
+		"name": "Samar-Shield",
 		"power": 50,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "A precise, rapid thrust.",
+		"description": "Increases team defense by 10%.",
 		"target_type": "Enemy",
-		"effects": []
+		"effects": [ {"effect": "aoe_stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 3, "target_team": "ally"}]
 	},
-	70: { # Ytterbium
-		"name": "Ytterbium Yield",
-		"power": 0,
+	63: { # Europium
+		"name": "Fluorescent Ray",
+		"power": 50,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Increases ally Attack and Defense for 2 turns.",
-		"target_type": "Ally",
+		"type": "Special",
+		"description": "+30% damage vs debuffed targets.",
+		"target_type": "Enemy",
+		"effects": [],
+		"bonus_damage_condition": "debuffed",
+		"damage_multiplier": 1.3
+	},
+	64: { # Gadolinium
+		"name": "Neutron Sponge",
+		"power": 50,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Absorbs 20% of next hit.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "status", "status": "absorb_shield", "duration": 2, "absorb_percent": 0.2, "target": "Attacker"}]
+	},
+	65: { # Terbium
+		"name": "Green-Shift",
+		"power": 50,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "+15% team Speed.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "aoe_stat_mod", "stat": "speed", "amount": 15, "percent": true, "duration": 3, "target_team": "ally"}]
+	},
+	66: { # Dysprosium
+		"name": "Hard-Magnet Slam",
+		"power": 50,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "40% Stun chance.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "status", "status": "stun", "duration": 1, "chance": 0.4}]
+	},
+	67: { # Holmium
+		"name": "Holm-Flux",
+		"power": 60,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Steals 10% target DEF.",
+		"target_type": "Enemy",
 		"effects": [ 
-			{"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 2}, 
-			{"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 2}
+			{"type": "stat_mod", "stat": "defense", "amount": -10, "percent": true, "duration": 3},
+			{"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 3, "target": "Attacker"}
 		]
 	},
-	71: { # Lutetium
-		"name": "Lutetium Lacerate",
+	68: { # Erbium
+		"name": "Amplifier Beam",
 		"power": 60,
-		"accuracy": 95,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Extends debuffs on target by 1 turn.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "extend_debuffs", "amount": 1}]
+	},
+	69: { # Thulium
+		"name": "Thul-Thumper",
+		"power": 65,
+		"accuracy": 100,
 		"type": "Physical",
-		"description": "Slashes the enemy with sharp edges.",
+		"description": "Ignores 20% Defense.",
+		"target_type": "Enemy",
+		"effects": [],
+		"ignore_def_percent": 0.2
+	},
+	70: { # Ytterbium
+		"name": "Resonance Wave",
+		"power": 50,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Deals 50% splash damage to other enemies.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "splash_damage", "percent": 0.5}]
+	},
+	71: { # Lutetium
+		"name": "Apex Rare-Earth",
+		"power": 70,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "A powerful finishing strike.",
 		"target_type": "Enemy",
 		"effects": []
 	},
@@ -1367,6 +1399,7 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 		"atk": {"base": base.atk * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
 		"def": {"base": base.def * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
 		"spd": {"base": base.spd * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
+		"crit": {"base": float(base.get("crit", 5)), "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0}
 	}
 	
 	# 1. Resonance Bonus (Set Bonus): Scales based on total owned elements of this group
@@ -1443,6 +1476,7 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 	final_stats["attack"] = int((base.atk * 2.0) * stability_multiplier * atk_mult)
 	final_stats["defense"] = int((base.def * 2.0) * stability_multiplier * def_mult)
 	final_stats["speed"] = int((base.spd * 2.0) * stability_multiplier * spd_mult)
+	final_stats["crit_chance"] = int(breakdown.crit.base) # Keep crit flat for now, but editable via baseline
 	
 	return {"final_stats": final_stats, "breakdown": breakdown}
 

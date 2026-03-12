@@ -156,8 +156,8 @@ func _create_ui():
 	
 	# Instruction Text
 	instruction_label = Label.new()
-	instruction_label.add_theme_font_size_override("font_size", 44)
-	instruction_label.add_theme_color_override("font_color", Color("#60fafc"))
+	instruction_label.add_theme_font_size_override("font_size", 48)
+	instruction_label.add_theme_color_override("font_color", Color("#ffd700"))
 	instruction_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	instruction_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	instruction_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -772,7 +772,7 @@ func _show_completion_popup():
 	desc.text = "You have synthesized your first element!\n\nExplore the Campaign to find more blueprints."
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.add_theme_font_size_override("font_size", 40)
+	desc.add_theme_font_size_override("font_size", 44)
 	desc.add_theme_color_override("font_color", Color("#60fafc"))
 	vbox.add_child(desc)
 	

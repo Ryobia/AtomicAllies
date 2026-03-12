@@ -139,6 +139,7 @@ expand_mode = 4
 stretch_mode = 6
 
 [node name="TargetButton" type="Button" parent="BattleHUD/Theater/EnemyRow/Enemy1/EnemySlot1" unique_id=1382287766]
+self_modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -213,10 +214,11 @@ alignment = 1
 custom_minimum_size = Vector2(150, 360)
 layout_mode = 2
 size_flags_horizontal = 3
-expand_mode = 4
+expand_mode = 1
 stretch_mode = 4
 
 [node name="TargetButton" type="Button" parent="BattleHUD/Theater/EnemyRow/Enemy2/EnemySlot2" unique_id=1538222546]
+self_modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -307,6 +309,7 @@ expand_mode = 4
 stretch_mode = 4
 
 [node name="TargetButton" type="Button" parent="BattleHUD/Theater/EnemyRow/Enemy3/EnemySlot3" unique_id=885821440]
+self_modulate = Color(1, 1, 1, 0)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -724,6 +727,8 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 0
 columns = 2
 
 [node name="QuitConfirmationDialog" type="ConfirmationDialog" parent="BattleHUD" unique_id=56278763]

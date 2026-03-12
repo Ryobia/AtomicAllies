@@ -18,6 +18,7 @@ var attack_label
 var defense_label
 var stats_label
 var speed_label
+var crit_label
 var icon_texture
 var moves_container
 var class_label
@@ -48,6 +49,7 @@ func _ready():
 	defense_label = find_child("DefenseLabel", true, false)
 	stats_label = find_child("StatsLabel", true, false)
 	speed_label = find_child("SpeedLabel", true, false)
+	crit_label = find_child("CritLabel", true, false)
 	icon_texture = find_child("IconTexture", true, false)
 	moves_container = find_child("MovesContainer", true, false)
 	class_label = find_child("ClassLabel", true, false)
@@ -199,11 +201,13 @@ func update_ui():
 		if attack_label: attack_label.text = "Attack: " + str(stats.attack)
 		if defense_label: defense_label.text = "Defense: " + str(stats.defense)
 		if speed_label: speed_label.text = "Speed: " + str(stats.speed)
+		if crit_label: crit_label.text = "Crit: %d%%" % stats.get("crit_chance", 5)
 		
 		if hp_label: hp_label.modulate = content_modulate
 		if attack_label: attack_label.modulate = content_modulate
 		if defense_label: defense_label.modulate = content_modulate
 		if speed_label: speed_label.modulate = content_modulate
+		if crit_label: crit_label.modulate = content_modulate
 
 	if class_label and "group" in current_monster:
 		var group_name = AtomicConfig.Group.find_key(current_monster.group)
@@ -559,6 +563,7 @@ func _show_detailed_stats_popup():
 	text += _format_stat_breakdown("Attack", breakdown.atk, final_stats.attack)
 	text += _format_stat_breakdown("Defense", breakdown.def, final_stats.defense)
 	text += _format_stat_breakdown("Speed", breakdown.spd, final_stats.speed)
+	text += _format_stat_breakdown("Crit Chance", breakdown.crit, final_stats.crit_chance)
 	
 	# Create a custom popup
 	var popup = PanelContainer.new()
@@ -600,8 +605,8 @@ func _show_detailed_stats_popup():
 	rtl.bbcode_enabled = true
 	rtl.text = text
 	rtl.fit_content = true
-	rtl.add_theme_font_size_override("normal_font_size", 36)
-	rtl.add_theme_font_size_override("bold_font_size", 36)
+	rtl.add_theme_font_size_override("normal_font_size", 42)
+	rtl.add_theme_font_size_override("bold_font_size", 42)
 	vbox.add_child(rtl)
 	
 	var close_btn = Button.new()
@@ -665,7 +670,7 @@ func _show_tooltip_popup(text: String):
 		
 		# Text
 		theme.set_color("font_color", "Label", Color("#60fafc"))
-		theme.set_font_size("font_size", "Label", 32)
+		theme.set_font_size("font_size", "Label", 40)
 		
 		# Button
 		var btn_style = StyleBoxFlat.new()
@@ -679,7 +684,7 @@ func _show_tooltip_popup(text: String):
 		theme.set_stylebox("hover", "Button", btn_style)
 		theme.set_stylebox("pressed", "Button", btn_style)
 		theme.set_color("font_color", "Button", Color("#010813"))
-		theme.set_font_size("font_size", "Button", 28)
+		theme.set_font_size("font_size", "Button", 32)
 		
 		popup.theme = theme
 	

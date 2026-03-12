@@ -61,6 +61,7 @@ var _press_timer: float = 0.0
 var _long_press_triggered: bool = false
 var _stat_popup_instance: Control = null
 
+var bench_container: HBoxContainer
 var _control_deck_grid: GridContainer = null
 var _default_columns: int = 1
 var _can_swap_state: bool = true
@@ -112,6 +113,16 @@ func _ready():
 	for i in range(player_slots.size()):
 		var slot = player_slots[i]
 		_setup_slot_input(slot, i, true)
+		
+	# Create Bench Container for Swap Moves
+	bench_container = HBoxContainer.new()
+	bench_container.name = "BenchContainer"
+	bench_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	bench_container.add_theme_constant_override("separation", 20)
+	bench_container.visible = false
+	bench_container.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	bench_container.position.y -= 580 # Offset above player row
+	add_child(bench_container)
 	
 	_build_ui_cache()
 
@@ -406,6 +417,25 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "physical_resist":
 			bg_color = Color("#a0a0a0") # Silver/Grey
 			tooltip_text = "Physical Resist\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "mirror_coat":
+			bg_color = Color("#e0e0e0") # Silver/White
+			tooltip_text = "Reflecting Next Hit\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "toxic_feedback":
+			bg_color = Color("#6dc000") # Radioactive Green
+			tooltip_text = "Toxic Feedback\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "reflective_shell":
+			bg_color = Color("#e0e0e0") # Silver/White
+			tooltip_text = "Reflective Shell\nReflects 30% of next hit."
+		elif s == "absorb_shield":
+			bg_color = Color("#2ecc71") # Green
+			var pct = int(float(effect.get("absorb_percent", 0.3)) * 100)
+			tooltip_text = "Absorb Shield\nAbsorbs next hit, converting %d%% to HP." % pct
+		elif s == "special_resist":
+			bg_color = Color("#6495ed") # Cornflower Blue
+			tooltip_text = "Special Resist\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "regeneration":
+			bg_color = Color("#2ecc71") # Green
+			tooltip_text = "Regeneration\nHeals HP each turn.\nDuration: %d turns" % effect.get("duration", 0)
 		
 		if s == "marked_covalent": text = "COV"
 		elif s == "unstable": text = "UNS"
@@ -414,6 +444,12 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "oxidized": text = "OXI"
 		elif s == "explosive": text = "EXP"
 		elif s == "physical_resist": text = "PHY"
+		elif s == "toxic_feedback": text = "TFB"
+		elif s == "mirror_coat": text = "MIR"
+		elif s == "reflective_shell": text = "RSH"
+		elif s == "absorb_shield": text = "ABS"
+		elif s == "special_resist": text = "SPR"
+		elif s == "regeneration": text = "REG"
 		elif s == "overload": text = "OVL"
 		elif s == "reactive_vapor": text = "VAP"
 		elif s == "radiation": text = "RAD"
@@ -600,7 +636,7 @@ func log_message(text: String):
 		var tween = create_tween()
 		tween.tween_property(log_label, "modulate:a", 0.0, 2.0).set_delay(1.0)
 
-func set_targeting_mode(enabled: bool, valid_indices: Array = [], target_allies: bool = false):
+func set_targeting_mode(enabled: bool, valid_indices: Array = [], target_allies: bool = false, bench_targets: Dictionary = {}):
 	_targeting_active = enabled
 	_valid_target_indices = valid_indices
 	_targeting_allies = target_allies
@@ -618,7 +654,13 @@ func set_targeting_mode(enabled: bool, valid_indices: Array = [], target_allies:
 				# Reset visual effect
 				var tween = create_tween()
 				tween.tween_property(slot, "modulate", Color.WHITE, 0.1)
+		bench_container.visible = false
 		return
+		
+	if not bench_targets.is_empty():
+		show_bench_targets(bench_targets.data, bench_targets.indices)
+	else:
+		bench_container.visible = false
 
 	var slots = player_slots if target_allies else enemy_slots
 	
@@ -640,6 +682,47 @@ func set_targeting_mode(enabled: bool, valid_indices: Array = [], target_allies:
 			var tween = create_tween()
 			var color = Color(1.2, 1.2, 0.8) if is_valid else Color.WHITE
 			tween.tween_property(slot, "modulate", color, 0.1)
+
+func show_bench_targets(bench_data: Array, valid_indices: Array):
+	bench_container.visible = true
+	for child in bench_container.get_children():
+		child.queue_free()
+		
+	for i in range(bench_data.size()):
+		var data = bench_data[i]
+		if not (i in valid_indices): continue
+		
+		var btn = Button.new()
+		btn.custom_minimum_size = Vector2(140, 140)
+		
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color("#010813")
+		style.border_color = Color("#60fafc")
+		style.set_border_width_all(2)
+		style.set_corner_radius_all(8)
+		btn.add_theme_stylebox_override("normal", style)
+		
+		var hover = style.duplicate()
+		hover.bg_color = Color("#0a1a2a")
+		hover.border_color = Color("#ffd700")
+		btn.add_theme_stylebox_override("hover", hover)
+		btn.add_theme_stylebox_override("pressed", hover)
+		
+		var margin = MarginContainer.new()
+		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn.add_child(margin)
+		
+		var icon_rect = TextureRect.new()
+		if data.icon: icon_rect.texture = data.icon
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		margin.add_child(icon_rect)
+		
+		# 10+ index signifies bench unit to BattleManager
+		btn.pressed.connect(func(): target_selected.emit(10 + i))
+		
+		bench_container.add_child(btn)
 
 func _set_slot_visual(slot: Control, monster: MonsterData, is_vanguard: bool = false):
 	var icon_rect = slot.find_child("IconTexture", true, false)
@@ -923,7 +1006,7 @@ func show_move_details(move: MoveData):
 	var title = Label.new()
 	var snipe_text = " [Snipe]" if move.is_snipe else ""
 	title.text = "%s%s" % [move.name, snipe_text]
-	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_font_size_override("font_size", 64)
 	title.add_theme_color_override("font_color", Color("#60fafc"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
@@ -931,7 +1014,7 @@ func show_move_details(move: MoveData):
 	var stats = Label.new()
 	stats.text = "Type: %s  |  Power: %d  |  Acc: %d%%" % [move.type, move.power, move.accuracy]
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stats.add_theme_font_size_override("font_size", 36)
+	stats.add_theme_font_size_override("font_size", 42)
 	stats.add_theme_color_override("font_color", Color.WHITE)
 	vbox.add_child(stats)
 	
@@ -940,7 +1023,7 @@ func show_move_details(move: MoveData):
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	desc.add_theme_font_size_override("font_size", 36)
+	desc.add_theme_font_size_override("font_size", 42)
 	desc.add_theme_color_override("font_color", Color("#cccccc"))
 	vbox.add_child(desc)
 	
@@ -1129,6 +1212,8 @@ func _style_button(btn: Button):
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color("#60fafc")
 	style.bg_color.a = 0.75
+	style.border_color = Color("#010813")
+	style.set_border_width_all(2)
 	
 	var hover_style = style.duplicate()
 	hover_style.bg_color = style.bg_color.lightened(0.2)
@@ -1138,7 +1223,9 @@ func _style_button(btn: Button):
 	btn.add_theme_stylebox_override("hover", hover_style)
 	btn.add_theme_stylebox_override("pressed", style)
 	btn.add_theme_color_override("font_color", Color("#010813"))
-	btn.add_theme_font_size_override("font_size", 40)
+	btn.add_theme_font_size_override("font_size", 50)
+	btn.add_theme_constant_override("outline_size", 3)
+	btn.add_theme_color_override("font_outline_color", Color("#010813"))
 
 func show_result(player_won: bool, rewards: Dictionary = {}):
 	# Hide interaction buttons
@@ -1153,6 +1240,7 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.color = Color(0, 0, 0, 0.85)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP # Block clicks
+	overlay.z_index = 200 # Ensure overlay is above everything (sprites use z=5-10, effects z=100)
 	add_child(overlay)
 	
 	var center = CenterContainer.new()

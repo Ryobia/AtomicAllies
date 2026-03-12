@@ -14,14 +14,18 @@ func _ready():
 				"capsule": null
 			})
 	
-	# On a fresh start, if the collection is empty, give the player the starting elements.
-	if owned_monsters.is_empty():
-		var he = load("res://data/Monsters/Helium.tres")
-		var h = load("res://data/Monsters/Hydrogen.tres")
-	
-		if h: owned_monsters.append(h.duplicate())
-		if he: owned_monsters.append(he.duplicate())
-		save_game()
+	# DEV: Give full access for testing
+	if MonsterManifest.all_monsters.is_empty():
+		MonsterManifest._scan_monsters()
+
+	owned_monsters.clear()
+	unlocked_blueprints.clear()
+	for m in MonsterManifest.all_monsters:
+		var new_m = m.duplicate()
+		new_m.stability = 100 # Max stability for testing
+		owned_monsters.append(new_m)
+		unlocked_blueprints.append(m.atomic_number)
+	save_game()
 	
 	recalculate_class_resonance()
 

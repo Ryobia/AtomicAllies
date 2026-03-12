@@ -198,7 +198,7 @@ horizontal_alignment = 1
 [node name="GridStats" type="GridContainer" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer" unique_id=1856869019]
 layout_mode = 2
 size_flags_vertical = 2
-columns = 4
+columns = 5
 
 [node name="HPLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=204995007]
 layout_mode = 2
@@ -231,6 +231,16 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=937785622]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CritLabel" type="Label" parent="MarginContainer/VBoxContainer/Panel/VBoxContainer/GridStats" unique_id=446971896]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

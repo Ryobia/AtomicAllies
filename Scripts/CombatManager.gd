@@ -63,6 +63,9 @@ func _create_move_from_dict(def: Dictionary) -> MoveData:
 	m.cooldown = def.get("cooldown", 1)
 	m.hit_count = def.get("hit_count", 1)
 	m.damage_scale = def.get("damage_scale", 1.0)
+	m.ignore_def_percent = def.get("ignore_def_percent", 0.0)
+	m.bonus_damage_condition = def.get("bonus_damage_condition", "")
+	m.damage_multiplier = def.get("damage_multiplier", 1.0)
 	
 	var t_str = def.get("target_type", "Enemy")
 	match t_str:
@@ -76,6 +79,7 @@ func execute_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	var result = {
 		"success": true,
 		"damage": 0,
+		"is_crit": false,
 		"hit": false,
 		"messages": [],
 		"effects": [] # List of effects applied
@@ -86,6 +90,10 @@ func execute_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	
 	if attacker.has_status("refracted") or attacker.has_status("insanity"):
 		hit_chance -= 20.0
+		
+	# Illuminated status negates misses
+	if defender.has_status("illuminated"):
+		hit_chance = 1000.0
 	
 	if hit_chance < 100 and randf() * 100 > hit_chance:
 		result.success = false
@@ -119,6 +127,10 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 		var penetration = alkali_count * 0.05
 		effective_defense = int(effective_defense * (1.0 - penetration))
 
+	# Move-specific defense ignore
+	if move.ignore_def_percent > 0:
+		effective_defense = int(effective_defense * (1.0 - move.ignore_def_percent))
+
 	# Transition Metal Passive: Consecutive attacks deal 5% more damage
 	if attacker.data.group == AtomicConfig.Group.TRANSITION_METAL:
 		var consec = attacker.get_meta("consecutive_attacks", 0)
@@ -137,10 +149,38 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 		raw_power += hp_bonus
 		result.messages.append("Impact scaled by HP! (+%d)" % int(hp_bonus))
 		
+	if move.name == "Red-Shift Dash":
+		effective_defense = int(effective_defense * 0.25) # Ignore 75% Defense
+		result.messages.append("Armor penetrated!")
+		
 	var mitigation = (100.0 / (100.0 + effective_defense))
 	var final_damage = raw_power * mitigation
 	
-	# Alkali Metal Full Set Bonus: First attack deals 2x damage
+	# Conditional Bonus Damage
+	if move.bonus_damage_condition == "debuffed":
+		var has_debuff = false
+		for effect in defender.active_effects:
+			var is_debuff = false
+			if effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
+				is_debuff = true
+			elif effect.get("type") == "status":
+				var s = str(effect.get("status", "")).to_lower()
+				if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload", "illuminated"]:
+					is_debuff = true
+			if is_debuff:
+				has_debuff = true
+				break
+		if has_debuff:
+			final_damage *= move.damage_multiplier
+			result.messages.append("Bonus Damage vs Debuffed!")
+	
+	# Critical Hit Calculation
+	var crit_chance = attacker.stats.get("crit_chance", 5)
+	if randf() * 100.0 < crit_chance:
+		final_damage *= 1.5
+		result.is_crit = true
+	
+	# Alkali Metal Full Set Bonus: First attack is a guaranteed critical hit
 	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
 		var alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
 		var total_alkali = 0
@@ -151,7 +191,9 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 		
 		if alkali_count >= total_alkali and total_alkali > 0:
 			if not attacker.has_meta("full_set_crit_used"):
-				final_damage *= 2.0
+				if not result.is_crit:
+					final_damage *= 1.5
+					result.is_crit = true
 				result.messages.append("Full Set Critical!")
 				attacker.set_meta("full_set_crit_used", true)
 	
@@ -166,6 +208,15 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 				var reduction = effect.get("reduction_amount", 0.2)
 				final_damage *= (1.0 - reduction)
 				result.messages.append("%s resists the physical blow!" % defender.data.monster_name)
+				break # Apply only once
+	
+	# Check for special resistance
+	if move.type == "Special":
+		for effect in defender.active_effects:
+			if effect.get("status") == "special_resist":
+				var reduction = effect.get("reduction_amount", 0.2)
+				final_damage *= (1.0 - reduction)
+				result.messages.append("%s resists the energy!" % defender.data.monster_name)
 				break # Apply only once
 	
 	# Check for damage-multiplying status effects on the defender
@@ -188,6 +239,10 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 					var reaction_name = effect.get("reaction_name", "Reaction")
 					result.messages.append("%s! Bonus Damage!" % reaction_name)
 					result.effects.append({ "target": defender, "effect": "remove_status", "status": effect.get("status") })
+	
+	# Message for generic crits (if not handled by Full Set message)
+	if result.is_crit and not "Full Set Critical!" in result.messages:
+		result.messages.append("Critical Hit!")
 	
 	# Variance +/- 10%
 	final_damage *= randf_range(0.9, 1.1)
@@ -212,17 +267,30 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 
 func _apply_data_driven_effects(attacker: BattleMonster, defender: BattleMonster, move: MoveData, result: Dictionary):
 	for effect_def in move.effects:
-		# Check chance
-		var chance = effect_def.get("chance", 1.0)
-		if randf() > chance: continue
-		
 		# Determine Target
 		var target_scope = effect_def.get("target", "Defender") # "Defender", "Attacker"
 		var target = defender if target_scope == "Defender" else attacker
 		
+		# Check Condition
+		if effect_def.has("condition_status"):
+			if not target.has_status(effect_def.get("condition_status")):
+				continue
+
+		# Check chance
+		var chance = effect_def.get("chance", 1.0)
+		if randf() > chance: continue
+		
 		# Build effect dictionary for BattleManager
 		var effect = effect_def.duplicate()
 		
+		# Critical Hit Check for Heals and Shields
+		if effect.get("effect") in ["heal", "heal_overflow_shield", "add_shield", "add_team_shield"]:
+			var crit_chance = attacker.stats.get("crit_chance", 5)
+			if randf() * 100.0 < crit_chance:
+				effect["is_crit"] = true
+				# We apply the multiplier later when amount is resolved or modify it here if possible.
+				# Since 'amount' might be percentage or scaled, we can tag it and handle multiplication here if it's flat, or flag it.
+				
 		# Resolve relative values (e.g. "amount": 20 with "percent": true)
 		if effect.get("type") == "stat_mod":
 			if effect.get("percent", false):
@@ -236,11 +304,17 @@ func _apply_data_driven_effects(attacker: BattleMonster, defender: BattleMonster
 			var stat_val = 0
 			if stat_name == "missing_hp":
 				stat_val = max(0, attacker.max_hp - attacker.current_hp)
+			elif stat_name == "damage_dealt":
+				stat_val = result.damage
 			else:
 				stat_val = attacker.stats.get(stat_name, 0)
 				
 			var factor = float(effect.get("scale_factor", 1.0))
 			effect["amount"] = int(stat_val * factor)
+
+		# Apply Crit Multiplier to resolved amount if applicable
+		if effect.get("is_crit", false):
+			effect["amount"] = int(effect.get("amount", 0) * 1.5)
 
 		# Add specific target reference for BattleManager
 		effect["target"] = target
@@ -442,6 +516,27 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			result.damage *= multiplier
 			result.messages.append("Resonance! %dx Damage!" % multiplier)
 			
+		"Violet Flare":
+			var debuff_count = 0
+			for effect in defender.active_effects:
+				var is_debuff = false
+				if effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
+					is_debuff = true
+				elif effect.get("type") == "status":
+					var s = str(effect.get("status", "")).to_lower()
+					if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload"]:
+						is_debuff = true
+				elif effect.get("effect") == "swap_stats":
+					is_debuff = true
+				
+				if is_debuff:
+					debuff_count += 1
+			
+			var multiplier = 1 + debuff_count
+			if multiplier > 1:
+				result.damage *= multiplier
+				result.messages.append("Flare intensified! %dx Damage!" % multiplier)
+
 		"Obliterate":
 			result.messages.append("%s unleashes void energy!" % attacker.data.monster_name)
 			

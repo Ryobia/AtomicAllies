@@ -628,7 +628,8 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		{"name": "HP", "val": stats.max_hp},
 		{"name": "ATK", "val": stats.attack},
 		{"name": "DEF", "val": stats.defense},
-		{"name": "SPD", "val": stats.speed}
+		{"name": "SPD", "val": stats.speed},
+		{"name": "CRIT", "val": str(stats.get("crit_chance", 5)) + "%"}
 	]
 	
 	for s in stat_list:
@@ -664,9 +665,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	moves_vbox.add_theme_constant_override("separation", 15)
 	vbox.add_child(moves_vbox)
 	
-	var moves_list = monster.moves
-	if moves_list.is_empty() and "group" in monster:
-		moves_list = AtomicConfig.GROUP_MOVES.get(monster.group, [])
+	var moves_list = CombatManager.get_active_moves(monster)
 	
 	for m in moves_list:
 		var m_panel = PanelContainer.new()
@@ -690,7 +689,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		row1.add_theme_constant_override("separation", 15)
 		m_content.add_child(row1)
 		
-		var type_badge = _create_move_type_badge(m.get("type", "Physical"))
+		var type_badge = _create_move_type_badge(m.type)
 		row1.add_child(type_badge)
 		
 		var m_name = Label.new()
@@ -708,7 +707,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		row1.add_child(m_pwr)
 		
 		var m_desc = Label.new()
-		var desc_text = m.get("description")
+		var desc_text = m.description
 		m_desc.text = desc_text if desc_text else "No description available."
 		m_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		m_desc.add_theme_font_size_override("font_size", 22)
