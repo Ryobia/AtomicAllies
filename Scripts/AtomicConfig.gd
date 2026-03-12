@@ -923,7 +923,7 @@ const UNIQUE_MOVES = {
 		"description": "Ignores 20% Defense.",
 		"target_type": "Enemy",
 		"effects": [],
-		"ignore_def_percent": 0.2
+		"ignore_def_percent": 20.0
 	},
 	70: { # Ytterbium
 		"name": "Resonance Wave",

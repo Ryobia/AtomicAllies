@@ -14,19 +14,6 @@ func _ready():
 				"capsule": null
 			})
 	
-	# DEV: Give full access for testing
-	if MonsterManifest.all_monsters.is_empty():
-		MonsterManifest._scan_monsters()
-
-	owned_monsters.clear()
-	unlocked_blueprints.clear()
-	for m in MonsterManifest.all_monsters:
-		var new_m = m.duplicate()
-		new_m.stability = 100 # Max stability for testing
-		owned_monsters.append(new_m)
-		unlocked_blueprints.append(m.atomic_number)
-	save_game()
-	
 	recalculate_class_resonance()
 
 signal resource_updated(resource_type, amount)
@@ -53,9 +40,9 @@ var has_seen_shop_tutorial: bool = false
 
 # Resources
 var resources = {
-	"neutron_dust": 0,
-	"gems": 0,
-	"binding_energy": 0
+	"neutron_dust": 200,
+	"gems": 10,
+	"binding_energy": 500
 }
 
 # --- Helper Functions ---

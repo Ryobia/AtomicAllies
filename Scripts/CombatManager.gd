@@ -63,9 +63,12 @@ func _create_move_from_dict(def: Dictionary) -> MoveData:
 	m.cooldown = def.get("cooldown", 1)
 	m.hit_count = def.get("hit_count", 1)
 	m.damage_scale = def.get("damage_scale", 1.0)
-	m.ignore_def_percent = def.get("ignore_def_percent", 0.0)
-	m.bonus_damage_condition = def.get("bonus_damage_condition", "")
-	m.damage_multiplier = def.get("damage_multiplier", 1.0)
+	if def.has("ignore_def_percent"):
+		m.set_meta("ignore_def_percent", float(def["ignore_def_percent"]))
+	if def.has("bonus_damage_condition"):
+		m.set_meta("bonus_damage_condition", def["bonus_damage_condition"])
+	if def.has("damage_multiplier"):
+		m.set_meta("damage_multiplier", float(def["damage_multiplier"]))
 	
 	var t_str = def.get("target_type", "Enemy")
 	match t_str:
@@ -128,8 +131,9 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 		effective_defense = int(effective_defense * (1.0 - penetration))
 
 	# Move-specific defense ignore
-	if move.ignore_def_percent > 0:
-		effective_defense = int(effective_defense * (1.0 - move.ignore_def_percent))
+	var ignore_def = move.get_meta("ignore_def_percent", 0.0)
+	if ignore_def > 0.0:
+		effective_defense = int(effective_defense * (1.0 - (ignore_def / 100.0)))
 
 	# Transition Metal Passive: Consecutive attacks deal 5% more damage
 	if attacker.data.group == AtomicConfig.Group.TRANSITION_METAL:
@@ -157,7 +161,8 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	var final_damage = raw_power * mitigation
 	
 	# Conditional Bonus Damage
-	if move.bonus_damage_condition == "debuffed":
+	var bonus_condition = move.get_meta("bonus_damage_condition", "")
+	if bonus_condition == "debuffed":
 		var has_debuff = false
 		for effect in defender.active_effects:
 			var is_debuff = false
@@ -171,7 +176,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 				has_debuff = true
 				break
 		if has_debuff:
-			final_damage *= move.damage_multiplier
+			final_damage *= move.get_meta("damage_multiplier", 1.0)
 			result.messages.append("Bonus Damage vs Debuffed!")
 	
 	# Critical Hit Calculation
