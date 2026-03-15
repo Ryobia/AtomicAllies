@@ -210,9 +210,9 @@ func generate_level_encounter(level: int) -> Array[MonsterData]:
     
     # Special restriction for Lithium run: Only Grunts allowed
     if not (is_rogue_run and current_run_target_z == 3):
-        if level >= 2: pool.append("assassin")
-        if level >= 4: pool.append("brute")
-        if level >= 8: pool.append("commander")
+        if level >= 2: pool.append("brute")
+        if level >= 7: pool.append("assassin")
+        if level >= 10: pool.append("commander")
         if level >= 15: pool.append("king")
     
     # 3. Fill the Budget

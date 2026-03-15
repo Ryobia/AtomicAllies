@@ -65,6 +65,10 @@ func _create_move_from_dict(def: Dictionary) -> MoveData:
 	m.damage_scale = def.get("damage_scale", 1.0)
 	if def.has("ignore_def_percent"):
 		m.set_meta("ignore_def_percent", float(def["ignore_def_percent"]))
+	if def.has("crit_bonus"):
+		m.set_meta("crit_bonus", float(def["crit_bonus"]))
+	if def.has("speed_scaling"):
+		m.set_meta("speed_scaling", def["speed_scaling"])
 	if def.has("bonus_damage_condition"):
 		m.set_meta("bonus_damage_condition", def["bonus_damage_condition"])
 	if def.has("damage_multiplier"):
@@ -170,7 +174,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 				is_debuff = true
 			elif effect.get("type") == "status":
 				var s = str(effect.get("status", "")).to_lower()
-				if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload", "illuminated"]:
+				if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload", "illuminated", "singularity_hazard"]:
 					is_debuff = true
 			if is_debuff:
 				has_debuff = true
@@ -179,8 +183,16 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 			final_damage *= move.get_meta("damage_multiplier", 1.0)
 			result.messages.append("Bonus Damage vs Debuffed!")
 	
+	# Speed Scaling (Einsteinium)
+	if move.get_meta("speed_scaling", false):
+		var spd_diff = max(0, attacker.stats.speed - defender.stats.speed)
+		if spd_diff > 0:
+			var multiplier = 1.0 + (spd_diff * 0.05) # 5% per point of speed difference
+			final_damage *= multiplier
+			result.messages.append("Relativistic Speed Bonus! (%.2fx)" % multiplier)
+			
 	# Critical Hit Calculation
-	var crit_chance = attacker.stats.get("crit_chance", 5)
+	var crit_chance = attacker.stats.get("crit_chance", 5) + move.get_meta("crit_bonus", 0.0)
 	if randf() * 100.0 < crit_chance:
 		final_damage *= 1.5
 		result.is_crit = true
@@ -289,7 +301,7 @@ func _apply_data_driven_effects(attacker: BattleMonster, defender: BattleMonster
 		var effect = effect_def.duplicate()
 		
 		# Critical Hit Check for Heals and Shields
-		if effect.get("effect") in ["heal", "heal_overflow_shield", "add_shield", "add_team_shield"]:
+		if effect.get("effect") in ["heal", "heal_overflow_shield", "add_shield", "add_team_shield", "team_heal"]:
 			var crit_chance = attacker.stats.get("crit_chance", 5)
 			if randf() * 100.0 < crit_chance:
 				effect["is_crit"] = true
@@ -453,7 +465,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			if effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
 				effect.amount = int(effect.amount * multiplier)
 				is_debuff = true
-			elif effect.get("type") == "status" and effect.get("status") in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity"]:
+			elif effect.get("type") == "status" and effect.get("status") in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard"]:
 				is_debuff = true
 			elif effect.get("effect") == "swap_stats":
 				is_debuff = true
@@ -529,7 +541,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 					is_debuff = true
 				elif effect.get("type") == "status":
 					var s = str(effect.get("status", "")).to_lower()
-					if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload"]:
+					if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload", "singularity_hazard"]:
 						is_debuff = true
 				elif effect.get("effect") == "swap_stats":
 					is_debuff = true
@@ -682,7 +694,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			if target and is_instance_valid(target) and target.data.group == AtomicConfig.Group.NOBLE_GAS:
 				if effect.get("type") == "status":
 					var s = effect.get("status")
-					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity"]:
+					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard"]:
 						should_block = true
 				elif effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
 					should_block = true

@@ -26,6 +26,13 @@ var _ui_layer: CanvasLayer
 func _ready():
 	# $Background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	# Safety net: Give starters if inventory is totally empty
+	if PlayerData.owned_monsters.is_empty() and MonsterManifest:
+		var h = MonsterManifest.get_monster(1)
+		var he = MonsterManifest.get_monster(2)
+		if h: PlayerData.owned_monsters.append(h.duplicate())
+		if he: PlayerData.owned_monsters.append(he.duplicate())
+
 	var grid = find_child("GridContainer", true, false)
 	if grid:
 		grid.columns = 18 # Standard Periodic Table width

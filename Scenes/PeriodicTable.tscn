@@ -22,10 +22,10 @@ corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6e2n0"]
 bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="PeriodicTable" type="Control" unique_id=1304090810]
 layout_mode = 3
@@ -67,7 +67,7 @@ expand_mode = 1
 stretch_mode = 6
 
 [node name="DiscoveryRunPopup" type="PanelContainer" parent="." unique_id=38568193]
-custom_minimum_size = Vector2(700, 500)
+custom_minimum_size = Vector2(800, 500)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -89,7 +89,10 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="TitleLabel" type="Label" parent="DiscoveryRunPopup/MarginContainer" unique_id=1036357961]
+[node name="VBoxContainer" type="VBoxContainer" parent="DiscoveryRunPopup/MarginContainer" unique_id=1018740150]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="DiscoveryRunPopup/MarginContainer/VBoxContainer" unique_id=1036357961]
 layout_mode = 2
 size_flags_vertical = 0
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
@@ -98,45 +101,46 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="DiscoveryRunPopup/MarginContainer" unique_id=2022710523]
+[node name="HSeparator" type="HSeparator" parent="DiscoveryRunPopup/MarginContainer/VBoxContainer" unique_id=1029593640]
 layout_mode = 2
 
-[node name="DescriptionLabel" type="Label" parent="DiscoveryRunPopup/MarginContainer/HBoxContainer2" unique_id=429110471]
+[node name="HBoxContainer2" type="HBoxContainer" parent="DiscoveryRunPopup/MarginContainer/VBoxContainer" unique_id=2022710523]
+layout_mode = 2
+
+[node name="DescriptionLabel" type="Label" parent="DiscoveryRunPopup/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=429110471]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(1, 0.84313726, 0, 1)
+theme_override_font_sizes/font_size = 44
 autowrap_mode = 3
 
-[node name="MonsterIcon" type="TextureRect" parent="DiscoveryRunPopup/MarginContainer/HBoxContainer2" unique_id=1340971696]
+[node name="MonsterIcon" type="TextureRect" parent="DiscoveryRunPopup/MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1340971696]
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 4
 expand_mode = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="DiscoveryRunPopup/MarginContainer" unique_id=2065134017]
+[node name="HBoxContainer" type="HBoxContainer" parent="DiscoveryRunPopup/MarginContainer/VBoxContainer" unique_id=2065134017]
 layout_mode = 2
-size_flags_vertical = 8
+size_flags_vertical = 10
 theme_override_constants/separation = 20
 
-[node name="CancelButton" type="Button" parent="DiscoveryRunPopup/MarginContainer/HBoxContainer" unique_id=1450866817]
+[node name="CancelButton" type="Button" parent="DiscoveryRunPopup/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1450866817]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 60
 theme_override_styles/normal = SubResource("StyleBoxFlat_6e2n0")
 text = "CANCEL
 "
 
-[node name="ConfirmButton" type="Button" parent="DiscoveryRunPopup/MarginContainer/HBoxContainer" unique_id=2071507781]
+[node name="ConfirmButton" type="Button" parent="DiscoveryRunPopup/MarginContainer/VBoxContainer/HBoxContainer" unique_id=2071507781]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 60
 theme_override_styles/normal = SubResource("StyleBoxFlat_6e2n0")
 text = "CONFIRM"
-
-[node name="Label" type="Label" parent="DiscoveryRunPopup/MarginContainer" unique_id=1888234421]
-layout_mode = 2

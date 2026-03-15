@@ -395,7 +395,7 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		var s = str(effect.get("status", "")).to_lower()
 		if s == "": return null
 		
-		var is_debuff = effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity"]
+		var is_debuff = effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard"]
 		
 		# Known Debuffs
 		if is_debuff:
@@ -423,6 +423,12 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "toxic_feedback":
 			bg_color = Color("#6dc000") # Radioactive Green
 			tooltip_text = "Toxic Feedback\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "radiation_feedback":
+			bg_color = Color("#6dc000") # Radioactive Green
+			tooltip_text = "Radiation Shield\nApplies radiation to attackers.\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "inertia_feedback":
+			bg_color = Color("#a0a0a0") # Silver/Grey
+			tooltip_text = "Dense Inertia\nAttackers are slowed by 20%%.\nDuration: %d turns" % effect.get("duration", 0)
 		elif s == "reflective_shell":
 			bg_color = Color("#e0e0e0") # Silver/White
 			tooltip_text = "Reflective Shell\nReflects 30% of next hit."
@@ -436,6 +442,15 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "regeneration":
 			bg_color = Color("#2ecc71") # Green
 			tooltip_text = "Regeneration\nHeals HP each turn.\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "heal_block":
+			bg_color = Color("#8b0000") # Dark Red
+			tooltip_text = "Heal Block\nCannot be healed.\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "death_bomb":
+			bg_color = Color("#ff4500") # Orange Red
+			tooltip_text = "Death Bomb\nExplodes on death for AoE damage.\nDuration: %d turns" % effect.get("duration", 0)
+		elif s == "singularity_hazard":
+			bg_color = Color("#4b0082") # Indigo
+			tooltip_text = "Singularity Hazard\nAttacking applies Poison and Slow.\nDuration: %d turns" % effect.get("duration", 0)
 		
 		if s == "marked_covalent": text = "COV"
 		elif s == "unstable": text = "UNS"
@@ -445,6 +460,8 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "explosive": text = "EXP"
 		elif s == "physical_resist": text = "PHY"
 		elif s == "toxic_feedback": text = "TFB"
+		elif s == "radiation_feedback": text = "RDF"
+		elif s == "inertia_feedback": text = "INE"
 		elif s == "mirror_coat": text = "MIR"
 		elif s == "reflective_shell": text = "RSH"
 		elif s == "absorb_shield": text = "ABS"
@@ -459,6 +476,9 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "stun": text = "STN"
 		elif s == "insanity": text = "INS"
 		elif s == "static_reflection": text = "RFL"
+		elif s == "heal_block": text = "N-H"
+		elif s == "death_bomb": text = "BMB"
+		elif s == "singularity_hazard": text = "SNG"
 		else: text = s.substr(0, 3).to_upper()
 
 	elif type == "swap_stats":

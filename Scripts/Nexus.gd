@@ -46,6 +46,8 @@ var sort_btn: Button
 var search_bar: LineEdit
 var search_text: String = ""
 
+var _ambient_particles: CPUParticles2D
+
 func _ready():
 	# Locate nodes dynamically to avoid path errors
 	parent_1_btn = find_child("Parent1Button", true, false)
@@ -53,12 +55,14 @@ func _ready():
 	breed_btn = find_child("BreedButton", true, false)
 	status_label = find_child("StatusLabel", true, false)
 	
+	_create_ambient_dust()
+	
+	_update_background_transform()
+	get_viewport().size_changed.connect(_update_background_transform)
+	
 	fusion_confirm_popup = find_child("FusionConfirmPopup", true, false)
 	if fusion_confirm_popup:
 		fusion_confirm_popup.visible = false
-		# Force reset size to prevent it from getting stuck at a huge height due to previous bugs
-		fusion_confirm_popup.custom_minimum_size = Vector2(600, 0)
-		fusion_confirm_popup.size = Vector2(600, 0)
 		
 		confirm_fuse_btn = fusion_confirm_popup.find_child("ConfirmButton", true, false)
 		cancel_fuse_btn = fusion_confirm_popup.find_child("CancelButton", true, false)
@@ -75,44 +79,13 @@ func _ready():
 		if stabilizer_checkbox:
 			var container = stabilizer_checkbox.get_parent()
 			
-			# Setup Styles (Shared)
-			var sb_normal = StyleBoxFlat.new()
-			sb_normal.bg_color = Color(0, 0, 0, 0.5)
-			sb_normal.border_color = Color("#60fafc")
-			sb_normal.border_width_left = 2
-			sb_normal.border_width_top = 2
-			sb_normal.border_width_right = 2
-			sb_normal.border_width_bottom = 2
-			sb_normal.set_corner_radius_all(8)
-			sb_normal.content_margin_left = 20
-			sb_normal.content_margin_right = 20
-			
-			var sb_hover = sb_normal.duplicate()
-			sb_hover.bg_color = Color("#60fafc")
-			sb_hover.bg_color.a = 0.2
-			
 			# Get siblings directly (No creation logic needed as they are in the scene)
 			catalyst_checkbox = container.get_node_or_null("CatalystCheckBox")
 			buy_stabilizer_btn = container.get_node_or_null("BuyStabilizerButton")
 			buy_catalyst_btn = container.get_node_or_null("BuyCatalystButton")
 			
-			# CLEANUP: Remove any duplicates that might have accumulated from previous bugs
-			var children = container.get_children()
-			for child in children:
-				if child == stabilizer_checkbox or child == catalyst_checkbox or child == buy_stabilizer_btn or child == buy_catalyst_btn:
-					continue
-				
-				if child.name.begins_with("StabilizerCheckBox") or \
-				   child.name.begins_with("CatalystCheckBox") or \
-				   child.name.begins_with("BuyStabilizerButton") or \
-				   child.name.begins_with("BuyCatalystButton") or \
-				   (child is Button and child.text.begins_with("Buy")):
-					print("Nexus: Removing duplicate node ", child.name)
-					child.queue_free()
-			
-			# Setup UI Properties
-			_setup_booster_ui(stabilizer_checkbox, buy_stabilizer_btn, "Use Magnetic Stabilizer (+10%)", "Buy Stabilizer (250 Dust)", sb_normal, sb_hover)
-			_setup_booster_ui(catalyst_checkbox, buy_catalyst_btn, "Use Quantum Catalyst (+25%)", "Buy Catalyst (500 Dust)", sb_normal, sb_hover)
+			_style_checkbox(stabilizer_checkbox)
+			_style_checkbox(catalyst_checkbox)
 			
 			# Connect Signals
 			if not stabilizer_checkbox.toggled.is_connected(_on_stabilizer_toggled):
@@ -199,7 +172,16 @@ func _ready():
 		search_bar = LineEdit.new()
 		search_bar.placeholder_text = "Search..."
 		search_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		search_bar.add_theme_font_size_override("font_size", 32)
+		
+		var sb = StyleBoxFlat.new()
+		sb.bg_color = Color("#60fafc")
+		sb.bg_color.a = 0.2
+		sb.set_corner_radius_all(8)
+		sb.content_margin_left = 15
+		search_bar.add_theme_stylebox_override("normal", sb)
+		search_bar.add_theme_stylebox_override("focus", sb)
+		
+		search_bar.add_theme_font_size_override("font_size", 36)
 		search_bar.text_changed.connect(_on_search_text_changed)
 		filter_row.add_child(search_bar)
 
@@ -282,6 +264,16 @@ func _ready():
 
 	if not SynthesisManager.capsule_created.is_connected(_on_capsule_created):
 		SynthesisManager.capsule_created.connect(_on_capsule_created)
+
+	# Setup background overlay pulsing (FusionCore)
+	var bg_node = find_child("Background", true, false)
+	if bg_node:
+		var core = bg_node.find_child("FusionCore", true, false)
+		if core:
+			var tween = create_tween()
+			tween.set_loops()
+			tween.tween_property(core, "modulate:a", 0.7, 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			tween.tween_property(core, "modulate:a", 1.0, 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	# Trigger tutorial check
 	if TutorialManager:
@@ -801,8 +793,12 @@ func _update_confirm_label(base_chance: float, cost: int, target_z: int):
 	if catalyst_checkbox and catalyst_checkbox.button_pressed:
 		final_chance += 25.0
 	
-	confirm_label.text = "Fuse %s and %s?\nTarget Z: %d\nSuccess Rate: %d%%\nCost: %d Binding Energy" % \
-		[parent_1.monster_name, parent_2.monster_name, target_z, int(final_chance), cost]
+	var target_name = "Unknown"
+	var m = _get_monster_by_atomic_number(target_z)
+	if m: target_name = m.monster_name
+	
+	confirm_label.text = "Fuse %s and %s?\nTarget Z: %d (%s)\nSuccess Rate: %d%%\nCost: %d Binding Energy" % \
+		[parent_1.monster_name, parent_2.monster_name, target_z, target_name, int(final_chance), cost]
 
 func _on_confirm_fusion_pressed():
 	if fusion_confirm_popup:
@@ -940,6 +936,7 @@ func _update_slot_visuals(slot_idx: int, monster: MonsterData):
 			visual.position = icon_rect.size / 2.0
 			if slot_idx == 1: atom_p1 = visual
 			else: atom_p2 = visual
+			_start_bobbing_tween(visual)
 
 func _update_success_rate_preview():
 	if parent_1 and parent_2:
@@ -1021,33 +1018,6 @@ func _animate_button_press(btn: Control):
 	var tween = create_tween()
 	tween.tween_property(btn, "scale", Vector2(0.95, 0.95), 0.1)
 	tween.tween_property(btn, "scale", Vector2.ONE, 0.1)
-
-func _setup_booster_ui(checkbox: CheckBox, btn: Button, check_text: String, btn_text: String, style_normal: StyleBox, style_hover: StyleBox):
-	if checkbox:
-		checkbox.text = check_text
-		checkbox.add_theme_font_size_override("font_size", 28)
-		checkbox.add_theme_color_override("font_color", Color("#60fafc"))
-		checkbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		checkbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		checkbox.custom_minimum_size.y = 60
-		checkbox.add_theme_constant_override("h_separation", 15)
-		checkbox.add_theme_stylebox_override("normal", style_normal)
-		checkbox.add_theme_stylebox_override("hover", style_hover)
-		checkbox.add_theme_stylebox_override("pressed", style_hover)
-		checkbox.add_theme_stylebox_override("focus", style_hover)
-		checkbox.add_theme_stylebox_override("hover_pressed", style_hover)
-		
-	if btn:
-		btn.text = btn_text
-		btn.visible = false
-		btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		btn.custom_minimum_size.y = 60
-		btn.add_theme_font_size_override("font_size", 28)
-		btn.add_theme_color_override("font_color", Color("#60fafc"))
-		btn.add_theme_stylebox_override("normal", style_normal)
-		btn.add_theme_stylebox_override("hover", style_hover)
-		btn.add_theme_stylebox_override("pressed", style_hover)
 
 func _create_monster_visual(monster: MonsterData, container_size: Vector2) -> Node2D:
 	var anim_name = monster.monster_name.replace(" ", "")
@@ -1284,3 +1254,88 @@ func _show_synthesis_complete_popup():
 		synthesis_complete_popup.scale = Vector2.ZERO
 		var tween = create_tween()
 		tween.tween_property(synthesis_complete_popup, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _update_background_transform():
+	var bg = find_child("Background", true, false)
+	if bg and bg is Sprite2D and bg.texture:
+		var view_size = get_viewport_rect().size
+		var tex_size = bg.texture.get_size()
+		
+		var scale_factor = max(view_size.x / tex_size.x, view_size.y / tex_size.y)
+		bg.scale = Vector2(scale_factor, scale_factor)
+		bg.position = view_size / 2.0
+		
+	if _ambient_particles:
+		var view_size = get_viewport_rect().size
+		_ambient_particles.position = view_size / 2.0
+		_ambient_particles.emission_rect_extents = view_size / 2.0
+
+func _create_ambient_dust():
+	_ambient_particles = CPUParticles2D.new()
+	_ambient_particles.name = "AmbientDust"
+	_ambient_particles.amount = 40
+	_ambient_particles.lifetime = 8.0
+	_ambient_particles.preprocess = 8.0
+	_ambient_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	# emission_rect_extents set in update_transform
+	_ambient_particles.gravity = Vector2(0, 0)
+	_ambient_particles.direction = Vector2(1, 0.5)
+	_ambient_particles.spread = 20.0
+	_ambient_particles.initial_velocity_min = 15.0
+	_ambient_particles.initial_velocity_max = 30.0
+	_ambient_particles.scale_amount_min = 2.0
+	_ambient_particles.scale_amount_max = 5.0
+	_ambient_particles.color = Color("#60fafc")
+	
+	var grad = Gradient.new()
+	grad.set_color(0, Color(1, 1, 1, 0))
+	grad.add_point(0.2, Color(1, 1, 1, 0.3))
+	grad.add_point(0.8, Color(1, 1, 1, 0.3))
+	grad.set_color(1, Color(1, 1, 1, 0))
+	_ambient_particles.color_ramp = grad
+	
+	var bg = find_child("Background", true, false)
+	if bg and bg.get_parent():
+		bg.get_parent().add_child(_ambient_particles)
+		bg.get_parent().move_child(_ambient_particles, bg.get_index() + 1)
+	else:
+		add_child(_ambient_particles)
+		move_child(_ambient_particles, 0)
+
+func _start_bobbing_tween(node: Node2D):
+	var start_y = node.position.y
+	var tween = node.create_tween()
+	tween.set_loops()
+	tween.tween_property(node, "position:y", start_y - 8.0, 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(node, "position:y", start_y, 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _style_checkbox(checkbox: CheckBox):
+	if not checkbox: return
+	
+	var sb_normal = StyleBoxFlat.new()
+	sb_normal.bg_color = Color(0, 0, 0, 0.5)
+	sb_normal.border_color = Color("#60fafc")
+	sb_normal.border_width_left = 2
+	sb_normal.border_width_top = 2
+	sb_normal.border_width_right = 2
+	sb_normal.border_width_bottom = 2
+	sb_normal.set_corner_radius_all(8)
+	sb_normal.content_margin_left = 20
+	sb_normal.content_margin_right = 20
+	
+	var sb_hover = sb_normal.duplicate()
+	sb_hover.bg_color = Color("#60fafc")
+	sb_hover.bg_color.a = 0.2
+	
+	checkbox.add_theme_font_size_override("font_size", 46)
+	checkbox.add_theme_color_override("font_color", Color("#60fafc"))
+	checkbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	checkbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	checkbox.custom_minimum_size.y = 60
+	checkbox.add_theme_constant_override("h_separation", 15)
+	
+	checkbox.add_theme_stylebox_override("normal", sb_normal)
+	checkbox.add_theme_stylebox_override("hover", sb_hover)
+	checkbox.add_theme_stylebox_override("pressed", sb_hover)
+	checkbox.add_theme_stylebox_override("focus", sb_hover)
+	checkbox.add_theme_stylebox_override("hover_pressed", sb_hover)

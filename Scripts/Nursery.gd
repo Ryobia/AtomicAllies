@@ -390,7 +390,7 @@ func _start_bobbing_tween(node: Node2D):
 func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable):
 	var popup = PanelContainer.new()
 	popup.set_anchors_preset(Control.PRESET_CENTER)
-	popup.custom_minimum_size = Vector2(500, 300)
+	popup.custom_minimum_size = Vector2(1000, 600)
 	popup.z_index = 100
 	
 	var style = StyleBoxFlat.new()
@@ -409,8 +409,8 @@ func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable
 	lbl.text = "Spend %d Gem(s) to %s?" % [cost, action_name]
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.custom_minimum_size.x = 460
-	lbl.add_theme_font_size_override("font_size", 32)
+	lbl.custom_minimum_size.x = 920
+	lbl.add_theme_font_size_override("font_size", 64)
 	vbox.add_child(lbl)
 	
 	var hbox = HBoxContainer.new()
@@ -420,7 +420,8 @@ func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable
 	
 	var confirm_btn = Button.new()
 	confirm_btn.text = "Confirm"
-	confirm_btn.custom_minimum_size = Vector2(150, 60)
+	confirm_btn.custom_minimum_size = Vector2(300, 120)
+	confirm_btn.add_theme_font_size_override("font_size", 48)
 	confirm_btn.pressed.connect(func():
 		on_confirm.call()
 		popup.queue_free()
@@ -429,7 +430,8 @@ func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable
 	
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Cancel"
-	cancel_btn.custom_minimum_size = Vector2(150, 60)
+	cancel_btn.custom_minimum_size = Vector2(300, 120)
+	cancel_btn.add_theme_font_size_override("font_size", 48)
 	cancel_btn.pressed.connect(popup.queue_free)
 	hbox.add_child(cancel_btn)
 	

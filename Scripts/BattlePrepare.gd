@@ -13,6 +13,11 @@ var enemy_intel_label
 @export var icon_hostile: Texture2D
 @export var icon_friendly: Texture2D
 
+enum SortMode { ATOMIC_NUMBER, NAME, STABILITY }
+var current_sort_mode: SortMode = SortMode.ATOMIC_NUMBER
+var search_text: String = ""
+var _collection_grid: GridContainer = null
+var _sort_button: Button = null
 var _selection_popup: PanelContainer
 var _target_slot_index: int = -1
 var _collection_popup_node: Control = null
@@ -265,6 +270,7 @@ func _populate_legend():
 
 func _on_team_slot_pressed(index: int):
 	_target_slot_index = index
+	search_text = "" # Reset search on new open
 	
 	# Tutorial: Advance from ASSIGN steps when slot is clicked
 	if TutorialManager:
@@ -322,13 +328,44 @@ func _show_collection_selector():
 	margin.add_theme_constant_override("margin_bottom", 20)
 	margin.add_child(main_vbox)
 	_collection_popup_node.add_child(margin)
-	
+
 	# Header
 	var header = Label.new()
 	header.text = "Select Monster for Slot"
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_theme_font_size_override("font_size", 40)
 	main_vbox.add_child(header)
+	
+	# Filter Row (Search + Sort)
+	var filter_row = HBoxContainer.new()
+	filter_row.add_theme_constant_override("separation", 20)
+	main_vbox.add_child(filter_row)
+	
+	var search_bar = LineEdit.new()
+	search_bar.placeholder_text = "Search..."
+	search_bar.text = search_text
+	search_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color("#60fafc")
+	sb.bg_color.a = 0.2
+	sb.set_corner_radius_all(8)
+	sb.content_margin_left = 15
+	search_bar.add_theme_stylebox_override("normal", sb)
+	search_bar.add_theme_stylebox_override("focus", sb)
+	
+	search_bar.add_theme_font_size_override("font_size", 36)
+	search_bar.text_changed.connect(_on_search_text_changed)
+	filter_row.add_child(search_bar)
+	
+	_sort_button = Button.new()
+	match current_sort_mode:
+		SortMode.ATOMIC_NUMBER: _sort_button.text = "Sort: Atomic #"
+		SortMode.NAME: _sort_button.text = "Sort: Name"
+		SortMode.STABILITY: _sort_button.text = "Sort: Stability"
+	_sort_button.add_theme_font_size_override("font_size", 32)
+	_sort_button.pressed.connect(_on_sort_pressed)
+	filter_row.add_child(_sort_button)
 	
 	# Scroll Area
 	var scroll = ScrollContainer.new()
@@ -339,22 +376,83 @@ func _show_collection_selector():
 	
 	main_vbox.add_child(scroll)
 	
-	var grid = GridContainer.new()
-	grid.columns = 3
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 15)
-	grid.add_theme_constant_override("v_separation", 15)
-	scroll.add_child(grid)
+	_collection_grid = GridContainer.new()
+	_collection_grid.columns = 3
+	_collection_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_collection_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_collection_grid.add_theme_constant_override("h_separation", 15)
+	_collection_grid.add_theme_constant_override("v_separation", 15)
+	scroll.add_child(_collection_grid)
 	
 	# Reset button states when scrolling starts (fixes stuck press states)
 	scroll.scroll_started.connect(func():
-		for child in grid.get_children():
+		for child in _collection_grid.get_children():
 			child.modulate = Color.WHITE
 	)
 	
+	_refresh_collection_grid()
+		
+	# Footer Buttons
+	var footer_style = StyleBoxFlat.new()
+	footer_style.bg_color = Color("#010813")
+	footer_style.set_corner_radius_all(8)
+	
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.custom_minimum_size = Vector2(0, 80)
+	cancel_btn.add_theme_font_size_override("font_size", 32)
+	cancel_btn.add_theme_color_override("font_color", Color("#60fafc"))
+	cancel_btn.add_theme_stylebox_override("normal", footer_style)
+	cancel_btn.add_theme_stylebox_override("hover", footer_style)
+	cancel_btn.add_theme_stylebox_override("pressed", footer_style)
+	cancel_btn.pressed.connect(_collection_popup_node.queue_free)
+	main_vbox.add_child(cancel_btn)
+	
+	# If slot is not empty, add a "Clear Slot" button
+	if _target_slot_index != -1 and PlayerData.active_team[_target_slot_index] != null:
+		var remove_btn = Button.new()
+		remove_btn.text = "Remove from Squad"
+		remove_btn.custom_minimum_size = Vector2(0, 80)
+		remove_btn.add_theme_font_size_override("font_size", 32)
+		remove_btn.add_theme_color_override("font_color", Color("#60fafc"))
+		remove_btn.add_theme_stylebox_override("normal", footer_style)
+		remove_btn.add_theme_stylebox_override("hover", footer_style)
+		remove_btn.add_theme_stylebox_override("pressed", footer_style)
+		remove_btn.pressed.connect(func():
+			PlayerData.active_team[_target_slot_index] = null
+			_update_team_display()
+			_collection_popup_node.queue_free()
+		)
+		main_vbox.add_child(remove_btn)
+	
+	add_child(_collection_popup_node)
+	
+	# Animate popup in (Fade)
+	_collection_popup_node.modulate.a = 0.0
+	var tween = create_tween()
+	tween.tween_property(_collection_popup_node, "modulate:a", 1.0, 0.2)
+
+func _refresh_collection_grid():
+	if not _collection_grid: return
+	
+	# Clear existing
+	for child in _collection_grid.get_children():
+		child.queue_free()
+		
+	var sorted_list = PlayerData.owned_monsters.duplicate()
+	
+	if search_text != "":
+		sorted_list = sorted_list.filter(func(m): return search_text.to_lower() in m.monster_name.to_lower())
+	
+	sorted_list.sort_custom(func(a, b):
+		match current_sort_mode:
+			SortMode.NAME: return a.monster_name < b.monster_name
+			SortMode.STABILITY: return a.stability > b.stability
+			_: return a.atomic_number < b.atomic_number
+	)
+	
 	# Populate Grid
-	for monster in PlayerData.owned_monsters:
+	for monster in sorted_list:
 		# Tutorial Filtering: Only show relevant monster for the step
 		if TutorialManager:
 			var step = PlayerData.tutorial_step
@@ -472,14 +570,17 @@ func _show_collection_selector():
 			btn.gui_input.connect(func(event):
 				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 					if event.pressed:
+						btn.set_meta("press_global_pos", event.global_position)
 						btn.modulate = Color(0.7, 0.7, 0.7)
 					else:
 						btn.modulate = Color.WHITE
-						if Rect2(Vector2.ZERO, btn.size).has_point(event.position):
-							_confirm_assignment(monster)
+						var start_pos = btn.get_meta("press_global_pos", Vector2.ZERO)
+						if event.global_position.distance_to(start_pos) < 30.0:
+							if Rect2(Vector2.ZERO, btn.size).has_point(event.position):
+								_confirm_assignment(monster)
 			)
 		
-		grid.add_child(btn)
+		_collection_grid.add_child(btn)
 		
 		# Add Coolant Button overlay if fatigued
 		if is_fatigued:
@@ -516,46 +617,23 @@ func _show_collection_selector():
 				TutorialManager.current_target_node = btn # Ensure highlight tracks this button
 			elif step == TutorialManager.Step.SELECT_HYDROGEN and monster.atomic_number == 1:
 				TutorialManager.show_instruction("Select Hydrogen. As a Nonmetal, it can prime reactions.", btn, "talk")
-		
-	# Footer Buttons
-	var footer_style = StyleBoxFlat.new()
-	footer_style.bg_color = Color("#010813")
-	footer_style.set_corner_radius_all(8)
+
+func _on_sort_pressed():
+	if current_sort_mode == SortMode.ATOMIC_NUMBER: current_sort_mode = SortMode.NAME
+	elif current_sort_mode == SortMode.NAME: current_sort_mode = SortMode.STABILITY
+	else: current_sort_mode = SortMode.ATOMIC_NUMBER
 	
-	var cancel_btn = Button.new()
-	cancel_btn.text = "Cancel"
-	cancel_btn.custom_minimum_size = Vector2(0, 80)
-	cancel_btn.add_theme_font_size_override("font_size", 32)
-	cancel_btn.add_theme_color_override("font_color", Color("#60fafc"))
-	cancel_btn.add_theme_stylebox_override("normal", footer_style)
-	cancel_btn.add_theme_stylebox_override("hover", footer_style)
-	cancel_btn.add_theme_stylebox_override("pressed", footer_style)
-	cancel_btn.pressed.connect(_collection_popup_node.queue_free)
-	main_vbox.add_child(cancel_btn)
+	if _sort_button:
+		match current_sort_mode:
+			SortMode.ATOMIC_NUMBER: _sort_button.text = "Sort: Atomic #"
+			SortMode.NAME: _sort_button.text = "Sort: Name"
+			SortMode.STABILITY: _sort_button.text = "Sort: Stability"
 	
-	# If slot is not empty, add a "Clear Slot" button
-	if _target_slot_index != -1 and PlayerData.active_team[_target_slot_index] != null:
-		var remove_btn = Button.new()
-		remove_btn.text = "Remove from Squad"
-		remove_btn.custom_minimum_size = Vector2(0, 80)
-		remove_btn.add_theme_font_size_override("font_size", 32)
-		remove_btn.add_theme_color_override("font_color", Color("#60fafc"))
-		remove_btn.add_theme_stylebox_override("normal", footer_style)
-		remove_btn.add_theme_stylebox_override("hover", footer_style)
-		remove_btn.add_theme_stylebox_override("pressed", footer_style)
-		remove_btn.pressed.connect(func():
-			PlayerData.active_team[_target_slot_index] = null
-			_update_team_display()
-			_collection_popup_node.queue_free()
-		)
-		main_vbox.add_child(remove_btn)
-	
-	add_child(_collection_popup_node)
-	
-	# Animate popup in (Fade)
-	_collection_popup_node.modulate.a = 0.0
-	var tween = create_tween()
-	tween.tween_property(_collection_popup_node, "modulate:a", 1.0, 0.2)
+	_refresh_collection_grid()
+
+func _on_search_text_changed(new_text: String):
+	search_text = new_text
+	_refresh_collection_grid()
 
 func _on_use_coolant_in_prep(monster: MonsterData):
 	var count = PlayerData.get_item_count("coolant_gel")
@@ -563,7 +641,7 @@ func _on_use_coolant_in_prep(monster: MonsterData):
 		if PlayerData.consume_item("coolant_gel", 1):
 			monster.fatigue_expiry = 0
 			PlayerData.save_game()
-			_show_collection_selector() # Refresh UI
+			_refresh_collection_grid() # Refresh UI without closing
 	else:
 		# Buy logic
 		if PlayerData.spend_resource("neutron_dust", 100):
@@ -578,7 +656,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	_selection_popup.set_anchors_preset(Control.PRESET_CENTER)
 	_selection_popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_selection_popup.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_selection_popup.custom_minimum_size = Vector2(800, 700)
+	_selection_popup.custom_minimum_size = Vector2(800, 1050)
 	_selection_popup.z_index = 30 # Ensure it's on top of collection popup
 	
 	var style = StyleBoxFlat.new()
@@ -591,19 +669,19 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	_selection_popup.add_theme_stylebox_override("panel", style)
 	
 	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 25)
+	vbox.add_theme_constant_override("separation", 35)
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_top", 30)
-	margin.add_theme_constant_override("margin_left", 30)
-	margin.add_theme_constant_override("margin_right", 30)
-	margin.add_theme_constant_override("margin_bottom", 30)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
 	margin.add_child(vbox)
 	_selection_popup.add_child(margin)
 	
 	var title = Label.new()
 	title.text = monster.monster_name
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", 72)
 	title.add_theme_color_override("font_color", Color("#60fafc"))
 	vbox.add_child(title)
 	
@@ -612,7 +690,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		var group_name = AtomicConfig.Group.find_key(monster.group).replace("_", " ").capitalize()
 		type_lbl.text = group_name
 		type_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		type_lbl.add_theme_font_size_override("font_size", 32)
+		type_lbl.add_theme_font_size_override("font_size", 48)
 		var type_color = AtomicConfig.GROUP_COLORS.get(monster.group, Color.WHITE)
 		type_lbl.add_theme_color_override("font_color", type_color)
 		vbox.add_child(type_lbl)
@@ -620,7 +698,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	# Stats Row
 	var stats_hbox = HBoxContainer.new()
 	stats_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	stats_hbox.add_theme_constant_override("separation", 50)
+	stats_hbox.add_theme_constant_override("separation", 75)
 	vbox.add_child(stats_hbox)
 	
 	var stats = monster.get_current_stats()
@@ -639,14 +717,14 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		var val_lbl = Label.new()
 		val_lbl.text = str(s.val)
 		val_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		val_lbl.add_theme_font_size_override("font_size", 42)
+		val_lbl.add_theme_font_size_override("font_size", 64)
 		val_lbl.add_theme_color_override("font_color", Color.WHITE)
 		s_vbox.add_child(val_lbl)
 		
 		var name_lbl = Label.new()
 		name_lbl.text = s.name
 		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_lbl.add_theme_font_size_override("font_size", 24)
+		name_lbl.add_theme_font_size_override("font_size", 44)
 		name_lbl.add_theme_color_override("font_color", Color("#60fafc"))
 		s_vbox.add_child(name_lbl)
 		
@@ -655,14 +733,14 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	# Moves Section
 	var moves_lbl = Label.new()
 	moves_lbl.text = "Moves:"
-	moves_lbl.add_theme_font_size_override("font_size", 32)
+	moves_lbl.add_theme_font_size_override("font_size", 48)
 	moves_lbl.add_theme_color_override("font_color", Color("#60fafc"))
 	vbox.add_child(moves_lbl)
 	
 	var moves_vbox = VBoxContainer.new()
 	moves_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	moves_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	moves_vbox.add_theme_constant_override("separation", 15)
+	moves_vbox.add_theme_constant_override("separation", 25)
 	vbox.add_child(moves_vbox)
 	
 	var moves_list = CombatManager.get_active_moves(monster)
@@ -686,7 +764,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		m_margin.add_child(m_content)
 		
 		var row1 = HBoxContainer.new()
-		row1.add_theme_constant_override("separation", 15)
+		row1.add_theme_constant_override("separation", 25)
 		m_content.add_child(row1)
 		
 		var type_badge = _create_move_type_badge(m.type)
@@ -694,7 +772,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		
 		var m_name = Label.new()
 		m_name.text = m.name
-		m_name.add_theme_font_size_override("font_size", 28)
+		m_name.add_theme_font_size_override("font_size", 42)
 		m_name.add_theme_color_override("font_color", Color.WHITE)
 		row1.add_child(m_name)
 		
@@ -702,7 +780,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		m_pwr.text = "Pwr: " + str(m.power)
 		m_pwr.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		m_pwr.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		m_pwr.add_theme_font_size_override("font_size", 24)
+		m_pwr.add_theme_font_size_override("font_size", 36)
 		m_pwr.add_theme_color_override("font_color", Color("#a0a0a0"))
 		row1.add_child(m_pwr)
 		
@@ -710,26 +788,26 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		var desc_text = m.description
 		m_desc.text = desc_text if desc_text else "No description available."
 		m_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		m_desc.add_theme_font_size_override("font_size", 22)
+		m_desc.add_theme_font_size_override("font_size", 32)
 		m_desc.add_theme_color_override("font_color", Color("#cccccc"))
 		m_content.add_child(m_desc)
 		
 	# Footer Buttons
 	var footer_style = StyleBoxFlat.new()
-	footer_style.bg_color = Color("#010813")
+	footer_style.bg_color = Color("#60fafc")
 	footer_style.set_corner_radius_all(8)
 	
 	var hbox = HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 40)
+	hbox.add_theme_constant_override("separation", 60)
 	vbox.add_child(hbox)
 	
 	var back_btn_popup = Button.new()
 	back_btn_popup.name = "PopupBackButton"
 	back_btn_popup.text = "Back"
-	back_btn_popup.custom_minimum_size = Vector2(200, 80)
-	back_btn_popup.add_theme_font_size_override("font_size", 32)
-	back_btn_popup.add_theme_color_override("font_color", Color("#60fafc"))
+	back_btn_popup.custom_minimum_size = Vector2(300, 120)
+	back_btn_popup.add_theme_font_size_override("font_size", 48)
+	back_btn_popup.add_theme_color_override("font_color", Color("#010813"))
 	back_btn_popup.add_theme_stylebox_override("normal", footer_style)
 	back_btn_popup.add_theme_stylebox_override("hover", footer_style)
 	back_btn_popup.add_theme_stylebox_override("pressed", footer_style)
@@ -750,9 +828,9 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	if is_squad_member:
 		var remove_btn = Button.new()
 		remove_btn.text = "Remove"
-		remove_btn.custom_minimum_size = Vector2(200, 80)
-		remove_btn.add_theme_font_size_override("font_size", 32)
-		remove_btn.add_theme_color_override("font_color", Color("#60fafc"))
+		remove_btn.custom_minimum_size = Vector2(300, 120)
+		remove_btn.add_theme_font_size_override("font_size", 48)
+		remove_btn.add_theme_color_override("font_color", Color("#010813"))
 		remove_btn.add_theme_stylebox_override("normal", footer_style)
 		remove_btn.add_theme_stylebox_override("hover", footer_style)
 		remove_btn.add_theme_stylebox_override("pressed", footer_style)
@@ -761,9 +839,9 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 		
 		var replace_btn = Button.new()
 		replace_btn.text = "Replace"
-		replace_btn.custom_minimum_size = Vector2(200, 80)
-		replace_btn.add_theme_font_size_override("font_size", 32)
-		replace_btn.add_theme_color_override("font_color", Color("#60fafc"))
+		replace_btn.custom_minimum_size = Vector2(300, 120)
+		replace_btn.add_theme_font_size_override("font_size", 48)
+		replace_btn.add_theme_color_override("font_color", Color("#010813"))
 		replace_btn.add_theme_stylebox_override("normal", footer_style)
 		replace_btn.add_theme_stylebox_override("hover", footer_style)
 		replace_btn.add_theme_stylebox_override("pressed", footer_style)
@@ -775,9 +853,9 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 	else:
 		var add_btn = Button.new()
 		add_btn.text = "Add to Squad"
-		add_btn.custom_minimum_size = Vector2(250, 80)
-		add_btn.add_theme_font_size_override("font_size", 32)
-		add_btn.add_theme_color_override("font_color", Color("#60fafc"))
+		add_btn.custom_minimum_size = Vector2(380, 120)
+		add_btn.add_theme_font_size_override("font_size", 48)
+		add_btn.add_theme_color_override("font_color", Color("#010813"))
 		add_btn.add_theme_stylebox_override("normal", footer_style)
 		add_btn.add_theme_stylebox_override("hover", footer_style)
 		add_btn.add_theme_stylebox_override("pressed", footer_style)
@@ -797,7 +875,7 @@ func _show_mini_detail(monster: MonsterData, is_squad_member: bool = false):
 
 func _create_move_type_badge(move_type: String) -> Control:
 	var icon_rect = TextureRect.new()
-	icon_rect.custom_minimum_size = Vector2(40, 40)
+	icon_rect.custom_minimum_size = Vector2(60, 60)
 	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	

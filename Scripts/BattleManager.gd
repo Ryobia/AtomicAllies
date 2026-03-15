@@ -175,6 +175,15 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	var player_roster = PlayerData.active_team
 	if player_roster.is_empty():
 		player_roster = PlayerData.owned_monsters
+		
+	# Fallback safety net for new players
+	if player_roster.is_empty() and MonsterManifest:
+		push_warning("BattleManager: Player roster empty. Generating starters.")
+		var h = MonsterManifest.get_monster(1)
+		var he = MonsterManifest.get_monster(2)
+		if h: PlayerData.owned_monsters.append(h.duplicate())
+		if he: PlayerData.owned_monsters.append(he.duplicate())
+		player_roster = PlayerData.owned_monsters
 	
 	benched_player_monsters.clear()
 	
@@ -254,6 +263,7 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 			unit.set_meta("shield", shield_amt)
 			_check_shield_update(unit)
 			_show_mastery_trigger(unit, "Mastery: Shielded!")
+			_play_status_vfx(unit, "shield")
 			
 		# Mastery: Halogens (100% Stability) -> Randomly poison 1 enemy
 		if unit.data.group == AtomicConfig.Group.HALOGEN and unit.data.stability >= 100:
@@ -264,6 +274,7 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 				var target = living_targets.pick_random()
 				target.apply_effect({ "status": "poison", "duration": 3, "damage_percent": 0.1, "type": "status" })
 				_refresh_unit_status(target)
+				_play_status_vfx(target, "poison")
 				_show_mastery_trigger(unit, "Mastery: Toxic Start!")
 				_show_damage_number(target, 0, "poison") # Keep visual cue on target
 	
@@ -954,6 +965,7 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 
 func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveData):
 	current_state = BattleState.EXECUTING
+	var attacker_is_player = attacker.is_player
 	
 	# Reactive Vapor Hazard Check
 	if attacker.has_status("reactive_vapor") and move.target_type == MoveData.TargetType.ENEMY:
@@ -968,6 +980,14 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 			await get_tree().create_timer(1.5).timeout
 			end_turn()
 			return
+			
+	# Singularity Hazard Check
+	if attacker.has_status("singularity_hazard") and move.target_type == MoveData.TargetType.ENEMY:
+		attacker.apply_effect({ "status": "poison", "duration": 3, "damage_percent": 0.1, "type": "status" })
+		var spd_drop = int(attacker.stats.speed * 0.2)
+		attacker.apply_effect({ "stat": "speed", "amount": -spd_drop, "duration": 1, "type": "stat_mod" })
+		_refresh_unit_status(attacker)
+		log_event.emit("%s is caught in the singularity!" % attacker.data.monster_name)
 	
 	log_event.emit("%s used %s!" % [attacker.data.monster_name, move.name])
 	await attacker.play_attack(move.type == "Physical")
@@ -1046,9 +1066,25 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 						if effect_to_apply.get("percent", false):
 							effect_to_apply["amount"] = int(attacker.stats.get(debuff_stat, 10) * (effect_to_apply.get("amount") / 100.0))
 						attacker.apply_effect(effect_to_apply)
+						_play_status_vfx(attacker, "toxic_feedback")
 						_refresh_unit_status(attacker)
 						log_event.emit("%s's %s was lowered by Toxic Feedback!" % [attacker.data.monster_name, debuff_stat.capitalize()])
+						
+				# Radiation Feedback Check
+				if not is_guarded and defender.has_status("radiation_feedback") and damage > 0:
+					attacker.apply_effect({ "status": "radiation", "duration": 3, "damage_percent": 0.05, "type": "status" })
+					_play_status_vfx(attacker, "radiation")
+					_refresh_unit_status(attacker)
+					log_event.emit("%s is irradiated by the shell!" % attacker.data.monster_name)
 				
+				# Inertia Feedback Check
+				if not is_guarded and defender.has_status("inertia_feedback") and damage > 0:
+					var spd_drop = max(1, int(attacker.stats.get("speed", 10) * 0.2))
+					attacker.apply_effect({ "stat": "speed", "amount": -spd_drop, "duration": 2, "type": "stat_mod" })
+					_play_status_vfx(attacker, "inertia_feedback")
+					_refresh_unit_status(attacker)
+					log_event.emit("%s is slowed by Dense Inertia!" % attacker.data.monster_name)
+
 				# Reflection Check
 				if not is_guarded and defender.has_status("static_reflection") and move.target_type == MoveData.TargetType.ENEMY:
 					var reflect_pct = 0.3
@@ -1071,7 +1107,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				var total_damage_dealt = 0
 				
 				for i in range(hits):
-					if defender.is_dead: break
+					if not is_instance_valid(defender) or defender.is_dead: break
 					
 					var current_hit_damage = base_damage
 					var shield = defender.get_meta("shield", 0)
@@ -1085,17 +1121,21 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 						
 						if shield <= 0:
 							var explosion = defender.get_meta("shield_explosion_dmg", 0)
-							if explosion > 0:
+							if explosion > 0 and is_instance_valid(attacker):
 								attacker.take_damage(explosion)
-								_show_damage_number(attacker, explosion, "damage")
+								if is_instance_valid(attacker):
+									_show_damage_number(attacker, explosion, "damage")
 								log_event.emit("Shield shatters explosively!")
+							if is_instance_valid(defender):
 								defender.set_meta("shield_explosion_dmg", 0)
 					
+					if not is_instance_valid(defender): break
 					current_hit_damage = _calculate_final_damage(defender, current_hit_damage)
 					
 					if current_hit_damage > 0:
 						defender.take_damage(current_hit_damage)
-						_show_damage_number(defender, current_hit_damage, "crit" if result.is_crit else "damage")
+						if is_instance_valid(defender):
+							_show_damage_number(defender, current_hit_damage, "crit" if result.is_crit else "damage")
 						total_damage_dealt += current_hit_damage
 						
 					if i < hits - 1:
@@ -1119,15 +1159,17 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 		for effect in result.effects:
 			if effect.get("effect") == "add_shield":
 				var target = effect.get("target")
-				var amount = effect.get("amount", 0)
-				if effect.get("is_crit"): _show_damage_number(target, 0, "crit") # Visual cue for crit
-				var current = target.get_meta("shield", 0)
-				target.set_meta("shield", current + amount)
-				
-				if effect.get("explode_on_break", false):
-					target.set_meta("shield_explosion_dmg", amount)
+				if is_instance_valid(target):
+					var amount = effect.get("amount", 0)
+					if effect.get("is_crit"): _show_damage_number(target, 0, "crit") # Visual cue for crit
+					var current = target.get_meta("shield", 0)
+					target.set_meta("shield", current + amount)
 					
-				_check_shield_update(target)
+					if effect.get("explode_on_break", false):
+						target.set_meta("shield_explosion_dmg", amount)
+						
+					_check_shield_update(target)
+					_play_status_vfx(target, "shield")
 				continue
 			
 			if effect.get("effect") == "add_team_shield":
@@ -1135,10 +1177,11 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				if effect.get("is_crit"): log_event.emit("Critical Shield!")
 				var team = active_player_monsters if attacker.is_player else active_enemy_monsters
 				for unit in team:
-					if unit and not unit.is_dead:
+					if is_instance_valid(unit) and not unit.is_dead:
 						var current = unit.get_meta("shield", 0)
 						unit.set_meta("shield", current + amount)
 						_check_shield_update(unit)
+						_play_status_vfx(unit, "shield")
 				log_event.emit("Team shielded!")
 				continue
 			
@@ -1152,17 +1195,23 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					var is_crit = effect.get("is_crit", false)
 					
 					if heal_val > 0:
-						target.heal(heal_val)
-						_show_damage_number(target, heal_val, "crit" if is_crit else "heal")
-						
-						# Mastery: Post-Transition (100% Stability) -> Heal deals damage
-						if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
-							_apply_post_transition_mastery_damage(attacker, heal_val)
+						if target.has_status("heal_block"):
+							log_event.emit("%s is blocked from healing!" % target.data.monster_name)
+							shield_val += heal_val # Convert blocked heal entirely into shield
+							heal_val = 0
+						else:
+							target.heal(heal_val)
+							_show_damage_number(target, heal_val, "crit" if is_crit else "heal")
+							
+							# Mastery: Post-Transition (100% Stability) -> Heal deals damage
+							if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+								_apply_post_transition_mastery_damage(attacker, heal_val)
 						
 					if shield_val > 0:
 						var current = target.get_meta("shield", 0)
 						target.set_meta("shield", current + shield_val)
 						_check_shield_update(target)
+						_play_status_vfx(target, "shield")
 						log_event.emit("%s gains %d shield!" % [target.data.monster_name, shield_val])
 					
 					_refresh_unit_status(target)
@@ -1228,6 +1277,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 							if choice == "poison": new_effect["damage_percent"] = 0.1
 							
 							unit.apply_effect(new_effect)
+							_play_status_vfx(unit, choice)
 							log_event.emit("%s is affected by %s!" % [unit.data.monster_name, choice.capitalize()])
 						
 						_refresh_unit_status(unit)
@@ -1239,7 +1289,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 			
 			if effect.get("effect") == "swap_position":
 				var target = effect.get("target")
-				if target and target != attacker:
+				if is_instance_valid(target) and target != attacker:
 					_swap_active_positions(attacker, target)
 				continue
 			
@@ -1251,7 +1301,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					targets = active_enemy_monsters if attacker.is_player else active_player_monsters
 				
 				for unit in targets:
-					if unit and not unit.is_dead:
+					if is_instance_valid(unit) and not unit.is_dead:
 						var stat = effect.get("stat")
 						var amount = effect.get("amount", 0)
 						var duration = effect.get("duration", 2)
@@ -1278,11 +1328,99 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				_handle_team_status(attacker, effect)
 				continue
 			
+			if effect.get("effect") == "percent_damage":
+				var target = effect.get("target")
+				var pct = effect.get("percent", 0.2)
+				if is_instance_valid(target) and not target.is_dead:
+					var dmg = int(target.max_hp * pct)
+					dmg = _calculate_final_damage(target, dmg)
+					if dmg > 0:
+						target.take_damage(dmg)
+						var is_crit = effect.get("is_crit", false)
+						_show_damage_number(target, dmg, "crit" if is_crit else "damage")
+						_check_shield_update(target)
+				continue
+
+			if effect.get("effect") == "steal_hp_team":
+				var target = effect.get("target")
+				var pct = effect.get("percent", 0.1)
+				if is_instance_valid(target) and not target.is_dead:
+					var dmg = int(target.max_hp * pct)
+					dmg = _calculate_final_damage(target, dmg)
+					if dmg > 0:
+						target.take_damage(dmg)
+						var is_crit = effect.get("is_crit", false)
+						_show_damage_number(target, dmg, "crit" if is_crit else "damage")
+						_check_shield_update(target)
+						
+						var team = active_player_monsters if attacker.is_player else active_enemy_monsters
+						for unit in team:
+							if is_instance_valid(unit) and not unit.is_dead:
+								var actual_heal = min(dmg, unit.max_hp - unit.current_hp)
+								if actual_heal > 0:
+									if unit.has_status("heal_block"):
+										pass # Cannot be healed
+									else:
+										unit.heal(actual_heal)
+										_show_damage_number(unit, actual_heal, "heal")
+										
+										# Mastery: Post-Transition (100% Stability) -> Heal deals damage
+										if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+											_apply_post_transition_mastery_damage(attacker, actual_heal)
+										_refresh_unit_status(unit)
+						log_event.emit("HP stolen and shared with the team!")
+				continue
+
+			if effect.get("effect") == "team_heal":
+				var amount = effect.get("amount", 0)
+				if amount > 0:
+					var team = active_player_monsters if attacker.is_player else active_enemy_monsters
+					for unit in team:
+						if is_instance_valid(unit) and not unit.is_dead:
+							var actual_heal = min(amount, unit.max_hp - unit.current_hp)
+							if actual_heal > 0:
+								if unit.has_status("heal_block"):
+									pass # Heal blocked
+								else:
+									unit.heal(actual_heal)
+									_show_damage_number(unit, actual_heal, "heal")
+									
+									# Mastery: Post-Transition (100% Stability) -> Heal deals damage
+									if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+										_apply_post_transition_mastery_damage(attacker, actual_heal)
+									_refresh_unit_status(unit)
+									
+					if effect.get("include_bench", false) and attacker.is_player:
+						for m_data in benched_player_monsters:
+							var max_hp = m_data.get_current_stats().max_hp
+							var hp = max_hp
+							if roster_hp_cache.has(m_data):
+								var state = roster_hp_cache[m_data]
+								if typeof(state) == TYPE_INT: hp = state
+								elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", max_hp)
+								
+							if hp > 0 and hp < max_hp:
+								var actual_heal = min(amount, max_hp - hp)
+								if actual_heal > 0:
+									var new_hp = hp + actual_heal
+									if typeof(roster_hp_cache.get(m_data)) == TYPE_INT:
+										roster_hp_cache[m_data] = new_hp
+									elif typeof(roster_hp_cache.get(m_data)) == TYPE_DICTIONARY:
+										roster_hp_cache[m_data]["hp"] = new_hp
+									else:
+										roster_hp_cache[m_data] = {"hp": new_hp, "stats": {}}
+									log_event.emit("%s (Benched) was healed!" % m_data.monster_name)
+									if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+										_apply_post_transition_mastery_damage(attacker, actual_heal)
+										
+					log_event.emit("Team healed!")
+				continue
+			
 			if effect.get("effect") == "aoe_power_attack":
 				var power = effect.get("power", 40)
 				var targets = active_enemy_monsters if attacker.is_player else active_player_monsters
 				for unit in targets:
-					if unit and not unit.is_dead:
+					if is_instance_valid(unit) and not unit.is_dead:
 						# Create a temporary move to reuse damage calc logic
 						var temp_move = MoveData.new()
 						temp_move.name = "AoE Burst"
@@ -1290,9 +1428,19 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 						temp_move.type = move.type # Physical/Special
 						
 						var sub_result = CombatManager.execute_move(attacker, unit, temp_move)
-						if sub_result.success and sub_result.damage > 0:
-							unit.take_damage(sub_result.damage)
-							_show_damage_number(unit, sub_result.damage, "damage")
+						if sub_result.success:
+							if sub_result.damage > 0:
+								unit.take_damage(sub_result.damage)
+								if is_instance_valid(unit):
+									_show_damage_number(unit, sub_result.damage, "damage")
+							
+							for sub_effect in sub_result.effects:
+								var sub_target = sub_effect.get("target")
+								if is_instance_valid(sub_target) and not sub_target.is_dead:
+									if sub_target.has_status("invulnerable") and sub_effect.get("type") in ["status", "stat_mod"]:
+										continue
+									sub_target.apply_effect(sub_effect)
+									_refresh_unit_status(sub_target)
 				log_event.emit("AoE Damage!")
 				continue
 				
@@ -1302,16 +1450,17 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				if splash_dmg > 0:
 					var targets = active_enemy_monsters if attacker.is_player else active_player_monsters
 					for unit in targets:
-						if unit and not unit.is_dead and unit != defender:
+						if is_instance_valid(unit) and not unit.is_dead and (not is_instance_valid(defender) or unit != defender):
 							unit.take_damage(splash_dmg)
-							_show_damage_number(unit, splash_dmg, "damage")
+							if is_instance_valid(unit):
+								_show_damage_number(unit, splash_dmg, "damage")
 					log_event.emit("Splash Damage!")
 				continue
 				
 			if effect.get("effect") == "extend_debuffs":
 				var amount = effect.get("amount", 1)
 				var target = effect.get("target")
-				if target and "active_effects" in target:
+				if is_instance_valid(target) and "active_effects" in target:
 					var count = 0
 					for eff in target.active_effects:
 						var is_debuff = false
@@ -1319,7 +1468,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 							is_debuff = true
 						elif eff.get("type") == "status":
 							var s = str(eff.get("status", "")).to_lower()
-							if eff.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "illuminated"]:
+							if eff.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "illuminated", "singularity_hazard"]:
 								is_debuff = true
 						
 						if is_debuff and eff.has("duration"):
@@ -1333,7 +1482,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 			if effect.get("effect") == "recoil":
 				var target = effect.get("target")
 				var amount = effect.get("amount", 0)
-				if target and is_instance_valid(target):
+				if is_instance_valid(target):
 					var final_amount = _calculate_final_damage(target, amount)
 					if final_amount > 0:
 						target.take_damage(final_amount)
@@ -1342,14 +1491,233 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 						_check_shield_update(target)
 				continue
 				
+			if effect.get("effect") == "reset_cooldowns":
+				var target = effect.get("target")
+				if is_instance_valid(target) and "move_cooldowns" in target:
+					target.move_cooldowns.clear()
+					log_event.emit("%s's cooldowns were reset!" % target.data.monster_name)
+				continue
+				
+			if effect.get("effect") == "swap_and_heal_lowest_ally":
+				var amount = effect.get("amount", 0)
+				var lowest_pct = 1.0
+				var lowest_unit = null
+				var lowest_benched_idx = -1
+				var lowest_benched_data = null
+				
+				var team = active_player_monsters if attacker_is_player else active_enemy_monsters
+				for m in team:
+					if is_instance_valid(m) and not m.is_dead and m != attacker:
+						var pct = float(m.current_hp) / float(m.max_hp)
+						if pct < lowest_pct:
+							lowest_pct = pct
+							lowest_unit = m
+				
+				if attacker_is_player:
+					for i in range(benched_player_monsters.size()):
+						var m_data = benched_player_monsters[i]
+						var max_hp = m_data.get_current_stats().max_hp
+						var hp = max_hp
+						if roster_hp_cache.has(m_data):
+							var state = roster_hp_cache[m_data]
+							if typeof(state) == TYPE_INT: hp = state
+							elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", max_hp)
+						
+						if hp > 0 and hp < max_hp:
+							var pct = float(hp) / float(max_hp)
+							if pct < lowest_pct:
+								lowest_pct = pct
+								lowest_unit = null
+								lowest_benched_data = m_data
+								lowest_benched_idx = i
+								
+				if lowest_unit:
+					if amount > 0 and not lowest_unit.has_status("heal_block"):
+						var actual_heal = min(amount, lowest_unit.max_hp - lowest_unit.current_hp)
+						if actual_heal > 0:
+							lowest_unit.heal(actual_heal)
+							_show_damage_number(lowest_unit, actual_heal, "heal")
+							log_event.emit("%s was healed!" % lowest_unit.data.monster_name)
+							if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+								_apply_post_transition_mastery_damage(attacker, actual_heal)
+					_swap_active_positions(attacker, lowest_unit)
+				elif lowest_benched_data:
+					if amount > 0:
+						var max_hp = lowest_benched_data.get_current_stats().max_hp
+						var hp = max_hp
+						if roster_hp_cache.has(lowest_benched_data):
+							var state = roster_hp_cache[lowest_benched_data]
+							if typeof(state) == TYPE_INT: hp = state
+							elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", max_hp)
+							
+						var actual_heal = min(amount, max_hp - hp)
+						if actual_heal > 0:
+							var new_hp = hp + actual_heal
+							if typeof(roster_hp_cache.get(lowest_benched_data)) == TYPE_INT:
+								roster_hp_cache[lowest_benched_data] = new_hp
+							elif typeof(roster_hp_cache.get(lowest_benched_data)) == TYPE_DICTIONARY:
+								roster_hp_cache[lowest_benched_data]["hp"] = new_hp
+							else:
+								roster_hp_cache[lowest_benched_data] = {"hp": new_hp, "stats": {}}
+							log_event.emit("%s (Benched) was healed!" % lowest_benched_data.monster_name)
+							
+					benched_player_monsters.remove_at(lowest_benched_idx)
+					benched_player_monsters.append(attacker.data)
+					_strip_temporary_buffs(attacker)
+					roster_hp_cache[attacker.data] = { "hp": attacker.current_hp, "stats": attacker.stats.duplicate(), "effects": attacker.active_effects.duplicate(true), "meta": _get_persistent_meta(attacker) }
+					
+					var marker = attacker.get_parent()
+					var slot_index = active_player_monsters.find(attacker)
+					all_monsters.erase(attacker)
+					attacker.queue_free()
+					
+					spawn_unit(lowest_benched_data, marker, true, slot_index)
+					var new_unit = active_player_monsters[slot_index]
+					new_unit.atb_value = 0
+					new_unit.play_move()
+					
+					_update_team_passives()
+					_refresh_team_ui(true)
+					log_event.emit("%s swaps in!" % lowest_benched_data.monster_name)
+				continue
+				
+			if effect.get("effect") == "heal_lowest_ally":
+				var amount = effect.get("amount", 0)
+				if amount > 0:
+					var lowest_pct = 1.0
+					var lowest_unit = null
+					var lowest_benched_data = null
+					
+					var team = active_player_monsters if attacker.is_player else active_enemy_monsters
+					for m in team:
+						if is_instance_valid(m) and not m.is_dead:
+							var pct = float(m.current_hp) / float(m.max_hp)
+							if pct < lowest_pct:
+								lowest_pct = pct
+								lowest_unit = m
+					
+					if attacker.is_player:
+						for m_data in benched_player_monsters:
+							var max_hp = m_data.get_current_stats().max_hp
+							var hp = max_hp
+							if roster_hp_cache.has(m_data):
+								var state = roster_hp_cache[m_data]
+								if typeof(state) == TYPE_INT: hp = state
+								elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", max_hp)
+							
+							if hp > 0 and hp < max_hp:
+								var pct = float(hp) / float(max_hp)
+								if pct < lowest_pct:
+									lowest_pct = pct
+									lowest_unit = null
+									lowest_benched_data = m_data
+									
+					if lowest_unit:
+						if not lowest_unit.has_status("heal_block"):
+							var actual_heal = min(amount, lowest_unit.max_hp - lowest_unit.current_hp)
+							if actual_heal > 0:
+								lowest_unit.heal(actual_heal)
+								_show_damage_number(lowest_unit, actual_heal, "heal")
+								log_event.emit("%s was healed!" % lowest_unit.data.monster_name)
+								if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+									_apply_post_transition_mastery_damage(attacker, actual_heal)
+								_refresh_unit_status(lowest_unit)
+					elif lowest_benched_data:
+						var max_hp = lowest_benched_data.get_current_stats().max_hp
+						var hp = max_hp
+						if roster_hp_cache.has(lowest_benched_data):
+							var state = roster_hp_cache[lowest_benched_data]
+							if typeof(state) == TYPE_INT: hp = state
+							elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", max_hp)
+							
+						var actual_heal = min(amount, max_hp - hp)
+						if actual_heal > 0:
+							var new_hp = hp + actual_heal
+							if typeof(roster_hp_cache.get(lowest_benched_data)) == TYPE_INT:
+								roster_hp_cache[lowest_benched_data] = new_hp
+							elif typeof(roster_hp_cache.get(lowest_benched_data)) == TYPE_DICTIONARY:
+								roster_hp_cache[lowest_benched_data]["hp"] = new_hp
+							else:
+								roster_hp_cache[lowest_benched_data] = {"hp": new_hp, "stats": {}}
+							log_event.emit("%s (Benched) was healed!" % lowest_benched_data.monster_name)
+							if attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
+								_apply_post_transition_mastery_damage(attacker, actual_heal)
+				continue
+				
 			var target_unit = effect.get("target")
+
+			if effect.get("effect") == "cleanse_buffs":
+				var target = effect.get("target")
+				if is_instance_valid(target) and "active_effects" in target:
+					var cleaned_count = 0
+					for i in range(target.active_effects.size() - 1, -1, -1):
+						var eff = target.active_effects[i]
+						var is_buff = false
+						if eff.get("type") == "stat_mod" and eff.get("amount", 0) > 0:
+							is_buff = true
+						elif eff.get("type") == "status":
+							var s = str(eff.get("status", "")).to_lower()
+							if s in ["invulnerable", "taunt", "static_reflection", "physical_resist", "mirror_coat", "toxic_feedback", "radiation_feedback", "reflective_shell", "absorb_shield", "special_resist", "regeneration"]:
+								is_buff = true
+						if is_buff:
+							if eff.get("type") == "stat_mod":
+								var stat = eff.get("stat")
+								var amount = eff.get("amount", 0)
+								if target.stats.has(stat): target.stats[stat] -= amount
+							target.active_effects.remove_at(i)
+							cleaned_count += 1
+					if cleaned_count > 0:
+						log_event.emit("Removed %d buff(s) from %s!" % [cleaned_count, target.data.monster_name])
+						_refresh_unit_status(target)
+				continue
+
+			if effect.get("effect") == "execute":
+				var target = effect.get("target")
+				var threshold = effect.get("threshold", 0.15)
+				if is_instance_valid(target) and not target.is_dead:
+					var threshold_hp = int(target.max_hp * threshold)
+					if target.current_hp <= threshold_hp:
+						target.take_damage(target.current_hp)
+						_show_damage_number(target, target.current_hp, "crit")
+						log_event.emit("%s was executed!" % target.data.monster_name)
+						_check_shield_update(target)
+				continue
+
+			if effect.get("effect") == "random_multi_hit":
+				var hits = effect.get("hits", 2)
+				var power = effect.get("power", 20)
+				var enemies = active_enemy_monsters if attacker.is_player else active_player_monsters
+				for i in range(hits):
+					var living = enemies.filter(func(m): return is_instance_valid(m) and not m.is_dead)
+					if not living.is_empty():
+						var target = living.pick_random()
+						var temp_move = MoveData.new()
+						temp_move.name = "Random Hit"
+						temp_move.power = power
+						temp_move.type = move.type
+						
+						var sub_result = CombatManager.execute_move(attacker, target, temp_move)
+						if sub_result.success and sub_result.damage > 0:
+							target.take_damage(sub_result.damage)
+							if is_instance_valid(target):
+								_show_damage_number(target, sub_result.damage, "damage")
+							
+							for sub_effect in sub_result.effects:
+								var sub_target = sub_effect.get("target")
+								if is_instance_valid(sub_target) and not sub_target.is_dead:
+									if sub_target.has_status("invulnerable") and sub_effect.get("type") in ["status", "stat_mod"]:
+										continue
+									sub_target.apply_effect(sub_effect)
+									_refresh_unit_status(sub_target)
+						await get_tree().create_timer(0.3).timeout
+				continue
 			
 			# Check Invulnerability for negative effects
-			if target_unit and target_unit.has_status("invulnerable"):
+			if is_instance_valid(target_unit) and target_unit.has_status("invulnerable"):
 				var is_harmful = false
 				if effect.get("type") == "status":
 					var s = effect.get("status")
-					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "insanity"]:
+					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "insanity", "singularity_hazard"]:
 						is_harmful = true
 				elif effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
 					is_harmful = true
@@ -1360,16 +1728,24 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					log_event.emit("%s blocked the effect!" % target_unit.data.monster_name)
 					continue
 			
-			if target_unit and is_instance_valid(target_unit):
-				# Mastery: Post-Transition (100% Stability) -> Heal deals damage
+			if is_instance_valid(target_unit):
+				# Check heal block for basic heal
 				if effect.get("effect") == "heal":
 					var amount = effect.get("amount", 0)
-					var actual_heal = min(amount, target_unit.max_hp - target_unit.current_hp)
+					if amount > 0 and target_unit.has_status("heal_block"):
+						log_event.emit("%s is blocked from healing!" % target_unit.data.monster_name)
+						effect["amount"] = 0 # Nullify heal
+						
+					var actual_heal = min(effect.get("amount", 0), target_unit.max_hp - target_unit.current_hp)
 					if actual_heal > 0 and attacker.data.group == AtomicConfig.Group.POST_TRANSITION and attacker.data.stability >= 100:
 						_apply_post_transition_mastery_damage(attacker, actual_heal)
 
 				target_unit.apply_effect(effect)
 				_refresh_unit_status(target_unit)
+				
+				# Play visual effects for statuses applied successfully
+				if effect.get("type") == "status":
+					_play_status_vfx(target_unit, effect.get("status"))
 				
 				if effect.get("effect") == "heal" and effect.get("amount", 0) > 0:
 					var is_crit = effect.get("is_crit", false)
@@ -1378,27 +1754,42 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 		# Handle Chain Reaction (Nonmetal Passive)
 		for effect in result.effects:
 			if effect.get("effect") == "chain_reaction":
-				var enemies = active_enemy_monsters if attacker.is_player else active_player_monsters
-				var living = enemies.filter(func(m): return m and not m.is_dead and m != defender)
+				var enemies = active_enemy_monsters if attacker_is_player else active_player_monsters
+				var living = []
+				for m in enemies:
+					if is_instance_valid(m) and not m.is_dead and (not is_instance_valid(defender) or m != defender):
+						living.append(m)
+				
 				if not living.is_empty():
 					var secondary = living.pick_random()
-					_play_chain_reaction_effect(defender.global_position, secondary.global_position)
+					var start_pos = defender.global_position if is_instance_valid(defender) else (attacker.global_position if is_instance_valid(attacker) else Vector2.ZERO)
+					_play_chain_reaction_effect(start_pos, secondary.global_position)
 					secondary.take_damage(int(effect.amount * 0.5)) # 50% damage to secondary
-					_show_damage_number(secondary, int(effect.amount * 0.5), "damage")
+					if is_instance_valid(secondary):
+						_show_damage_number(secondary, int(effect.amount * 0.5), "damage")
 					log_event.emit("Chain Reaction hits %s!" % secondary.data.monster_name)
 					
 					# Mastery: Copy Status Effects
 					if effect.get("copy_status", false):
 						for other_effect in result.effects:
-							if other_effect.get("type") == "status" and other_effect.get("target") == defender:
+							var eff_target = other_effect.get("target")
+							var is_primary_target = false
+							if is_instance_valid(defender):
+								is_primary_target = (eff_target == defender)
+							else:
+								is_primary_target = (not is_instance_valid(eff_target))
+							
+							if other_effect.get("type") == "status" and is_primary_target:
 								var new_status = other_effect.duplicate()
 								new_status["target"] = secondary
-								secondary.apply_effect(new_status)
-								_refresh_unit_status(secondary)
+								if is_instance_valid(secondary):
+									secondary.apply_effect(new_status)
+									_refresh_unit_status(secondary)
+									_play_status_vfx(secondary, new_status.get("status", ""))
 								log_event.emit("Status spreads to %s!" % secondary.data.monster_name)
 	
 	# Wait for animation/text
-	if move.cooldown > 1:
+	if move.cooldown > 1 and is_instance_valid(attacker):
 		attacker.move_cooldowns[move.name] = move.cooldown
 		
 	await get_tree().create_timer(1.0).timeout # Short final wait since we waited during messages
@@ -1420,6 +1811,9 @@ func perform_item(user: BattleMonster, target: BattleMonster, item_id: String):
 	CombatManager.apply_item_effect(target, item_id)
 	PlayerData.consume_item(item_id, 1)
 	_check_shield_update(target)
+	
+	if data.get("effect") == "add_shield":
+		_play_status_vfx(target, "shield")
 	
 	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.EXPLAIN_TARGETING:
 		TutorialManager.advance_step() # To INSPECT_ENEMY
@@ -1519,6 +1913,24 @@ func end_battle(player_won: bool):
 
 func _on_monster_death(dead_unit: BattleMonster):
 	# Death animation is handled in BattleMonster.die(), so we just check win condition
+	
+	var death_bomb_effect = null
+	if "active_effects" in dead_unit:
+		for eff in dead_unit.active_effects:
+			if eff.get("status") == "death_bomb":
+				death_bomb_effect = eff
+				break
+	
+	if death_bomb_effect:
+		var pct = death_bomb_effect.get("damage_percent", 0.2)
+		var dmg = int(dead_unit.max_hp * pct)
+		log_event.emit("%s explodes violently!" % dead_unit.data.monster_name)
+		var targets = active_player_monsters if dead_unit.is_player else active_enemy_monsters # Damage its own team
+		for unit in targets:
+			if unit and not unit.is_dead and unit != dead_unit:
+				unit.take_damage(dmg)
+				_show_damage_number(unit, dmg, "damage")
+				_check_shield_update(unit)
 	
 	# Lanthanide Passive: Absorb 10% of stats of fallen enemies
 	var all_active = active_player_monsters + active_enemy_monsters
@@ -1720,8 +2132,11 @@ func _apply_turn_start_passives(unit: BattleMonster):
 				pct = 0.10
 			
 			var heal_amount = int(unit.max_hp * pct)
-			unit.heal(heal_amount)
-			_show_damage_number(unit, heal_amount, "heal")
+			if unit.has_status("heal_block"):
+				log_event.emit("%s's passive healing is blocked!" % unit.data.monster_name)
+			else:
+				unit.heal(heal_amount)
+				_show_damage_number(unit, heal_amount, "heal")
 			
 		AtomicConfig.Group.POST_TRANSITION:
 			# Passive: Gain +1 to all stats each turn
@@ -1760,6 +2175,7 @@ func _apply_turn_start_passives(unit: BattleMonster):
 					if not has_rad:
 						target.apply_effect({ "status": "radiation", "duration": 3, "damage_percent": 0.05, "type": "status" })
 						_refresh_unit_status(target)
+						_play_status_vfx(target, "radiation")
 						applied = true
 			if applied:
 				log_event.emit("%s emits radiation!" % unit.data.monster_name)
@@ -2049,7 +2465,7 @@ func _play_chain_reaction_effect(start_pos: Vector2, end_pos: Vector2):
 
 func _handle_cleanse(effect_data: Dictionary):
 	var unit = effect_data.get("target")
-	if not unit or not "active_effects" in unit: return
+	if not is_instance_valid(unit) or not "active_effects" in unit: return
 	
 	var cleanse_amount = effect_data.get("amount", 99) # Default to a high number to cleanse all
 	var effects = unit.active_effects
@@ -2068,7 +2484,7 @@ func _handle_cleanse(effect_data: Dictionary):
 		elif effect.has("status"):
 			var s = effect.get("status")
 			# Check for known debuff names or if it's a damage multiplier debuff
-			if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "radiation", "refracted", "insanity"]:
+			if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "radiation", "refracted", "insanity", "singularity_hazard", "reactive_vapor"]:
 				is_debuff = true
 		elif effect.get("type") == "swap_stats":
 			is_debuff = true
@@ -2143,6 +2559,7 @@ func _force_bench_dead_unit(unit: BattleMonster):
 
 func _handle_swap_stats(effect: Dictionary):
 	var target = effect.get("target")
+	if not is_instance_valid(target): return
 	var stats_to_swap = effect.get("stats", [])
 	var duration = effect.get("duration", 2)
 	
@@ -2172,7 +2589,7 @@ func _handle_swap_stats(effect: Dictionary):
 func _handle_remove_status(effect: Dictionary):
 	var unit = effect.get("target")
 	var status_name = effect.get("status")
-	if not unit or not status_name: return
+	if not is_instance_valid(unit) or not status_name: return
 	
 	if "active_effects" in unit:
 		var effects = unit.active_effects
@@ -2217,6 +2634,7 @@ func _handle_team_status(attacker: BattleMonster, effect: Dictionary):
 			
 			unit.apply_effect(new_effect)
 			_refresh_unit_status(unit)
+			_play_status_vfx(unit, status_name)
 			applied_count += 1
 			
 	if applied_count > 0:
@@ -2230,7 +2648,7 @@ func _update_status_visuals(unit: BattleMonster):
 	if "active_effects" in unit:
 		for effect in unit.active_effects:
 			var s = effect.get("status")
-			if s == "reactive_vapor" or s == "poison":
+			if s == "reactive_vapor" or s == "poison" or s == "singularity_hazard":
 				has_vapor = true
 			elif s == "radiation":
 				has_radiation = true
@@ -2385,9 +2803,12 @@ func _process_status_heal(unit: BattleMonster):
 					total_heal += amount
 	
 	if total_heal > 0:
-		unit.heal(total_heal)
-		_show_damage_number(unit, total_heal, "heal")
-		log_event.emit("%s regenerates health!" % unit.data.monster_name)
+		if unit.has_status("heal_block"):
+			log_event.emit("%s's regeneration is blocked!" % unit.data.monster_name)
+		else:
+			unit.heal(total_heal)
+			_show_damage_number(unit, total_heal, "heal")
+			log_event.emit("%s regenerates health!" % unit.data.monster_name)
 
 func _process_status_damage(unit: BattleMonster):
 	if unit.is_dead: return
@@ -2481,6 +2902,131 @@ func _show_damage_number(unit: Node2D, amount: int, type: String = "damage"):
 	tween.tween_property(label, "scale", Vector2(scale_factor, scale_factor), 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	tween.chain().tween_callback(label.queue_free)
+
+func _play_status_vfx(unit: Node2D, status: String):
+	if not is_instance_valid(unit): return
+	var s = status.to_lower()
+	
+	# 1. Bubbles / Acid (Poison, Corrosion, Singularity)
+	if s in ["poison", "corrosion", "toxic_feedback", "singularity_hazard"]:
+		var particles = CPUParticles2D.new()
+		particles.amount = 15
+		particles.lifetime = 1.0
+		particles.one_shot = true
+		particles.explosiveness = 0.8
+		particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+		particles.emission_sphere_radius = 40.0
+		particles.gravity = Vector2(0, -100) # Float up rapidly
+		particles.scale_amount_min = 4.0
+		particles.scale_amount_max = 12.0
+		particles.color = Color("#802680") if s == "poison" else Color("#6dc000")
+		if s == "singularity_hazard": particles.color = Color("#4b0082")
+		
+		unit.add_child(particles)
+		get_tree().create_timer(1.5).timeout.connect(particles.queue_free)
+		
+	# 2. Glowing Shields (Invulnerable, Reflect, Guards)
+	elif s in ["shield", "invulnerable", "guarded", "static_reflection", "mirror_coat", "reflective_shell", "absorb_shield", "physical_resist", "special_resist", "inertia_feedback"]:
+		var ring = Line2D.new()
+		var points = []
+		var segments = 32
+		var radius = 70.0
+		for i in range(segments + 1):
+			var angle = (float(i) / segments) * TAU
+			points.append(Vector2(cos(angle), sin(angle)) * radius)
+		ring.points = points
+		ring.width = 8.0
+		ring.default_color = Color("#ffd700") # Default Gold
+		if s in ["mirror_coat", "reflective_shell", "inertia_feedback"]: ring.default_color = Color("#e0e0e0")
+		elif s in ["shield", "static_reflection", "guarded"]: ring.default_color = Color("#60fafc")
+		elif s in ["absorb_shield", "physical_resist"]: ring.default_color = Color("#2ecc71")
+		
+		unit.add_child(ring)
+		ring.position = Vector2(0, -40)
+		ring.scale = Vector2(0.1, 0.1)
+		
+		var tween = create_tween()
+		tween.tween_property(ring, "scale", Vector2(1.2, 1.2), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(ring, "width", 2.0, 0.3)
+		tween.tween_property(ring, "modulate:a", 0.0, 0.4)
+		tween.tween_callback(ring.queue_free)
+		
+	# 3. Erratic Sparks (Radiation, Unstable, Overload, Explosive)
+	elif s in ["radiation", "radiation_feedback", "unstable", "overload", "explosive", "death_bomb"]:
+		var particles = CPUParticles2D.new()
+		particles.amount = 30
+		particles.lifetime = 0.6
+		particles.one_shot = true
+		particles.explosiveness = 1.0
+		particles.spread = 180.0
+		particles.initial_velocity_min = 100.0
+		particles.initial_velocity_max = 200.0
+		particles.gravity = Vector2(0, 0)
+		particles.scale_amount_min = 3.0
+		particles.scale_amount_max = 6.0
+		
+		if s in ["radiation", "radiation_feedback"]: particles.color = Color("#adff2f")
+		elif s in ["explosive", "death_bomb"]: particles.color = Color("#ff4500")
+		else: particles.color = Color("#ffeb3b")
+		
+		unit.add_child(particles)
+		particles.position = Vector2(0, -40)
+		get_tree().create_timer(1.0).timeout.connect(particles.queue_free)
+
+	# 4. Mind/Senses (Stun, Insanity, Refracted, Taunt)
+	elif s in ["stun", "insanity", "refracted", "taunt", "marked_covalent"]:
+		var particles = CPUParticles2D.new()
+		particles.amount = 8
+		particles.lifetime = 0.8
+		particles.one_shot = true
+		particles.explosiveness = 0.9
+		particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+		particles.emission_sphere_radius = 20.0
+		particles.direction = Vector2(0, -1)
+		particles.initial_velocity_min = 50.0
+		particles.initial_velocity_max = 80.0
+		particles.gravity = Vector2(0, 50)
+		particles.scale_amount_min = 8.0
+		particles.scale_amount_max = 16.0
+		
+		if s == "stun": particles.color = Color("#ffd700")
+		elif s == "insanity": particles.color = Color("#1a0033")
+		elif s == "refracted": particles.color = Color("#ffffff")
+		elif s in ["taunt", "marked_covalent"]: particles.color = Color("#ff4d4d")
+		
+		unit.add_child(particles)
+		particles.position = Vector2(0, -80) # Head level
+		get_tree().create_timer(1.2).timeout.connect(particles.queue_free)
+		
+		# Add a subtle shake to the unit itself
+		var tween = create_tween()
+		var base_pos = unit.position
+		for i in range(4):
+			tween.tween_property(unit, "position", base_pos + Vector2(randf_range(-10, 10), 0), 0.05)
+		tween.tween_property(unit, "position", base_pos, 0.05)
+
+	# 5. Soot/Dust (Carbonized, Oxidized)
+	elif s in ["carbonized", "oxidized"]:
+		var particles = CPUParticles2D.new()
+		particles.amount = 40
+		particles.lifetime = 1.2
+		particles.one_shot = true
+		particles.explosiveness = 0.8
+		particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		particles.emission_rect_extents = Vector2(30, 40)
+		particles.gravity = Vector2(0, 40) # Float down like heavy dust
+		particles.scale_amount_min = 2.0
+		particles.scale_amount_max = 6.0
+		
+		var grad = Gradient.new()
+		var base_c = Color(0.1, 0.1, 0.1, 0.8) if s == "carbonized" else Color(0.6, 0.3, 0.1, 0.8)
+		grad.set_color(0, base_c)
+		grad.set_color(1, Color(base_c.r, base_c.g, base_c.b, 0.0))
+		particles.color_ramp = grad
+		
+		unit.add_child(particles)
+		particles.position = Vector2(0, -40)
+		get_tree().create_timer(1.5).timeout.connect(particles.queue_free)
 
 func _strip_temporary_buffs(unit: BattleMonster):
 	if not "active_effects" in unit: return

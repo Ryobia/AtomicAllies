@@ -95,7 +95,7 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_horizontal = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 70
+theme_override_font_sizes/font_size = 60
 
 [node name="XPDisplay2" type="PanelContainer" parent="PanelContainer/HBoxContainer" unique_id=1917658389]
 layout_mode = 2
@@ -126,7 +126,7 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_horizontal = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 70
+theme_override_font_sizes/font_size = 60
 horizontal_alignment = 1
 
 [node name="XPDisplay3" type="PanelContainer" parent="PanelContainer/HBoxContainer" unique_id=1610651678]
@@ -159,4 +159,4 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_horizontal = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_font_sizes/font_size = 70
+theme_override_font_sizes/font_size = 60

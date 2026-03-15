@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://53vf2w623bi3" path="res://Scripts/Nexus.gd" id="1_88gcs"]
 [ext_resource type="PackedScene" uid="uid://deeit4dexuhou" path="res://Scenes/monster_card.tscn" id="2_i3m1b"]
 [ext_resource type="Texture2D" uid="uid://d4lln7paci7ts" path="res://Images/Fusion.png" id="3_ut1jl"]
+[ext_resource type="SpriteFrames" uid="uid://ci117btk7g17s" path="res://Assets/Animations/fusioncore.tres" id="4_26528"]
+[ext_resource type="SpriteFrames" uid="uid://bkevs5h52wjk2" path="res://Assets/Animations/FusionSign.tres" id="5_hoak4"]
 [ext_resource type="Texture2D" uid="uid://dtmntevxwbd33" path="res://data/ElectronGlow.tres" id="5_ut1jl"]
 [ext_resource type="Texture2D" uid="uid://b4cloiewemyyx" path="res://Assets/initiatefusionbtn.png" id="7_26528"]
 [ext_resource type="Texture2D" uid="uid://dslgli1r16a2t" path="res://Assets/menuicons.png" id="7_lkuis"]
@@ -33,8 +35,21 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ut1jl"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_26528"]
 bg_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+border_blend = true
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ut1jl"]
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ut1jl"]
 particle_flag_disable_z = true
@@ -72,18 +87,27 @@ grow_vertical = 2
 script = ExtResource("1_88gcs")
 monster_card_scene = ExtResource("2_i3m1b")
 
-[node name="TextureRect" type="TextureRect" parent="." unique_id=106351309]
+[node name="Background" type="Sprite2D" parent="." unique_id=846877034]
 show_behind_parent = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
+scale = Vector2(0.68877554, 0.70536375)
 texture = ExtResource("3_ut1jl")
-expand_mode = 1
-stretch_mode = 6
+
+[node name="FusionCore" type="AnimatedSprite2D" parent="Background" unique_id=94735729]
+position = Vector2(-197.45183, -476.34995)
+scale = Vector2(1.4595922, 1.4821618)
+sprite_frames = ExtResource("4_26528")
+animation = &"core"
+autoplay = "core"
+frame_progress = 0.86234105
+centered = false
+
+[node name="FusionSign" type="AnimatedSprite2D" parent="Background" unique_id=1202715435]
+position = Vector2(-11.614811, -884.6499)
+scale = Vector2(1.5425925, 1.6835284)
+sprite_frames = ExtResource("5_hoak4")
+animation = &"sign"
+autoplay = "sign"
+frame_progress = 0.9922046
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
 visible = false
@@ -120,9 +144,9 @@ z_index = 5
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
-anchor_top = 0.189
+anchor_top = 0.578
 anchor_right = 0.5
-anchor_bottom = 0.189
+anchor_bottom = 0.578
 offset_left = -244.0
 offset_top = -88.0
 offset_right = 241.0
@@ -213,17 +237,17 @@ oversampling_override = 1.0
 [node name="FusionConfirmPopup" type="PanelContainer" parent="." unique_id=1747203823]
 visible = false
 z_index = 10
-custom_minimum_size = Vector2(600, 400)
+custom_minimum_size = Vector2(800, 700)
 layout_mode = 1
-anchors_preset = -1
+anchors_preset = 8
 anchor_left = 0.5
-anchor_top = 0.389
+anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.389
-offset_left = -29.5
-offset_top = -20.0
-offset_right = 29.5
-offset_bottom = 20.0
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -350.0
+offset_right = 400.0
+offset_bottom = 350.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_h8wke")
@@ -242,21 +266,30 @@ theme_override_constants/separation = 20
 [node name="Label" type="Label" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=25140591]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1, 0.84313726, 0, 1)
+theme_override_font_sizes/font_size = 61
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="StabilizerCheckBox" type="CheckBox" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1783786234]
 layout_mode = 2
+theme_override_font_sizes/font_size = 46
+theme_override_styles/normal = SubResource("StyleBoxFlat_26528")
 
 [node name="BuyStabilizerButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=355599025]
 layout_mode = 2
+theme_override_font_sizes/font_size = 46
+theme_override_styles/normal = SubResource("StyleBoxFlat_26528")
 
 [node name="CatalystCheckBox" type="CheckBox" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1278115379]
 layout_mode = 2
+theme_override_font_sizes/font_size = 46
+theme_override_styles/normal = SubResource("StyleBoxFlat_26528")
 
 [node name="BuyCatalystButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1974865229]
 layout_mode = 2
+theme_override_font_sizes/font_size = 46
+theme_override_styles/normal = SubResource("StyleBoxFlat_26528")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1408633696]
 custom_minimum_size = Vector2(0, 50)
@@ -267,20 +300,20 @@ alignment = 1
 [node name="ConfirmButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1624059872]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 60
 theme_override_styles/normal = SubResource("StyleBoxFlat_ut1jl")
 text = "FUSE"
 
 [node name="CancelButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1586337905]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 60
 theme_override_styles/normal = SubResource("StyleBoxFlat_ut1jl")
 text = "CANCEL"
 
@@ -368,11 +401,17 @@ text = "Go to Synthesis Chamber"
 
 [node name="IconTexture1" type="TextureRect" parent="." unique_id=1018375149]
 custom_minimum_size = Vector2(250, 250)
-layout_mode = 0
-offset_left = 204.12
-offset_top = 942.52
-offset_right = 454.12
-offset_bottom = 1192.5425
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.4
+anchor_top = 0.421
+anchor_right = 0.4
+anchor_bottom = 0.421
+offset_left = -125.0
+offset_top = -125.01123
+offset_right = 125.0
+offset_bottom = 125.01123
+grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 2
 size_flags_vertical = 3
@@ -381,12 +420,17 @@ stretch_mode = 5
 
 [node name="IconTexture2" type="TextureRect" parent="." unique_id=1825551555]
 custom_minimum_size = Vector2(250, 250)
-layout_mode = 0
-offset_left = 637.76
-offset_top = 942.52
-offset_right = 887.76
-offset_bottom = 1192.5425
-grow_horizontal = 0
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.595
+anchor_top = 0.421
+anchor_right = 0.595
+anchor_bottom = 0.421
+offset_left = -125.0
+offset_top = -125.01123
+offset_right = 125.0
+offset_bottom = 125.01123
+grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 10
 size_flags_vertical = 3

@@ -1,0 +1,32 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bkevs5h52wjk2"]
+
+[ext_resource type="Texture2D" uid="uid://crrmqmc8lwqqj" path="res://Assets/Fusionsheet2.png" id="1_8q2ii"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8q2ii"]
+atlas = ExtResource("1_8q2ii")
+region = Rect2(256, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rqawy"]
+atlas = ExtResource("1_8q2ii")
+region = Rect2(512, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tef28"]
+atlas = ExtResource("1_8q2ii")
+region = Rect2(768, 256, 256, 256)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8q2ii")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rqawy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tef28")
+}],
+"loop": true,
+"name": &"sign",
+"speed": 4.0
+}]
