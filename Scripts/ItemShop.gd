@@ -3,6 +3,9 @@ extends Control
 @onready var grid = find_child("ShopGrid", true, false)
 @onready var back_btn = find_child("BackButton", true, false)
 
+# Map item IDs to AtlasTextures in the Godot Inspector
+@export var item_icons: Dictionary = {}
+
 # Define the items available in the shop
 const SHOP_ITEMS = [
 	{
@@ -119,6 +122,52 @@ const SHOP_ITEMS = [
 		"currency": "neutron_dust",
 		"category": "Ship Upgrades",
 		"is_upgrade": true
+	},
+	{
+		"id": "power_cell",
+		"name": "Power Cell",
+		"description": "Fully restores 100% HP to a unit during combat.",
+		"cost": 400,
+		"currency": "neutron_dust",
+		"category": "Battle"
+	},
+	{
+		"id": "ion_battery",
+		"name": "Ion Battery",
+		"description": "Increases Defense by 20% for 3 turns.",
+		"cost": 150,
+		"currency": "neutron_dust",
+		"category": "Battle"
+	},
+	{
+		"id": "plasma_injector",
+		"name": "Plasma Injector",
+		"description": "Increases Speed by 20% for 3 turns.",
+		"cost": 300,
+		"currency": "neutron_dust",
+		"category": "Battle"
+	},
+	{
+		"id": "gravimetric_sensor",
+		"name": "Gravimetric Sensor",
+		"description": "Increases Speed of all units by 5% per level.",
+		"base_cost": 1000,
+		"cost_scale": 1.5,
+		"max_level": 5,
+		"currency": "neutron_dust",
+		"category": "Ship Upgrades",
+		"is_upgrade": true
+	},
+	{
+		"id": "cybernetic_implant",
+		"name": "Cybernetic Implant",
+		"description": "Increases Critical Hit Chance of all units by 2% per level.",
+		"base_cost": 1500,
+		"cost_scale": 1.5,
+		"max_level": 5,
+		"currency": "neutron_dust",
+		"category": "Ship Upgrades",
+		"is_upgrade": true
 	}
 ]
 
@@ -208,10 +257,30 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 	margin.mouse_filter = Control.MOUSE_FILTER_PASS
 	panel.add_child(margin)
 	
-	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
-	vbox.mouse_filter = Control.MOUSE_FILTER_PASS
-	margin.add_child(vbox)
+	var main_vbox = VBoxContainer.new()
+	main_vbox.add_theme_constant_override("separation", 15)
+	main_vbox.mouse_filter = Control.MOUSE_FILTER_PASS
+	margin.add_child(main_vbox)
+	
+	var content_hbox = HBoxContainer.new()
+	content_hbox.add_theme_constant_override("separation", 15)
+	content_hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_vbox.add_child(content_hbox)
+	
+	var tex = _load_item_icon(item.id)
+	if tex:
+		var icon_rect = TextureRect.new()
+		icon_rect.texture = tex
+		icon_rect.custom_minimum_size = Vector2(100, 100)
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		content_hbox.add_child(icon_rect)
+		
+	var text_vbox = VBoxContainer.new()
+	text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_vbox.add_theme_constant_override("separation", 5)
+	content_hbox.add_child(text_vbox)
 	
 	# Name
 	var name_lbl = Label.new()
@@ -219,7 +288,7 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 	name_lbl.add_theme_font_size_override("font_size", 48)
 	name_lbl.add_theme_color_override("font_color", Color("#60fafc"))
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(name_lbl)
+	text_vbox.add_child(name_lbl)
 	
 	# Description
 	var desc_lbl = Label.new()
@@ -229,7 +298,7 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 	desc_lbl.add_theme_font_size_override("font_size", 28)
 	desc_lbl.add_theme_color_override("font_color", Color("#cccccc"))
 	desc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(desc_lbl)
+	text_vbox.add_child(desc_lbl)
 	
 	# Owned Count / Level
 	var status_lbl = Label.new()
@@ -249,7 +318,7 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 	status_lbl.add_theme_font_size_override("font_size", 28)
 	status_lbl.add_theme_color_override("font_color", Color("#ffd700"))
 	status_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(status_lbl)
+	text_vbox.add_child(status_lbl)
 	
 	# Buy Button
 	var btn = Button.new()
@@ -278,7 +347,7 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 	btn.add_theme_stylebox_override("normal", btn_style)
 	
 	btn.pressed.connect(func(): _on_buy_pressed(item, status_lbl, btn))
-	vbox.add_child(btn)
+	main_vbox.add_child(btn)
 	
 	parent_grid.add_child(panel)
 
@@ -429,3 +498,8 @@ func _scroll_to_node(node: Control):
 		var target_y = node.position.y
 		var tween = create_tween()
 		tween.tween_property(scroll, "scroll_vertical", int(target_y), 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+func _load_item_icon(id: String) -> Texture2D:
+	if item_icons.has(id):
+		return item_icons[id]
+	return null

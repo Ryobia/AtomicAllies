@@ -2,6 +2,11 @@ extends Control
 
 @export var monster_card_scene: PackedScene
 
+# Resource Icons
+@export var icon_energy: Texture2D
+@export var icon_dust: Texture2D
+@export var icon_gem: Texture2D
+
 # Zoom variables
 var _zoom_wrapper: Control
 var _scroll_container: ScrollContainer
@@ -20,8 +25,10 @@ var _current_max_z = 0
 
 # Run UI
 var _run_popup: Control
+var _replay_popup: Control
 var _selected_run_z: int = 0
 var _ui_layer: CanvasLayer
+var _synergy_btn: Button
 
 func _ready():
 	# $Background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -76,7 +83,36 @@ func _ready():
 		if cancel_btn:
 			cancel_btn.pressed.connect(func(): _run_popup.visible = false)
 		
+	_replay_popup = find_child("ReplayRunPopup", true, false)
+	if _replay_popup:
+		_replay_popup.visible = false
+		
+		var replay_btn = _replay_popup.find_child("ReplayRun", true, false)
+		if not replay_btn: replay_btn = _replay_popup.find_child("ReplayButton", true, false)
+		if not replay_btn: replay_btn = _replay_popup.find_child("ConfirmButton", true, false)
+		if not replay_btn: replay_btn = _replay_popup.find_child("StartButton", true, false)
+		
+		var r_cancel_btn = _replay_popup.find_child("CancelButton", true, false)
+		
+		if replay_btn:
+			for c in replay_btn.pressed.get_connections():
+				replay_btn.pressed.disconnect(c["callable"])
+			replay_btn.pressed.connect(_on_start_run_confirmed)
+		if r_cancel_btn:
+			for c in r_cancel_btn.pressed.get_connections():
+				r_cancel_btn.pressed.disconnect(c["callable"])
+			r_cancel_btn.pressed.connect(func(): _replay_popup.visible = false)
+			
 	_setup_legend_ui()
+
+	if PlayerData and not PlayerData.has_seen_synergy_tutorial and PlayerData.tutorial_step >= 999:
+		get_tree().create_timer(0.5).timeout.connect(_start_synergy_pointer_tutorial)
+
+func _exit_tree():
+	# Cleanup tutorial connections safely in case the scene unloads abruptly
+	if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_replay_tutorial_next):
+		TutorialManager.story_button.pressed.disconnect(_on_replay_tutorial_next)
+		TutorialManager.hide_tutorial()
 
 func _populate_table(grid: GridContainer):
 	# Optimization: Pre-calculate owned monsters lookup
@@ -227,7 +263,7 @@ func _add_card(grid: Container, z: int):
 			card.gui_input.connect(func(event):
 				if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 					if not _is_dragging:
-						_on_monster_clicked(monster)
+						_show_run_dialog(z, monster, true, true)
 			)
 		elif has_blueprint:
 			# Blueprint Unlocked: Blue Tint
@@ -407,23 +443,76 @@ func _on_monster_clicked(monster: MonsterData):
 	PlayerData.selected_monster = monster
 	GlobalManager.switch_scene("detail_view")
 
-func _show_run_dialog(z: int, monster: MonsterData, has_blueprint: bool):
+func _show_run_dialog(z: int, monster: MonsterData, has_blueprint: bool, is_owned: bool = false):
 	_selected_run_z = z
 	var m_name = monster.monster_name if monster else "Unknown Element"
-	var title = "Discovery Run: %s" % m_name
 	
-	var difficulty_level = max(1, z/2)
-	var star_count = clampi(int(ceil(difficulty_level / 10.0)), 1, 6)
-	var stars = "💀".repeat(star_count)
-	var desc = "Target: Element #%d\nThreat: %s (Lv. %d)" % [z, stars, difficulty_level]
-	
-	if has_blueprint:
-		title = "Resource Run: %s" % m_name
-		desc += "\n\nBlueprint acquired.\nRun for Binding Energy?"
-	else:
-		desc += "\n\nReward: Unlock Blueprint + Energy"
+	if is_owned and _replay_popup:
+		var title = "%s" % m_name
+		var energy = AtomicConfig.calculate_fusion_cost(z)
+		var waves = 3 + int(z / 16.0)
+		if CampaignManager:
+			var race = CampaignManager.GROUP_TO_RACE_MAP.get(monster.group, "void")
+			if race == "brood":
+				waves += 2
 		
-	if _run_popup:
+		var desc = "View element details or replay run to earn resources."
+				   
+		var title_lbl = _replay_popup.find_child("TitleLabel", true, false)
+		var desc_lbl = _replay_popup.find_child("DescriptionLabel", true, false)
+		if not desc_lbl: desc_lbl = _replay_popup.find_child("Label", true, false)
+		
+		if title_lbl: title_lbl.text = title
+		if desc_lbl: desc_lbl.text = desc
+		
+		var energy_lbl = _replay_popup.find_child("EnergyLabel", true, false)
+		if energy_lbl: energy_lbl.text = "~%d" % energy
+		_add_icon_to_label(energy_lbl, icon_energy)
+		
+		var dust_lbl = _replay_popup.find_child("DustLabel", true, false)
+		if dust_lbl: dust_lbl.text = "0 - %d" % (waves * 200)
+		_add_icon_to_label(dust_lbl, icon_dust)
+		
+		var gem_lbl = _replay_popup.find_child("GemLabel", true, false)
+		if gem_lbl: gem_lbl.text = "0 - %d" % waves
+		_add_icon_to_label(gem_lbl, icon_gem)
+		
+		var view_btn = _replay_popup.find_child("ViewDetails", true, false)
+		if not view_btn: view_btn = _replay_popup.find_child("ViewDetailsButton", true, false)
+				
+		if view_btn:
+			view_btn.visible = true
+			for c in view_btn.pressed.get_connections():
+				view_btn.pressed.disconnect(c["callable"])
+			view_btn.pressed.connect(func():
+				if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_replay_tutorial_next):
+					_on_replay_tutorial_next()
+				_replay_popup.visible = false
+				_on_monster_clicked(monster)
+			)
+			
+		var icon_rect = _replay_popup.find_child("MonsterIcon", true, false)
+		_populate_popup_icon(icon_rect, monster)
+		
+		_replay_popup.visible = true
+		_replay_popup.move_to_front()
+		
+		if PlayerData and not PlayerData.has_seen_replay_tutorial:
+			_start_replay_tutorial()
+		
+	elif _run_popup:
+		var difficulty_level = max(1, z/2)
+		var star_count = clampi(int(ceil(difficulty_level / 10.0)), 1, 6)
+		var stars = "💀".repeat(star_count)
+		var title = "Discovery Run: %s" % m_name
+		var desc = "Target: Element #%d\nThreat: %s (Lv. %d)" % [z, stars, difficulty_level]
+		
+		if has_blueprint:
+			title = "Resource Run: %s" % m_name
+			desc += "\n\nBlueprint acquired.\nRun for Binding Energy?"
+		else:
+			desc += "\n\nReward: Unlock Blueprint + Energy"
+			
 		var title_lbl = _run_popup.find_child("TitleLabel", true, false)
 		var desc_lbl = _run_popup.find_child("DescriptionLabel", true, false)
 		if not desc_lbl: desc_lbl = _run_popup.find_child("Label", true, false)
@@ -431,61 +520,127 @@ func _show_run_dialog(z: int, monster: MonsterData, has_blueprint: bool):
 		if title_lbl: title_lbl.text = title
 		if desc_lbl: desc_lbl.text = desc
 		
+		# Clean up any dynamically generated View Details button on the old popup
+		var old_view_btn = _run_popup.find_child("ViewDetails", true, false)
+		if not old_view_btn: old_view_btn = _run_popup.find_child("ViewDetailsButton", true, false)
+		if old_view_btn: old_view_btn.visible = false
+		
 		var icon_rect = _run_popup.find_child("MonsterIcon", true, false)
-		if icon_rect:
-			# Clear previous visuals
-			icon_rect.texture = null
-			for child in icon_rect.get_children():
-				child.queue_free()
-				
-			if monster:
-				icon_rect.visible = true
-				
-				# Try to load animation
-				var anim_name = monster.monster_name.replace(" ", "")
-				if "animation_override" in monster and monster.animation_override != "":
-					anim_name = monster.animation_override
-					
-				var anim_path = "res://Assets/Animations/" + anim_name + ".tres"
-				if ResourceLoader.exists(anim_path):
-					var sprite_frames = load(anim_path)
-					var sprite = AnimatedSprite2D.new()
-					sprite.sprite_frames = sprite_frames
-					
-					var anim_to_play = "idle"
-					if not sprite_frames.has_animation(anim_to_play):
-						if sprite_frames.has_animation("default"):
-							anim_to_play = "default"
-						else:
-							var anims = sprite_frames.get_animation_names()
-							if anims.size() > 0:
-								anim_to_play = anims[0]
-					
-					sprite.play(anim_to_play)
-					
-					var target_size = icon_rect.size if icon_rect.size != Vector2.ZERO else icon_rect.custom_minimum_size
-					if target_size == Vector2.ZERO: target_size = Vector2(100, 100)
-					
-					sprite.position = target_size / 2
-					var tex = sprite_frames.get_frame_texture(anim_to_play, 0)
-					if tex:
-						var s = min(target_size.x, target_size.y) / float(tex.get_height())
-						sprite.scale = Vector2(s, s)
-					icon_rect.add_child(sprite)
-				elif monster.icon:
-					icon_rect.texture = monster.icon
-			else:
-				# Hide the icon if there's no monster data (e.g., placeholder)
-				icon_rect.visible = false
+		_populate_popup_icon(icon_rect, monster)
+		
+		var confirm_btn = _run_popup.find_child("ConfirmButton", true, false)
+		if not confirm_btn: confirm_btn = _run_popup.find_child("StartButton", true, false)
+		if confirm_btn: confirm_btn.text = "Start Run"
+		
 		_run_popup.visible = true
 		_run_popup.move_to_front()
 		
-		# Tutorial Hook: Advance if Lithium selected
-		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_LITHIUM and z == 3:
-			TutorialManager.advance_step()
+	# Tutorial Hook: Advance if Lithium selected
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_LITHIUM and z == 3:
+		TutorialManager.advance_step()
+
+func _add_icon_to_label(label: Control, tex: Texture2D):
+	if not label or not tex: return
+	var parent = label.get_parent()
+	if not parent: return
+	
+	var existing_icon = parent.get_node_or_null(NodePath(label.name + "Icon"))
+	if existing_icon: return
+	
+	# Wrap the label and icon in an HBoxContainer so they sit side-by-side
+	var hbox = HBoxContainer.new()
+	hbox.name = label.name + "HBox"
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_theme_constant_override("separation", 15)
+	
+	var index = label.get_index()
+	parent.add_child(hbox)
+	parent.move_child(hbox, index)
+	parent.remove_child(label)
+	
+	var tex_rect = TextureRect.new()
+	tex_rect.name = label.name + "Icon"
+	tex_rect.texture = tex
+	tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	
+	var icon_size = label.get_theme_font_size("font_size") if label.has_theme_font_size_override("font_size") else 40
+	tex_rect.custom_minimum_size = Vector2(icon_size, icon_size)
+	tex_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	
+	hbox.add_child(tex_rect)
+	hbox.add_child(label)
+
+func _populate_popup_icon(icon_rect: Control, monster: MonsterData):
+	if not icon_rect: return
+	
+	icon_rect.texture = null
+	for child in icon_rect.get_children():
+		child.queue_free()
+		
+	if monster:
+		icon_rect.visible = true
+		var anim_name = monster.monster_name.replace(" ", "")
+		if "animation_override" in monster and monster.animation_override != "":
+			anim_name = monster.animation_override
+			
+		var anim_path = "res://Assets/Animations/" + anim_name + ".tres"
+		if ResourceLoader.exists(anim_path):
+			var sprite_frames = load(anim_path)
+			var sprite = AnimatedSprite2D.new()
+			sprite.sprite_frames = sprite_frames
+			
+			var anim_to_play = "idle"
+			if not sprite_frames.has_animation(anim_to_play):
+				if sprite_frames.has_animation("default"):
+					anim_to_play = "default"
+				else:
+					var anims = sprite_frames.get_animation_names()
+					if anims.size() > 0:
+						anim_to_play = anims[0]
+			
+			sprite.play(anim_to_play)
+			
+			var target_size = icon_rect.size if icon_rect.size != Vector2.ZERO else icon_rect.custom_minimum_size
+			if target_size == Vector2.ZERO: target_size = Vector2(100, 100)
+			
+			sprite.position = target_size / 2
+			var tex = sprite_frames.get_frame_texture(anim_to_play, 0)
+			if tex:
+				var s = min(target_size.x, target_size.y) / float(tex.get_height())
+				sprite.scale = Vector2(s, s)
+			icon_rect.add_child(sprite)
+		elif monster.icon:
+			icon_rect.texture = monster.icon
+	else:
+		icon_rect.visible = false
+
+func _start_replay_tutorial():
+	if not TutorialManager: return
+	
+	if TutorialManager.story_button.pressed.is_connected(_on_replay_tutorial_next):
+		TutorialManager.story_button.pressed.disconnect(_on_replay_tutorial_next)
+		
+	TutorialManager.story_button.pressed.connect(_on_replay_tutorial_next)
+	
+	TutorialManager.show_instruction("You've already synthesized this element!\nYou can 'View Details' to check its stats, or 'Replay Run' to grind for more resources.", _replay_popup, "talk", "top")
+	TutorialManager.story_button.visible = true
+	TutorialManager.story_button.text = "Got it!"
+
+func _on_replay_tutorial_next():
+	if not TutorialManager: return
+	TutorialManager.hide_tutorial()
+	PlayerData.has_seen_replay_tutorial = true
+	PlayerData.save_game()
+	if is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_replay_tutorial_next):
+		TutorialManager.story_button.pressed.disconnect(_on_replay_tutorial_next)
 
 func _on_start_run_confirmed():
+	if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_replay_tutorial_next):
+		_on_replay_tutorial_next()
 	if _run_popup: _run_popup.visible = false
+	if _replay_popup: _replay_popup.visible = false
 	
 	# Tutorial Hook: Advance if Run Confirmed
 	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.CONFIRM_RUN:
@@ -495,6 +650,8 @@ func _on_start_run_confirmed():
 		CampaignManager.start_node_run(_selected_run_z)
 
 func _on_back_pressed():
+	if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_replay_tutorial_next):
+		_on_replay_tutorial_next()
 	GlobalManager.switch_scene("main_menu")
 
 func _update_zoom_wrapper():
@@ -588,8 +745,15 @@ func _setup_legend_ui():
 	syn_btn.offset_bottom = 100
 	syn_btn.pressed.connect(_show_synergy_popup)
 	_ui_layer.add_child(syn_btn)
+	_synergy_btn = syn_btn
 	
+func _start_synergy_pointer_tutorial():
+	if not TutorialManager or not _synergy_btn: return
+	TutorialManager.show_instruction("Your collection is growing!\nTap the Synergies button to see your Class bonuses.", _synergy_btn, "happy")
+
 func _show_synergy_popup():
+	if TutorialManager and not PlayerData.has_seen_synergy_tutorial:
+		TutorialManager.hide_tutorial()
 	var scene = load("res://Scenes/SynergyView.tscn")
 	if scene:
 		var popup = scene.instantiate()

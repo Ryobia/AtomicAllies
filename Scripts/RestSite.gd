@@ -4,6 +4,9 @@ extends Control
 @export var icon_energy: Texture2D
 @export var icon_dust: Texture2D
 
+# Map item IDs to AtlasTextures in the Godot Inspector
+@export var item_icons: Dictionary = {}
+
 @onready var retreat_btn = find_child("RetreatButton", true, false)
 @onready var continue_btn = find_child("ContinueButton", true, false)
 @onready var monster_grid = find_child("MonsterGrid", true, false)
@@ -16,6 +19,9 @@ var _anim_cache: Dictionary = {} # Cache loaded animations
 var _selected_swap_index: int = -1
 var _loot_container: HBoxContainer
 var _reward_selection_container: Control
+var _prev_energy: int = -1
+var _prev_dust: int = -1
+var _prev_gems: int = -1
 
 func _ready():
 	if retreat_btn: retreat_btn.pressed.connect(_on_retreat_pressed)
@@ -41,6 +47,93 @@ func _ready():
 		TutorialManager.check_tutorial_progress()
 
 func _on_retreat_pressed():
+	# Prevent multiple clicks while animating
+	if retreat_btn: retreat_btn.disabled = true
+	if continue_btn: continue_btn.disabled = true
+	if full_heal_btn: full_heal_btn.disabled = true
+	
+	var animated_any = false
+	var duration = 0.8
+	var tween = create_tween()
+	tween.set_parallel(true)
+	
+	var header = get_tree().root.find_child("ResourceHeader", true, false)
+	if not header: header = find_child("ResourceHeader", true, false)
+	
+	# Ensure the header is visible to receive the icons
+	if header:
+		header.visible = true
+		if "modulate" in header:
+			header.modulate.a = 0.0
+			var htween = create_tween()
+			htween.tween_property(header, "modulate:a", 1.0, 0.2)
+		elif header.get_child_count() > 0 and "modulate" in header.get_child(0):
+			var hc = header.get_child(0)
+			hc.modulate.a = 0.0
+			var htween = create_tween()
+			htween.tween_property(hc, "modulate:a", 1.0, 0.2)
+		
+	if _loot_container and _loot_container.visible:
+		for child in _loot_container.get_children():
+			if child is HBoxContainer:
+				var tex_rect = null
+				for sub in child.get_children():
+					if sub is TextureRect:
+						tex_rect = sub
+						break
+				
+				if tex_rect and tex_rect.texture:
+					var tex = tex_rect.texture
+					var type = ""
+					if tex == icon_energy: type = "binding_energy"
+					elif tex == icon_dust: type = "neutron_dust"
+					elif tex == icon_gem: type = "gems"
+					
+					if type != "":
+						var fly_icon = Sprite2D.new()
+						fly_icon.texture = tex
+						var global_rect = tex_rect.get_global_rect()
+						fly_icon.global_position = global_rect.position + (global_rect.size / 2.0)
+						fly_icon.z_index = 300
+						
+						var tex_size = tex.get_size()
+						if tex_size.x > 0:
+							var s = min(global_rect.size.x, global_rect.size.y) / max(tex_size.x, 1.0)
+							fly_icon.scale = Vector2(s, s)
+						add_child(fly_icon)
+						
+						var target_pos = Vector2(size.x / 2.0, 50)
+						if header:
+							var target_node = null
+							if type == "binding_energy": target_node = header.find_child("*Binding*", true, false)
+							elif type == "neutron_dust": target_node = header.find_child("*Dust*", true, false)
+							elif type == "gems": target_node = header.find_child("*Gem*", true, false)
+							
+							if target_node:
+								var tgt_rect = target_node.get_global_rect()
+								target_pos = tgt_rect.position + (tgt_rect.size / 2.0)
+							elif header.has_method("get_global_rect"):
+								var head_rect = header.get_global_rect()
+								target_pos = head_rect.position + (head_rect.size / 2.0)
+							elif header.get_child_count() > 0 and header.get_child(0).has_method("get_global_rect"):
+								var head_rect = header.get_child(0).get_global_rect()
+								target_pos = head_rect.position + (head_rect.size / 2.0)
+						
+						tween.tween_property(fly_icon, "global_position", target_pos, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+						tween.tween_property(fly_icon, "scale", Vector2(0.2, 0.2), duration)
+						tween.tween_property(fly_icon, "modulate:a", 0.0, 0.2).set_delay(duration - 0.2)
+						
+						get_tree().create_timer(duration).timeout.connect(fly_icon.queue_free)
+						animated_any = true
+
+	if animated_any:
+		var seq = create_tween()
+		seq.tween_interval(duration + 0.1)
+		seq.tween_callback(_finalize_retreat)
+	else:
+		_finalize_retreat()
+
+func _finalize_retreat():
 	if CampaignManager:
 		# Bank rewards
 		if CampaignManager.current_run_energy > 0: PlayerData.add_resource("binding_energy", CampaignManager.current_run_energy)
@@ -270,11 +363,16 @@ func _on_slot_clicked(index: int):
 	else:
 		# Swap
 		var roster = PlayerData.active_team
-		if roster.is_empty(): roster = PlayerData.owned_monsters
+		if roster.is_empty(): 
+			PlayerData.active_team = PlayerData.owned_monsters.duplicate()
+			roster = PlayerData.active_team
 		
 		var temp = roster[index]
 		roster[index] = roster[_selected_swap_index]
 		roster[_selected_swap_index] = temp
+		
+		if PlayerData.has_method("save_game"):
+			PlayerData.save_game()
 		
 		_selected_swap_index = -1
 		_populate_monster_grid()
@@ -340,14 +438,24 @@ func _update_loot_label():
 	title.add_theme_color_override("font_color", Color.WHITE)
 	_loot_container.add_child(title)
 	
-	_add_loot_item(_loot_container, CampaignManager.current_run_energy, icon_energy)
+	var cur_energy = CampaignManager.current_run_energy if CampaignManager else 0
+	var start_energy = _prev_energy if _prev_energy != -1 else cur_energy
+	_add_loot_item(_loot_container, start_energy, cur_energy, icon_energy)
+	_prev_energy = cur_energy
 	
-	if CampaignManager.current_run_dust > 0:
-		_add_loot_item(_loot_container, CampaignManager.current_run_dust, icon_dust)
-	if CampaignManager.current_run_gems > 0:
-		_add_loot_item(_loot_container, CampaignManager.current_run_gems, icon_gem)
+	var cur_dust = CampaignManager.current_run_dust if CampaignManager else 0
+	var start_dust = _prev_dust if _prev_dust != -1 else cur_dust
+	if cur_dust > 0 or start_dust > 0:
+		_add_loot_item(_loot_container, start_dust, cur_dust, icon_dust)
+	_prev_dust = cur_dust
+		
+	var cur_gems = CampaignManager.current_run_gems if CampaignManager else 0
+	var start_gems = _prev_gems if _prev_gems != -1 else cur_gems
+	if cur_gems > 0 or start_gems > 0:
+		_add_loot_item(_loot_container, start_gems, cur_gems, icon_gem)
+	_prev_gems = cur_gems
 
-func _add_loot_item(container: Control, amount: int, icon: Texture2D):
+func _add_loot_item(container: Control, prev_amount: int, target_amount: int, icon: Texture2D):
 	var hbox = HBoxContainer.new()
 	hbox.add_theme_constant_override("separation", 5)
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -361,11 +469,18 @@ func _add_loot_item(container: Control, amount: int, icon: Texture2D):
 		hbox.add_child(tex)
 		
 	var lbl = Label.new()
-	lbl.text = str(amount)
+	lbl.text = str(prev_amount)
 	lbl.add_theme_font_size_override("font_size", 56)
 	lbl.add_theme_color_override("font_color", Color("#60fafc"))
 	hbox.add_child(lbl)
 	container.add_child(hbox)
+	
+	if prev_amount != target_amount:
+		var tween = create_tween()
+		tween.tween_method(func(val):
+			if is_instance_valid(lbl):
+				lbl.text = str(int(val))
+		, prev_amount, target_amount, 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 func _get_anim_frames(monster: MonsterData) -> SpriteFrames:
 	if _anim_cache.has(monster.monster_name): return _anim_cache[monster.monster_name]
@@ -451,6 +566,28 @@ func _setup_reward_selection():
 			rare_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			vbox.add_child(rare_lbl)
 		
+		var tex = null
+		var icon_color = Color.WHITE
+		if reward.id == "neutron_dust": tex = icon_dust
+		elif reward.id == "binding_energy": tex = icon_energy
+		elif reward.id == "gems": tex = icon_gem
+		elif reward.type == "item": 
+			if item_icons.has(reward.id):
+				tex = item_icons[reward.id]
+			else:
+				tex = icon_energy
+				icon_color = Color("#2ecc71") # Green tint for generic items
+			
+		if tex:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture = tex
+			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tex_rect.custom_minimum_size = Vector2(80, 80)
+			tex_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			tex_rect.modulate = icon_color
+			vbox.add_child(tex_rect)
+		
 		var lbl = Label.new()
 		lbl.text = reward.name
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -469,8 +606,53 @@ func _setup_reward_selection():
 		desc.add_theme_color_override("font_color", Color("#e0e0e0"))
 		vbox.add_child(desc)
 		
-		btn.pressed.connect(func(): _select_reward(reward))
+		btn.pressed.connect(func(): _on_reward_button_pressed(reward, btn, tex, icon_color))
 		options_hbox.add_child(btn)
+
+func _on_reward_button_pressed(reward: Dictionary, btn: Button, tex: Texture2D, icon_color: Color):
+	# Disable all buttons to prevent double-clicks
+	if _reward_selection_container:
+		for child in _reward_selection_container.find_children("*", "Button", true, false):
+			if child is Button: child.disabled = true
+			
+	if not tex:
+		_select_reward(reward)
+		return
+		
+	var duration = 0.6
+	var tween = create_tween()
+	tween.set_parallel(true)
+	
+	var fly_icon = Sprite2D.new()
+	fly_icon.texture = tex
+	fly_icon.modulate = icon_color
+	var global_rect = btn.get_global_rect()
+	fly_icon.global_position = global_rect.position + (global_rect.size / 2.0)
+	fly_icon.z_index = 300
+	
+	var tex_size = tex.get_size()
+	if tex_size.x > 0:
+		var s = 80.0 / max(tex_size.x, 1.0)
+		fly_icon.scale = Vector2(s, s)
+	add_child(fly_icon)
+	
+	var target_pos = Vector2(size.x / 2.0, 50)
+	if _loot_container and _loot_container.visible:
+		var tgt_rect = _loot_container.get_global_rect()
+		target_pos = tgt_rect.position + (tgt_rect.size / 2.0)
+	elif loot_label and loot_label.visible:
+		var tgt_rect = loot_label.get_global_rect()
+		target_pos = tgt_rect.position + (tgt_rect.size / 2.0)
+		
+	tween.tween_property(fly_icon, "global_position", target_pos, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(fly_icon, "scale", Vector2(0.2, 0.2), duration)
+	tween.tween_property(fly_icon, "modulate:a", 0.0, 0.2).set_delay(duration - 0.2)
+	
+	get_tree().create_timer(duration).timeout.connect(fly_icon.queue_free)
+	
+	var seq = create_tween()
+	seq.tween_interval(duration + 0.1)
+	seq.tween_callback(func(): _select_reward(reward))
 
 func _generate_rewards() -> Array:
 	var energy_amount = 100
@@ -488,6 +670,9 @@ func _generate_rewards() -> Array:
 		{ "type": "item", "id": "repair_nanites", "amount": 1, "name": "Nanites", "desc": "Get 1 Repair Nanite", "weight": 20.0 },
 		{ "type": "item", "id": "adrenaline_shot", "amount": 1, "name": "Adrenaline", "desc": "Get 1 Adrenaline Shot", "weight": 20.0 },
 		{ "type": "item", "id": "coolant_gel", "amount": 1, "name": "Coolant Gel", "desc": "Get 1 Coolant Gel", "weight": 20.0 },
+		{ "type": "item", "id": "power_cell", "amount": 1, "name": "Power Cell", "desc": "Get 1 Power Cell", "weight": 15.0 },
+		{ "type": "item", "id": "ion_battery", "amount": 1, "name": "Ion Battery", "desc": "Get 1 Ion Battery", "weight": 20.0 },
+		{ "type": "item", "id": "plasma_injector", "amount": 1, "name": "Plasma Injector", "desc": "Get 1 Plasma Injector", "weight": 20.0 },
 	]
 	
 	var selected = []

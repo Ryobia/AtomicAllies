@@ -1,16 +1,52 @@
 [gd_scene format=3 uid="uid://b4kki5bcwln8t"]
 
 [ext_resource type="Script" uid="uid://be1b71if15wq" path="res://Scripts/RestSite.gd" id="1_ya7uk"]
-[ext_resource type="Texture2D" uid="uid://d2k7e2ncjlh50" path="res://Assets/Gem.tres" id="2_ep4c3"]
-[ext_resource type="Texture2D" uid="uid://drgfc0ec2wubq" path="res://Assets/BE.tres" id="3_eufrv"]
-[ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="4_eufrv"]
+[ext_resource type="Texture2D" uid="uid://cwwsh0aaj3yvn" path="res://Assets/ItemSheet2.png" id="2_ep4c3"]
+[ext_resource type="Texture2D" uid="uid://7c7kha1t73g7" path="res://Assets/ItemSheet.png" id="3_eufrv"]
+[ext_resource type="Texture2D" uid="uid://cgua1h5qbdain" path="res://Images/restsite.png" id="5_ulgok"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eufrv"]
+atlas = ExtResource("2_ep4c3")
+region = Rect2(89.9335, 1380.556, 360.3307, 429.7522)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ulgok"]
-atlas = ExtResource("4_eufrv")
-region = Rect2(587, 64.255005, 326, 395)
+atlas = ExtResource("2_ep4c3")
+region = Rect2(862.0503, 756.4919, 361.98364, 428.0993)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ya7uk"]
-bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+[sub_resource type="AtlasTexture" id="AtlasTexture_bf1td"]
+atlas = ExtResource("2_ep4c3")
+region = Rect2(1249.5967, 756.4922, 360.3307, 429.7522)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_swlla"]
+atlas = ExtResource("3_eufrv")
+region = Rect2(91.84299, 138.10745, 359.50424, 427.27286)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qian1"]
+atlas = ExtResource("3_eufrv")
+region = Rect2(862.0503, 136.28377, 362.81006, 428.92578)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4okof"]
+atlas = ExtResource("3_eufrv")
+region = Rect2(1249.8184, 138.9091, 360.90918, 425.45465)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_24cr6"]
+atlas = ExtResource("3_eufrv")
+region = Rect2(1250.0703, 757.2273, 360.00024, 427.27283)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wqf2j"]
+atlas = ExtResource("3_eufrv")
+region = Rect2(89.12953, 1380.2819, 362.1338, 428.2495)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_20fcw"]
+atlas = ExtResource("3_eufrv")
+region = Rect2(477.1406, 1381.2811, 361.15714, 428.92578)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_au6ga"]
+atlas = ExtResource("3_eufrv")
+region = Rect2(474.44693, 135.45732, 364.46286, 429.7522)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bf1td"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.35686275)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eufrv"]
 content_margin_left = 30.0
@@ -29,12 +65,17 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ep4c3"]
-bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+border_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_blend = true
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -48,9 +89,29 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ya7uk")
-icon_gem = ExtResource("2_ep4c3")
-icon_energy = ExtResource("3_eufrv")
-icon_dust = SubResource("AtlasTexture_ulgok")
+icon_gem = SubResource("AtlasTexture_eufrv")
+icon_energy = SubResource("AtlasTexture_ulgok")
+icon_dust = SubResource("AtlasTexture_bf1td")
+item_icons = {
+"adrenaline_shot": SubResource("AtlasTexture_qian1"),
+"coolant_gel": SubResource("AtlasTexture_4okof"),
+"emergency_shield": SubResource("AtlasTexture_au6ga"),
+"ion_battery": SubResource("AtlasTexture_wqf2j"),
+"plasma_injector": SubResource("AtlasTexture_20fcw"),
+"power_cell": SubResource("AtlasTexture_24cr6"),
+"repair_nanites": SubResource("AtlasTexture_swlla")
+}
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=751767795]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_ulgok")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Panel" type="Panel" parent="." unique_id=1802053876]
 layout_mode = 1
@@ -59,7 +120,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_ya7uk")
+theme_override_styles/panel = SubResource("StyleBoxFlat_bf1td")
 
 [node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=401710237]
 layout_mode = 1
@@ -137,19 +198,19 @@ theme_override_constants/separation = 20
 [node name="RetreatButton" type="Button" parent="Panel/MarginContainer/MainContainer/HBoxContainer" unique_id=1831687254]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 70
 theme_override_styles/normal = SubResource("StyleBoxFlat_ep4c3")
 text = "RETREAT"
 
 [node name="ContinueButton" type="Button" parent="Panel/MarginContainer/MainContainer/HBoxContainer" unique_id=592343890]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 70
 theme_override_styles/normal = SubResource("StyleBoxFlat_ep4c3")
 text = "CONTINUE"

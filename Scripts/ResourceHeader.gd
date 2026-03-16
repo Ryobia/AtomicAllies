@@ -4,6 +4,10 @@ var dust_label
 var binding_label
 var gems_label
 
+var _prev_dust: int = -1
+var _prev_binding: int = -1
+var _prev_gems: int = -1
+
 func _ready():
 	# Find the labels by their new names
 	dust_label = find_child("DustLabel", true, false)
@@ -26,15 +30,37 @@ func _update_display():
 	_on_resource_updated("gems", PlayerData.resources.get("gems", 0))
 
 func _on_resource_updated(type: String, amount: float):
-	# The amount can come in as a float from JSON, so we cast to int for display.
-	var display_amount = str(int(amount))
+	var new_val = int(amount)
 	
 	if type == "neutron_dust" and dust_label:
-		dust_label.text = display_amount
+		_animate_resource_label(dust_label, _prev_dust, new_val)
+		_prev_dust = new_val
 	elif type == "binding_energy" and binding_label:
-		binding_label.text = display_amount
+		_animate_resource_label(binding_label, _prev_binding, new_val)
+		_prev_binding = new_val
 	elif type == "gems" and gems_label:
-		gems_label.text = display_amount
+		_animate_resource_label(gems_label, _prev_gems, new_val)
+		_prev_gems = new_val
+
+func _animate_resource_label(label: Label, prev_val: int, new_val: int):
+	if not is_instance_valid(label): return
+	
+	if prev_val == -1:
+		label.text = str(new_val)
+		return
+		
+	if prev_val != new_val:
+		var tween = create_tween()
+		tween.tween_method(func(val):
+			if is_instance_valid(label):
+				label.text = str(int(val))
+		, prev_val, new_val, 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		
+		var flash_color = Color("#2ecc71") if new_val > prev_val else Color("#ff4d4d")
+		
+		var color_tween = create_tween()
+		color_tween.tween_property(label, "modulate", flash_color, 0.1)
+		color_tween.tween_property(label, "modulate", Color.WHITE, 0.5).set_delay(0.3)
 
 func _on_scene_changed(scene_key: String):
 	# Hide header in battle, show everywhere else

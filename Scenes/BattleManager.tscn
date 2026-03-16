@@ -5,13 +5,48 @@
 [ext_resource type="PackedScene" uid="uid://b2l1bfl8d5h0a" path="res://Scenes/BattleMonster.tscn" id="2_yygwm"]
 [ext_resource type="Texture2D" uid="uid://b21fv7oeh7gqt" path="res://Images/battleground.png" id="3_l362f"]
 [ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="4_272bk"]
-[ext_resource type="Texture2D" uid="uid://drgfc0ec2wubq" path="res://Assets/BE.tres" id="5_hoy3w"]
-[ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="6_r3dt2"]
-[ext_resource type="Texture2D" uid="uid://d2k7e2ncjlh50" path="res://Assets/Gem.tres" id="7_wivlx"]
+[ext_resource type="Texture2D" uid="uid://7c7kha1t73g7" path="res://Assets/ItemSheet.png" id="5_l362f"]
+[ext_resource type="Texture2D" uid="uid://cwwsh0aaj3yvn" path="res://Assets/ItemSheet2.png" id="6_hoy3w"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_swlla"]
+atlas = ExtResource("5_l362f")
+region = Rect2(91.84299, 138.10745, 359.50424, 427.27286)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qian1"]
+atlas = ExtResource("5_l362f")
+region = Rect2(862.0503, 136.28377, 362.81006, 428.92578)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4okof"]
+atlas = ExtResource("5_l362f")
+region = Rect2(1249.8184, 138.9091, 360.90918, 425.45465)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_24cr6"]
+atlas = ExtResource("5_l362f")
+region = Rect2(1250.0703, 757.2273, 360.00024, 427.27283)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wqf2j"]
+atlas = ExtResource("5_l362f")
+region = Rect2(89.12953, 1380.2819, 362.1338, 428.2495)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_20fcw"]
+atlas = ExtResource("5_l362f")
+region = Rect2(477.1406, 1381.2811, 361.15714, 428.92578)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f42mu"]
+atlas = ExtResource("5_l362f")
+region = Rect2(476.92627, 136.28348, 360.3307, 428.09933)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r3dt2"]
+atlas = ExtResource("6_hoy3w")
+region = Rect2(862.87683, 758.1448, 361.98352, 428.09937)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wivlx"]
+atlas = ExtResource("6_hoy3w")
+region = Rect2(1248.0249, 755.405, 363.63647, 430.5786)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_mj6kv"]
-atlas = ExtResource("6_r3dt2")
-region = Rect2(585.90936, 64.43353, 326.36365, 394.54544)
+atlas = ExtResource("6_hoy3w")
+region = Rect2(90.34465, 1382.9316, 361.98358, 427.27283)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jqbkq"]
 atlas = ExtResource("4_272bk")
@@ -105,9 +140,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_272bk")
-icon_energy = ExtResource("5_hoy3w")
-icon_dust = SubResource("AtlasTexture_mj6kv")
-icon_gem = ExtResource("7_wivlx")
+item_icons = {
+"adrenaline_shot": SubResource("AtlasTexture_qian1"),
+"coolant_gel": SubResource("AtlasTexture_4okof"),
+"emergency_shield": SubResource("AtlasTexture_f42mu"),
+"ion_battery": SubResource("AtlasTexture_wqf2j"),
+"plasma_injector": SubResource("AtlasTexture_20fcw"),
+"power_cell": SubResource("AtlasTexture_24cr6"),
+"repair_nanites": SubResource("AtlasTexture_swlla")
+}
+icon_energy = SubResource("AtlasTexture_r3dt2")
+icon_dust = SubResource("AtlasTexture_wivlx")
+icon_gem = SubResource("AtlasTexture_mj6kv")
 
 [node name="Theater" type="VBoxContainer" parent="BattleHUD" unique_id=550534713]
 layout_mode = 1

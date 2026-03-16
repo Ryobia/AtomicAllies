@@ -2,7 +2,20 @@
 
 [ext_resource type="Script" uid="uid://boco7djaefshy" path="res://Scripts/PeriodicTable.gd" id="1_mste3"]
 [ext_resource type="PackedScene" uid="uid://deeit4dexuhou" path="res://Scenes/monster_card.tscn" id="2_6e2n0"]
+[ext_resource type="Texture2D" uid="uid://cwwsh0aaj3yvn" path="res://Assets/ItemSheet2.png" id="3_6e2n0"]
 [ext_resource type="Texture2D" uid="uid://csxsj3kexqdji" path="res://Images/table.png" id="3_7flee"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yqx8d"]
+atlas = ExtResource("3_6e2n0")
+region = Rect2(864.52966, 758.9712, 359.50427, 426.4464)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7flee"]
+atlas = ExtResource("3_6e2n0")
+region = Rect2(1250.7969, 758.1451, 358.67773, 427.2729)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hcuv7"]
+atlas = ExtResource("3_6e2n0")
+region = Rect2(90.3047, 1382.9316, 359.50427, 425.62)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yqx8d"]
 content_margin_left = 50.0
@@ -27,6 +40,35 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7flee"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yqx8d"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.08627451, 0.1764706, 0.26666668, 1)
+border_blend = true
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [node name="PeriodicTable" type="Control" unique_id=1304090810]
 layout_mode = 3
 anchors_preset = 15
@@ -36,6 +78,9 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_mste3")
 monster_card_scene = ExtResource("2_6e2n0")
+icon_energy = SubResource("AtlasTexture_yqx8d")
+icon_dust = SubResource("AtlasTexture_7flee")
+icon_gem = SubResource("AtlasTexture_hcuv7")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=113249070]
 layout_mode = 1
@@ -144,3 +189,99 @@ theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.0745
 theme_override_font_sizes/font_size = 60
 theme_override_styles/normal = SubResource("StyleBoxFlat_6e2n0")
 text = "CONFIRM"
+
+[node name="ReplayRunPopup" type="Panel" parent="." unique_id=2140439485]
+custom_minimum_size = Vector2(800, 500)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -300.0
+offset_right = 400.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_7flee")
+
+[node name="MarginContainer" type="MarginContainer" parent="ReplayRunPopup" unique_id=572502691]
+layout_mode = 0
+offset_right = 800.0
+offset_bottom = 600.0
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ReplayRunPopup/MarginContainer" unique_id=901670541]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="ViewDetails" type="Button" parent="ReplayRunPopup/MarginContainer/HBoxContainer" unique_id=1313004577]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 70
+theme_override_styles/normal = SubResource("StyleBoxFlat_yqx8d")
+text = "View
+Element
+Details"
+
+[node name="ReplayRun" type="Button" parent="ReplayRunPopup/MarginContainer/HBoxContainer" unique_id=1555622523]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 70
+theme_override_styles/normal = SubResource("StyleBoxFlat_yqx8d")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ReplayRunPopup/MarginContainer/HBoxContainer/ReplayRun" unique_id=253251277]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ReplayLabel" type="Label" parent="ReplayRunPopup/MarginContainer/HBoxContainer/ReplayRun/VBoxContainer" unique_id=804704024]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/line_spacing = 3
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 70
+text = "Replay
+Discovery
+Run"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EnergyLabel" type="Label" parent="ReplayRunPopup/MarginContainer/HBoxContainer/ReplayRun/VBoxContainer" unique_id=273586614]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 50
+horizontal_alignment = 1
+
+[node name="DustLabel" type="Label" parent="ReplayRunPopup/MarginContainer/HBoxContainer/ReplayRun/VBoxContainer" unique_id=1409383805]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 50
+horizontal_alignment = 1
+
+[node name="GemLabel" type="Label" parent="ReplayRunPopup/MarginContainer/HBoxContainer/ReplayRun/VBoxContainer" unique_id=1058795419]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 50
+horizontal_alignment = 1

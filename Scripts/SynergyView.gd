@@ -6,6 +6,8 @@ extends Control
 # Cache for total counts per group (Total elements in game vs Owned)
 var _group_totals = {}
 
+var _tutorial_step: int = 0
+
 func _ready():
     if back_btn:
         if not back_btn.pressed.is_connected(_on_back_pressed):
@@ -16,6 +18,15 @@ func _ready():
     
     _calculate_group_totals()
     _populate_grid()
+    
+    # Only show this tutorial if the main tutorial is complete
+    if PlayerData and not PlayerData.has_seen_synergy_tutorial and PlayerData.tutorial_step >= 999:
+        get_tree().create_timer(0.5).timeout.connect(_start_synergy_tutorial)
+
+func _exit_tree():
+    if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+        TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
+        TutorialManager.hide_tutorial()
 
 func _calculate_group_totals():
     _group_totals.clear()
@@ -48,7 +59,7 @@ func _create_synergy_card(group: int):
     var panel = PanelContainer.new()
     panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     # panel.custom_minimum_size = Vector2(0, 180) # Allow auto-sizing
-    panel.mouse_filter = Control.MOUSE_FILTER_STOP # Capture clicks
+    panel.mouse_filter = Control.MOUSE_FILTER_PASS # Allow drag events to reach ScrollContainer
     
     # Style: Dark background with colored left border matching the group
     var style = StyleBoxFlat.new()
@@ -183,10 +194,32 @@ func _create_synergy_card(group: int):
             else:
                 var start = panel.get_meta("touch_start", Vector2.ZERO)
                 if start.distance_to(event.global_position) < 40:
-                    var show = !element_grid.visible
-                    element_grid.visible = show
-                    separator.visible = show
+                    var show = not element_grid.is_visible_in_tree()
                     arrow.text = " ▲" if show else " ▼"
+                    
+                    if show:
+                        element_grid.visible = true
+                        separator.visible = true
+                        element_grid.modulate.a = 0.0
+                        separator.modulate.a = 0.0
+                        element_grid.custom_minimum_size.y = 0
+                        
+                        var target_height = element_grid.get_combined_minimum_size().y
+                        
+                        var tween = panel.create_tween().set_parallel()
+                        tween.tween_property(element_grid, "custom_minimum_size:y", target_height, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+                        tween.tween_property(element_grid, "modulate:a", 1.0, 0.2).set_delay(0.1)
+                        tween.tween_property(separator, "modulate:a", 0.3, 0.2).set_delay(0.1)
+                    else:
+                        var tween = panel.create_tween().set_parallel()
+                        tween.tween_property(element_grid, "custom_minimum_size:y", 0, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+                        tween.tween_property(element_grid, "modulate:a", 0.0, 0.2)
+                        tween.tween_property(separator, "modulate:a", 0.0, 0.2)
+                        
+                        tween.finished.connect(func():
+                            if is_instance_valid(element_grid): element_grid.visible = false
+                            if is_instance_valid(separator): separator.visible = false
+                        )
     )
     
     grid.add_child(panel)
@@ -247,5 +280,49 @@ func _get_synergy_text(group: int, count: int) -> String:
     return text
 
 func _on_back_pressed():
-    # Return to the Periodic Table since that's likely where we came from
-    GlobalManager.switch_scene("periodic_table")
+    # If instantiated as a popup over the table, just close it. Otherwise, switch scenes.
+    if get_tree().current_scene != self:
+        queue_free()
+    else:
+        GlobalManager.switch_scene("periodic_table")
+
+func _start_synergy_tutorial():
+    if not TutorialManager: return
+    _tutorial_step = 0
+    
+    if TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+        TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
+        
+    TutorialManager.story_button.pressed.connect(_on_tutorial_next)
+    _advance_tutorial()
+
+func _on_tutorial_next():
+    _tutorial_step += 1
+    _advance_tutorial()
+
+func _advance_tutorial():
+    if not TutorialManager: return
+    
+    match _tutorial_step:
+        0:
+            TutorialManager.show_instruction("Welcome to the Synergies page! Here you can track your collection progress for each Atomic Class.", null, "happy")
+            TutorialManager.story_button.visible = true
+            TutorialManager.story_button.text = "Next"
+        1:
+            TutorialManager.show_instruction("Collecting multiple elements of the same class unlocks powerful passive bonuses for your entire team.", null, "talk")
+            TutorialManager.story_button.visible = true
+            TutorialManager.story_button.text = "Next"
+        2:
+            TutorialManager.show_instruction("If you manage to collect every element in a class, you'll unlock a devastating Full Set Mastery!", null, "warning")
+            TutorialManager.story_button.visible = true
+            TutorialManager.story_button.text = "Next"
+        3:
+            TutorialManager.show_instruction("Tap on any class card to see exactly which elements you need to complete the set. Keep fusing!", null, "talk")
+            TutorialManager.story_button.visible = true
+            TutorialManager.story_button.text = "Got it!"
+        _:
+            TutorialManager.hide_tutorial()
+            PlayerData.has_seen_synergy_tutorial = true
+            PlayerData.save_game()
+            if TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+                TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)

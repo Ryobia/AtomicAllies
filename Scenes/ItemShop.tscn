@@ -1,7 +1,77 @@
 [gd_scene format=3 uid="uid://bkvsxx0br8esr"]
 
 [ext_resource type="Script" uid="uid://b6sq3qp51xtq0" path="res://Scripts/ItemShop.gd" id="1_shop"]
+[ext_resource type="Texture2D" uid="uid://7c7kha1t73g7" path="res://Assets/ItemSheet.png" id="2_j448o"]
 [ext_resource type="Texture2D" uid="uid://c52uw4kab01b3" path="res://Images/Shop.png" id="2_ykgfi"]
+[ext_resource type="Texture2D" uid="uid://cwwsh0aaj3yvn" path="res://Assets/ItemSheet2.png" id="3_862br"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_862br"]
+atlas = ExtResource("2_j448o")
+region = Rect2(1254.0001, 141.00002, 357.00012, 424.00012)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j448o"]
+atlas = ExtResource("2_j448o")
+region = Rect2(88.90575, 757.9998, 362.00006, 426.00018)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rm0e0"]
+atlas = ExtResource("2_j448o")
+region = Rect2(90.909195, 138.63638, 360.00012, 426.36374)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fjxrw"]
+atlas = ExtResource("2_j448o")
+region = Rect2(476.18124, 759.0455, 360.9092, 426.3637)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ifxhq"]
+atlas = ExtResource("2_j448o")
+region = Rect2(864.2002, 139.80002, 359.70007, 424.60013)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fyjct"]
+atlas = ExtResource("2_j448o")
+region = Rect2(475.9996, 135.9998, 363.00015, 430.00012)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a1qoc"]
+atlas = ExtResource("2_j448o")
+region = Rect2(1251.7217, 754.99976, 359.00012, 431.00024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j4gv1"]
+atlas = ExtResource("2_j448o")
+region = Rect2(91.00009, 1381, 360.00015, 430.00024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gvyt4"]
+atlas = ExtResource("2_j448o")
+region = Rect2(477.75214, 1382.0579, 359.5042, 428.09937)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ypbag"]
+atlas = ExtResource("3_862br")
+region = Rect2(89.6364, 136.54546, 360.90918, 429.091)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kk033"]
+atlas = ExtResource("3_862br")
+region = Rect2(476.18124, 135.04337, 362.7274, 430.00015)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rxewf"]
+atlas = ExtResource("3_862br")
+region = Rect2(864.36316, 136.86148, 359.09106, 429.09103)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d4l8h"]
+atlas = ExtResource("3_862br")
+region = Rect2(1249.121, 135.95255, 360.90918, 429.09103)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dr1gs"]
+atlas = ExtResource("3_862br")
+region = Rect2(89.81955, 756.86365, 361.81827, 428.182)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ssovg"]
+atlas = ExtResource("3_862br")
+region = Rect2(476.18124, 757.7727, 362.7274, 426.36377)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cgeoj"]
+atlas = ExtResource("2_j448o")
+region = Rect2(863.0993, 1381.6696, 360.33063, 428.09924)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0et0f"]
+atlas = ExtResource("2_j448o")
+region = Rect2(1250.4425, 1383.3778, 358.67786, 425.62)
 
 [node name="ItemShop" type="Control" unique_id=341176545]
 layout_mode = 3
@@ -11,6 +81,25 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_shop")
+item_icons = {
+"adrenaline_shot": SubResource("AtlasTexture_ifxhq"),
+"combat_hull": SubResource("AtlasTexture_d4l8h"),
+"combat_optics": SubResource("AtlasTexture_dr1gs"),
+"combat_shielding": SubResource("AtlasTexture_ssovg"),
+"coolant_gel": SubResource("AtlasTexture_862br"),
+"cybernetic_implant": SubResource("AtlasTexture_0et0f"),
+"dust_efficiency": SubResource("AtlasTexture_kk033"),
+"emergency_shield": SubResource("AtlasTexture_fyjct"),
+"fusion_speed": SubResource("AtlasTexture_ypbag"),
+"gravimetric_sensor": SubResource("AtlasTexture_cgeoj"),
+"ion_battery": SubResource("AtlasTexture_j4gv1"),
+"magnetic_stabilizer": SubResource("AtlasTexture_j448o"),
+"plasma_injector": SubResource("AtlasTexture_gvyt4"),
+"power_cell": SubResource("AtlasTexture_a1qoc"),
+"quantum_catalyst": SubResource("AtlasTexture_fjxrw"),
+"repair_nanites": SubResource("AtlasTexture_rm0e0"),
+"scanner_range": SubResource("AtlasTexture_rxewf")
+}
 
 [node name="Background" type="TextureRect" parent="." unique_id=766608620]
 layout_mode = 1

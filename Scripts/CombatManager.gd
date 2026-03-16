@@ -8,7 +8,10 @@ extends Node
 const ITEM_DATA = {
 	"repair_nanites": { "name": "Repair Nanites", "target": "Ally", "effect": "heal_percent", "amount": 0.5 },
 	"adrenaline_shot": { "name": "Adrenaline Shot", "target": "Ally", "effect": "buff_stat", "stat": "attack", "amount": 20, "duration": 3 },
-	"emergency_shield": { "name": "Emergency Shield", "target": "Ally", "effect": "add_shield", "amount": 0.3 }
+	"emergency_shield": { "name": "Emergency Shield", "target": "Ally", "effect": "add_shield", "amount": 0.3 },
+	"power_cell": { "name": "Power Cell", "target": "Ally", "effect": "heal_percent", "amount": 1.0 },
+	"ion_battery": { "name": "Ion Battery", "target": "Ally", "effect": "buff_stat", "stat": "defense", "amount": 20, "duration": 3 },
+	"plasma_injector": { "name": "Plasma Injector", "target": "Ally", "effect": "buff_stat", "stat": "speed", "amount": 20, "duration": 3 }
 }
 
 func get_item_data(item_id: String) -> Dictionary:

@@ -58,6 +58,7 @@ func _ready():
 		battle_hud.swap_selected.connect(_on_swap_selected)
 		battle_hud.inspect_unit.connect(_on_inspect_unit)
 		battle_hud.item_selected.connect(_on_item_selected)
+		battle_hud.battle_finished.connect(_on_battle_hud_finished)
 		
 		# Connect Manager -> HUD signals
 		log_event.connect(battle_hud.log_message)
@@ -174,7 +175,8 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	# Use active_team if set, otherwise fallback to owned_monsters
 	var player_roster = PlayerData.active_team
 	if player_roster.is_empty():
-		player_roster = PlayerData.owned_monsters
+		player_roster = PlayerData.owned_monsters.duplicate()
+		PlayerData.active_team = player_roster
 		
 	# Fallback safety net for new players
 	if player_roster.is_empty() and MonsterManifest:
@@ -183,7 +185,8 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 		var he = MonsterManifest.get_monster(2)
 		if h: PlayerData.owned_monsters.append(h.duplicate())
 		if he: PlayerData.owned_monsters.append(he.duplicate())
-		player_roster = PlayerData.owned_monsters
+		player_roster = PlayerData.owned_monsters.duplicate()
+		PlayerData.active_team = player_roster
 	
 	benched_player_monsters.clear()
 	
@@ -560,14 +563,59 @@ func start_turn():
 func execute_ai_turn():
 	# 1. Select a Move
 	var moves = CombatManager.get_active_moves(current_acting_unit.data)
+	
+	var available_moves = []
+	for m in moves:
+		if not current_acting_unit.move_cooldowns.has(m.name):
+			available_moves.append(m)
+			
 	var move = null
-	if not moves.is_empty():
-		move = moves.pick_random()
-	else:
+	if available_moves.is_empty():
 		# Fallback move
 		move = MoveData.new()
 		move.name = "Struggle"
 		move.power = 10
+	else:
+		# AI Logic: Categorize Moves
+		var heals = []
+		var buffs = []
+		var attacks = []
+		var debuffs = []
+		
+		for m in available_moves:
+			if m.type == "Status_Friendly":
+				var is_heal = false
+				for eff in m.effects:
+					if eff.get("effect") in ["heal", "team_heal", "add_shield", "add_team_shield", "heal_overflow_shield"]:
+						is_heal = true
+						break
+				if is_heal: heals.append(m)
+				else: buffs.append(m)
+			elif m.type == "Status_Hostile":
+				debuffs.append(m)
+			else:
+				attacks.append(m)
+				
+		# Analyze Allies
+		var allies = active_enemy_monsters.filter(func(m): return not m.is_dead)
+		var lowest_ally_hp_pct = 1.0
+		
+		for a in allies:
+			var pct = float(a.current_hp) / float(a.max_hp)
+			if pct < lowest_ally_hp_pct:
+				lowest_ally_hp_pct = pct
+				
+		# AI Decision Tree
+		if lowest_ally_hp_pct < 0.4 and not heals.is_empty():
+			move = heals.pick_random() # 1. Critical Healing
+		elif not buffs.is_empty() and randf() < 0.4:
+			move = buffs.pick_random() # 2. Buffing
+		elif not attacks.is_empty() and randf() < 0.8:
+			move = attacks.pick_random() # 3. Attacking
+		elif not debuffs.is_empty():
+			move = debuffs.pick_random() # 4. Debuffing
+		else:
+			move = available_moves.pick_random() # Fallback
 	
 	# 2. Determine Valid Targets
 	# Handle Self/Ally targeting for AI
@@ -575,10 +623,23 @@ func execute_ai_turn():
 		perform_move(current_acting_unit, current_acting_unit, move)
 		return
 	elif move.target_type == MoveData.TargetType.ALLY:
-		# AI heals/buffs random living ally
 		var allies = active_enemy_monsters.filter(func(m): return not m.is_dead)
 		if not allies.is_empty():
-			perform_move(current_acting_unit, allies.pick_random(), move)
+			var is_heal = false
+			for eff in move.effects:
+				if eff.get("effect") in ["heal", "add_shield", "heal_overflow_shield"]: is_heal = true
+			
+			var target_ally = null
+			if is_heal:
+				# Find lowest HP ally for heals/shields
+				allies.sort_custom(func(a, b): return (float(a.current_hp) / float(a.max_hp)) < (float(b.current_hp) / float(b.max_hp)))
+				target_ally = allies[0]
+			else:
+				# Find strongest ally to buff
+				allies.sort_custom(func(a, b): return (a.stats.get("attack", 0) + a.max_hp) > (b.stats.get("attack", 0) + b.max_hp))
+				target_ally = allies[0]
+				
+			perform_move(current_acting_unit, target_ally, move)
 		return
 	
 	# Enemy Targeting (Player Team)
@@ -606,15 +667,22 @@ func execute_ai_turn():
 			# Can attack anyone (Vanguard dead OR Snipe move)
 			valid_targets = potential_targets
 	
-	# AI Preference: Target weakest unit (Lowest HP + Def)
-	if valid_targets.size() > 1:
-		valid_targets.sort_custom(func(a, b):
-			var score_a = a.current_hp + a.stats.get("defense", 0)
-			var score_b = b.current_hp + b.stats.get("defense", 0)
-			return score_a < score_b
-		)
+	var target = null
 	
-	var target = valid_targets[0]
+	# Execution Priority (Target enemies below 25% HP)
+	var execute_targets = valid_targets.filter(func(m): return float(m.current_hp) / float(m.max_hp) < 0.25)
+	if not execute_targets.is_empty():
+		execute_targets.sort_custom(func(a, b): return a.current_hp < b.current_hp)
+		target = execute_targets[0]
+	else:
+		# AI Preference: Target weakest unit (Lowest HP + Def)
+		if valid_targets.size() > 1:
+			valid_targets.sort_custom(func(a, b):
+				var score_a = a.current_hp + a.stats.get("defense", 0)
+				var score_b = b.current_hp + b.stats.get("defense", 0)
+				return score_a < score_b
+			)
+		target = valid_targets[0]
 	
 	perform_move(current_acting_unit, target, move)
 
@@ -641,7 +709,13 @@ func _on_action_selected(action_type):
 	elif action_type == "swap":
 		var can_swap = false
 		for m in benched_player_monsters:
-			if not (roster_hp_cache.has(m) and roster_hp_cache[m] <= 0):
+			var is_dead = false
+			if roster_hp_cache.has(m):
+				var state = roster_hp_cache[m]
+				var hp = state if typeof(state) == TYPE_INT else state.get("hp", 0)
+				if typeof(hp) != TYPE_INT and typeof(hp) != TYPE_FLOAT: hp = 0
+				if hp <= 0: is_dead = true
+			if not is_dead:
 				can_swap = true
 				break
 				
@@ -781,7 +855,7 @@ func _on_cancel_targeting():
 	
 	if was_move:
 		var moves = CombatManager.get_active_moves(current_acting_unit.data)
-		battle_hud.show_moves(moves)
+		battle_hud.show_moves(moves, current_acting_unit.move_cooldowns)
 	elif was_item:
 		var battle_items = {}
 		for item_id in PlayerData.inventory:
@@ -933,6 +1007,7 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	new_unit.play_move() # Play enter animation
 	
 	_update_team_passives()
+	_sync_roster_order()
 	
 	# Refresh HUD visuals (Sprites/Names) and restore Bars
 	if battle_hud:
@@ -952,12 +1027,14 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 			if u:
 				battle_hud.update_hp(true, i, u.current_hp, u.max_hp)
 				_refresh_unit_status(u)
+				_check_shield_update(u)
 				battle_hud.update_speed_bar(true, i, u.atb_value)
 			
 		for i in range(active_enemy_monsters.size()):
 			var u = active_enemy_monsters[i]
 			battle_hud.update_hp(false, i, u.current_hp, u.max_hp)
 			_refresh_unit_status(u)
+			_check_shield_update(u)
 			battle_hud.update_speed_bar(false, i, u.atb_value)
 	
 	await get_tree().create_timer(1.5).timeout
@@ -1500,7 +1577,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				
 			if effect.get("effect") == "swap_and_heal_lowest_ally":
 				var amount = effect.get("amount", 0)
-				var lowest_pct = 1.0
+				var lowest_pct = 2.0 # Changed to 2.0 to catch 100% HP targets
 				var lowest_unit = null
 				var lowest_benched_idx = -1
 				var lowest_benched_data = null
@@ -1512,6 +1589,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 						if pct < lowest_pct:
 							lowest_pct = pct
 							lowest_unit = m
+							lowest_benched_data = null # Clear if active is lower
 				
 				if attacker_is_player:
 					for i in range(benched_player_monsters.size()):
@@ -1523,7 +1601,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 							if typeof(state) == TYPE_INT: hp = state
 							elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", max_hp)
 						
-						if hp > 0 and hp < max_hp:
+						if hp > 0: # Ensures swap still occurs even if at 100% HP
 							var pct = float(hp) / float(max_hp)
 							if pct < lowest_pct:
 								lowest_pct = pct
@@ -1584,7 +1662,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 			if effect.get("effect") == "heal_lowest_ally":
 				var amount = effect.get("amount", 0)
 				if amount > 0:
-					var lowest_pct = 1.0
+					var lowest_pct = 2.0 # Changed to 2.0 to catch 100% HP targets
 					var lowest_unit = null
 					var lowest_benched_data = null
 					
@@ -1595,6 +1673,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 							if pct < lowest_pct:
 								lowest_pct = pct
 								lowest_unit = m
+								lowest_benched_data = null # Clear if active is lower
 					
 					if attacker.is_player:
 						for m_data in benched_player_monsters:
@@ -1605,7 +1684,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 								if typeof(state) == TYPE_INT: hp = state
 								elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", max_hp)
 							
-							if hp > 0 and hp < max_hp:
+							if hp > 0:
 								var pct = float(hp) / float(max_hp)
 								if pct < lowest_pct:
 									lowest_pct = pct
@@ -1911,6 +1990,15 @@ func end_battle(player_won: bool):
 	if battle_hud:
 		battle_hud.show_result(player_won, rewards)
 
+func _on_battle_hud_finished():
+	var next_scene = "main_menu"
+	if CampaignManager and CampaignManager.is_rogue_run:
+		# Check if we should go to rest site
+		if CampaignManager.current_run_energy > 0 and CampaignManager.current_run_wave <= CampaignManager.max_run_waves:
+			next_scene = "rest_site"
+			
+	GlobalManager.switch_scene(next_scene)
+
 func _on_monster_death(dead_unit: BattleMonster):
 	# Death animation is handled in BattleMonster.die(), so we just check win condition
 	
@@ -1925,6 +2013,31 @@ func _on_monster_death(dead_unit: BattleMonster):
 		var pct = death_bomb_effect.get("damage_percent", 0.2)
 		var dmg = int(dead_unit.max_hp * pct)
 		log_event.emit("%s explodes violently!" % dead_unit.data.monster_name)
+		
+		var explosion = CPUParticles2D.new()
+		explosion.emitting = false
+		explosion.one_shot = true
+		explosion.amount = 60
+		explosion.lifetime = 0.8
+		explosion.explosiveness = 1.0
+		explosion.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+		explosion.emission_sphere_radius = 20.0
+		explosion.spread = 180.0
+		explosion.initial_velocity_min = 200.0
+		explosion.initial_velocity_max = 400.0
+		explosion.scale_amount_min = 10.0
+		explosion.scale_amount_max = 20.0
+		explosion.color = Color("#ff4500")
+		
+		var parent = dead_unit.get_parent()
+		if parent:
+			parent.add_child(explosion)
+			explosion.global_position = dead_unit.global_position + Vector2(0, -50)
+			explosion.restart()
+			get_tree().create_timer(1.0).timeout.connect(explosion.queue_free)
+			
+		_shake_screen(0.5, 20.0)
+			
 		var targets = active_player_monsters if dead_unit.is_player else active_enemy_monsters # Damage its own team
 		for unit in targets:
 			if unit and not unit.is_dead and unit != dead_unit:
@@ -2234,6 +2347,9 @@ func _scramble_team(is_player: bool):
 				unit.get_parent().remove_child(unit)
 				marker.add_child(unit)
 				unit.position = Vector2.ZERO
+				
+	if is_player:
+		_sync_roster_order()
 	
 	# Update HUD to reflect new order
 	if battle_hud:
@@ -2282,6 +2398,7 @@ func _perform_bench_swap_move(attacker: BattleMonster, bench_index: int, move: M
 	new_unit.play_move()
 	
 	_update_team_passives()
+	_sync_roster_order()
 	
 	# Apply Move Effects to Incoming Unit
 	for effect_def in move.effects:
@@ -2318,10 +2435,12 @@ func _perform_bench_swap_move(attacker: BattleMonster, bench_index: int, move: M
 				hud_update_hp.emit(true, i, u.current_hp, u.max_hp)
 				hud_update_atb.emit(true, i, u.atb_value)
 				_refresh_unit_status(u)
+				_check_shield_update(u)
 		for i in range(active_enemy_monsters.size()):
 			var u = active_enemy_monsters[i]
 			hud_update_hp.emit(false, i, u.current_hp, u.max_hp)
 			_refresh_unit_status(u)
+			_check_shield_update(u)
 	
 	await get_tree().create_timer(1.5).timeout
 	end_turn()
@@ -2361,6 +2480,9 @@ func _swap_active_positions(unit1: BattleMonster, unit2: BattleMonster):
 				unit.position = Vector2.ZERO
 	
 	log_event.emit("Positions swapped!")
+	
+	if is_player:
+		_sync_roster_order()
 	
 	# Update HUD (reuse logic via _scramble_team refresh pattern)
 	# We can just call _scramble_team logic here effectively by just refreshing UI since array is swapped
@@ -2518,7 +2640,7 @@ func _get_persistent_meta(unit: BattleMonster) -> Dictionary:
 	var meta_to_save = {}
 	var all_meta = unit.get_meta_list()
 	for key in all_meta:
-		if key.begins_with("persist_"):
+		if key.begins_with("persist_") or key in ["shield", "shield_explosion_dmg", "full_set_crit_used", "full_set_immune_used", "consecutive_attacks"]:
 			meta_to_save[key] = unit.get_meta(key)
 	return meta_to_save
 
@@ -2538,6 +2660,8 @@ func _force_bench_dead_unit(unit: BattleMonster):
 	all_monsters.erase(unit)
 	unit.queue_free()
 	
+	_sync_roster_order()
+	
 	# Update HUD
 	if battle_hud:
 		var player_data = []
@@ -2556,6 +2680,7 @@ func _force_bench_dead_unit(unit: BattleMonster):
 				hud_update_hp.emit(true, i, u.current_hp, u.max_hp)
 				hud_update_atb.emit(true, i, u.atb_value)
 				_refresh_unit_status(u)
+				_check_shield_update(u)
 
 func _handle_swap_stats(effect: Dictionary):
 	var target = effect.get("target")
@@ -2903,6 +3028,23 @@ func _show_damage_number(unit: Node2D, amount: int, type: String = "damage"):
 	
 	tween.chain().tween_callback(label.queue_free)
 
+func _shake_screen(duration: float, intensity: float):
+	var target = null
+	var camera = get_viewport().get_camera_2d()
+	if camera:
+		target = camera
+	elif player_spawn_points.size() > 0:
+		target = player_spawn_points[0].get_parent()
+		
+	if target and "position" in target:
+		var original_pos = target.position
+		var tween = create_tween()
+		var steps = int(duration / 0.05)
+		for i in range(steps):
+			var offset = Vector2(randf_range(-intensity, intensity), randf_range(-intensity, intensity))
+			tween.tween_property(target, "position", original_pos + offset, 0.05)
+		tween.tween_property(target, "position", original_pos, 0.05)
+
 func _play_status_vfx(unit: Node2D, status: String):
 	if not is_instance_valid(unit): return
 	var s = status.to_lower()
@@ -2925,12 +3067,20 @@ func _play_status_vfx(unit: Node2D, status: String):
 		unit.add_child(particles)
 		get_tree().create_timer(1.5).timeout.connect(particles.queue_free)
 		
+		if s == "corrosion":
+			var tween = create_tween()
+			var base_mod = unit.modulate
+			for i in range(5):
+				tween.tween_property(unit, "modulate", Color(0.6, 1.0, 0.4), 0.05)
+				tween.tween_property(unit, "modulate", base_mod, 0.05)
+			tween.tween_property(unit, "modulate", Color.WHITE, 0.05)
+		
 	# 2. Glowing Shields (Invulnerable, Reflect, Guards)
 	elif s in ["shield", "invulnerable", "guarded", "static_reflection", "mirror_coat", "reflective_shell", "absorb_shield", "physical_resist", "special_resist", "inertia_feedback"]:
 		var ring = Line2D.new()
 		var points = []
 		var segments = 32
-		var radius = 70.0
+		var radius = 90.0
 		for i in range(segments + 1):
 			var angle = (float(i) / segments) * TAU
 			points.append(Vector2(cos(angle), sin(angle)) * radius)
@@ -2946,9 +3096,9 @@ func _play_status_vfx(unit: Node2D, status: String):
 		ring.scale = Vector2(0.1, 0.1)
 		
 		var tween = create_tween()
-		tween.tween_property(ring, "scale", Vector2(1.2, 1.2), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tween.parallel().tween_property(ring, "width", 2.0, 0.3)
-		tween.tween_property(ring, "modulate:a", 0.0, 0.4)
+		tween.tween_property(ring, "scale", Vector2(1.2, 1.2), 0.8).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(ring, "width", 2.0, 0.8)
+		tween.tween_property(ring, "modulate:a", 0.0, 0.9)
 		tween.tween_callback(ring.queue_free)
 		
 	# 3. Erratic Sparks (Radiation, Unstable, Overload, Explosive)
@@ -2972,6 +3122,31 @@ func _play_status_vfx(unit: Node2D, status: String):
 		unit.add_child(particles)
 		particles.position = Vector2(0, -40)
 		get_tree().create_timer(1.0).timeout.connect(particles.queue_free)
+		
+		if s == "unstable":
+			var tween = create_tween()
+			var base_pos = unit.position
+			for i in range(5):
+				tween.tween_property(unit, "position", base_pos + Vector2(randf_range(-12, 12), randf_range(-6, 6)), 0.05)
+			tween.tween_property(unit, "position", base_pos, 0.05)
+		elif s == "overload":
+			var tween = create_tween()
+			var base_mod = unit.modulate
+			for i in range(5):
+				tween.tween_property(unit, "modulate", Color(2.0, 2.0, 0.5), 0.05)
+				tween.tween_property(unit, "modulate", base_mod, 0.05)
+			tween.tween_property(unit, "modulate", Color.WHITE, 0.05)
+		elif s in ["explosive", "death_bomb"]:
+			var tween = create_tween()
+			var base_mod = unit.modulate
+			var base_scale = unit.scale
+			for i in range(4):
+				tween.tween_property(unit, "modulate", Color(3.0, 0.5, 0.2), 0.1)
+				tween.parallel().tween_property(unit, "scale", base_scale * 1.05, 0.1)
+				tween.tween_property(unit, "modulate", base_mod, 0.1)
+				tween.parallel().tween_property(unit, "scale", base_scale, 0.1)
+			tween.tween_property(unit, "modulate", Color.WHITE, 0.05)
+			tween.parallel().tween_property(unit, "scale", base_scale, 0.05)
 
 	# 4. Mind/Senses (Stun, Insanity, Refracted, Taunt)
 	elif s in ["stun", "insanity", "refracted", "taunt", "marked_covalent"]:
@@ -3004,6 +3179,13 @@ func _play_status_vfx(unit: Node2D, status: String):
 		for i in range(4):
 			tween.tween_property(unit, "position", base_pos + Vector2(randf_range(-10, 10), 0), 0.05)
 		tween.tween_property(unit, "position", base_pos, 0.05)
+		
+		if s == "insanity":
+			var color_tween = create_tween()
+			for i in range(6):
+				var glitch_color = [Color(1, 0, 1), Color(0, 1, 1), Color(0.2, 0.2, 0.2), Color(1, 1, 0)].pick_random() # Magenta, Cyan, Dark Grey, Yellow
+				color_tween.tween_property(unit, "modulate", glitch_color, 0.04)
+			color_tween.tween_property(unit, "modulate", Color.WHITE, 0.05)
 
 	# 5. Soot/Dust (Carbonized, Oxidized)
 	elif s in ["carbonized", "oxidized"]:
@@ -3031,25 +3213,49 @@ func _play_status_vfx(unit: Node2D, status: String):
 func _strip_temporary_buffs(unit: BattleMonster):
 	if not "active_effects" in unit: return
 	
+	# Only remove statuses when the unit is actually dead
+	if not unit.is_dead: return
+	
 	# Iterate backwards to safely remove or revert
 	for i in range(unit.active_effects.size() - 1, -1, -1):
 		var effect = unit.active_effects[i]
-		var duration = effect.get("duration", 0)
 		
-		# Assume duration >= 50 is "permanent" for the run (like 99)
-		if duration < 50:
-			if effect.get("type") == "stat_mod":
-				var stat = effect.get("stat")
-				var amount = effect.get("amount", 0)
-				if unit.stats.has(stat):
-					unit.stats[stat] -= amount
-			elif effect.get("type") == "swap_stats":
-				# Revert swap
-				var stats_swapped = effect.get("stats", [])
-				if stats_swapped.size() == 2:
-					var s1 = stats_swapped[0]
-					var s2 = stats_swapped[1]
-					var v1 = unit.stats.get(s1, 0)
-					var v2 = unit.stats.get(s2, 0)
-					unit.stats[s1] = v2
-					unit.stats[s2] = v1
+		if effect.get("type") == "stat_mod":
+			var stat = effect.get("stat")
+			var amount = effect.get("amount", 0)
+			if unit.stats.has(stat):
+				unit.stats[stat] -= amount
+		elif effect.get("type") == "swap_stats":
+			# Revert swap
+			var stats_swapped = effect.get("stats", [])
+			if stats_swapped.size() == 2:
+				var s1 = stats_swapped[0]
+				var s2 = stats_swapped[1]
+				var v1 = unit.stats.get(s1, 0)
+				var v2 = unit.stats.get(s2, 0)
+				unit.stats[s1] = v2
+				unit.stats[s2] = v1
+				
+		unit.active_effects.remove_at(i)
+
+func _sync_roster_order():
+	if not PlayerData: return
+	
+	var new_team: Array[MonsterData] = []
+	for u in active_player_monsters:
+		if is_instance_valid(u):
+			new_team.append(u.data)
+		else:
+			new_team.append(null)
+			
+	for d in benched_player_monsters:
+		if d:
+			new_team.append(d)
+			
+	# Trim trailing nulls
+	while new_team.size() > 0 and new_team.back() == null:
+		new_team.pop_back()
+		
+	PlayerData.active_team = new_team
+	if PlayerData.has_method("save_game"):
+		PlayerData.save_game()

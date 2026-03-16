@@ -1273,8 +1273,8 @@ func _update_background_transform():
 func _create_ambient_dust():
 	_ambient_particles = CPUParticles2D.new()
 	_ambient_particles.name = "AmbientDust"
-	_ambient_particles.amount = 40
-	_ambient_particles.lifetime = 8.0
+	_ambient_particles.amount = 60
+	_ambient_particles.lifetime = 10.0
 	_ambient_particles.preprocess = 8.0
 	_ambient_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	# emission_rect_extents set in update_transform

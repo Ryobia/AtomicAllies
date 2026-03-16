@@ -37,6 +37,9 @@ var settings: Dictionary = {} # Volume, Fullscreen, etc.
 var quest_data: Dictionary = { "z": 3, "stage": 0 } # z: Atomic Number, stage: 0=Run, 1=Fuse
 var tutorial_step: int = 0 # 0: Not started, 1+: In progress, 999: Complete
 var has_seen_shop_tutorial: bool = false
+var has_seen_replay_tutorial: bool = false
+var has_seen_detail_tutorial: bool = false
+var has_seen_synergy_tutorial: bool = false
 
 # Resources
 var resources = {
@@ -179,7 +182,10 @@ func save_game():
 		"seen_enemies": seen_enemies,
 		"settings": settings,
 		"quest_data": quest_data,
-		"has_seen_shop_tutorial": has_seen_shop_tutorial
+		"has_seen_shop_tutorial": has_seen_shop_tutorial,
+		"has_seen_replay_tutorial": has_seen_replay_tutorial,
+		"has_seen_detail_tutorial": has_seen_detail_tutorial,
+		"has_seen_synergy_tutorial": has_seen_synergy_tutorial
 	}
 	
 	# Serialize Monsters
@@ -266,6 +272,15 @@ func load_game():
 		if "has_seen_shop_tutorial" in save_data:
 			has_seen_shop_tutorial = save_data["has_seen_shop_tutorial"]
 
+		if "has_seen_replay_tutorial" in save_data:
+			has_seen_replay_tutorial = save_data["has_seen_replay_tutorial"]
+
+		if "has_seen_detail_tutorial" in save_data:
+			has_seen_detail_tutorial = save_data["has_seen_detail_tutorial"]
+
+		if "has_seen_synergy_tutorial" in save_data:
+			has_seen_synergy_tutorial = save_data["has_seen_synergy_tutorial"]
+
 		if "monsters" in save_data:
 			owned_monsters.clear()
 			for m_data in save_data["monsters"]:
@@ -302,6 +317,9 @@ func reset_save():
 	class_resonance.clear()
 	tutorial_step = 0
 	has_seen_shop_tutorial = false
+	has_seen_replay_tutorial = false
+	has_seen_detail_tutorial = false
+	has_seen_synergy_tutorial = false
 	ship_upgrades.clear()
 	seen_enemies.clear()
 	inventory.clear()

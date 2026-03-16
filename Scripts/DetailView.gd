@@ -33,9 +33,11 @@ var prev_button
 var next_button
 var replay_container
 var replay_btn
+var back_btn
 var _run_confirm_popup
 var _touch_start_pos = Vector2.ZERO
 var _min_swipe_distance = 50
+var _tutorial_step: int = 0
 
 
 func _ready():
@@ -64,16 +66,52 @@ func _ready():
 	next_button = find_child("NextButton", true, false)
 	replay_container = find_child("ReplayContainer", true, false)
 	replay_btn = find_child("ReplayButton", true, false)
+	back_btn = find_child("BackButton", true, false)
 	
 	if prev_button: prev_button.pressed.connect(_on_prev_pressed)
 	if next_button: next_button.pressed.connect(_on_next_pressed)
 	
 	if view_toggle:
 		view_toggle.toggled.connect(_on_view_toggle_toggled)
+		view_toggle.text = "View: Sprite" if view_toggle.button_pressed else "View: Atom"
+		view_toggle.add_theme_font_size_override("font_size", 28)
+		view_toggle.add_theme_color_override("font_color", Color("#60fafc"))
+		view_toggle.add_theme_color_override("font_pressed_color", Color("#010813"))
+		view_toggle.add_theme_color_override("font_hover_color", Color("#ffd700"))
+		view_toggle.add_theme_color_override("font_hover_pressed_color", Color("#010813"))
+		
+		var vt_normal = StyleBoxFlat.new()
+		vt_normal.bg_color = Color("#010813")
+		vt_normal.border_color = Color("#60fafc")
+		vt_normal.set_border_width_all(2)
+		vt_normal.set_corner_radius_all(8)
+		vt_normal.content_margin_left = 15
+		vt_normal.content_margin_right = 15
+		vt_normal.content_margin_top = 8
+		vt_normal.content_margin_bottom = 8
+		
+		var vt_pressed = vt_normal.duplicate()
+		vt_pressed.bg_color = Color("#60fafc")
+		
+		var vt_hover = vt_normal.duplicate()
+		vt_hover.bg_color = Color("#0a1a2a")
+		vt_hover.border_color = Color("#ffd700")
+		
+		view_toggle.add_theme_stylebox_override("normal", vt_normal)
+		view_toggle.add_theme_stylebox_override("pressed", vt_pressed)
+		view_toggle.add_theme_stylebox_override("hover", vt_hover)
+		view_toggle.add_theme_stylebox_override("hover_pressed", vt_pressed)
+		view_toggle.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	
 	if replay_btn:
 		replay_btn.pressed.connect(_on_replay_pressed)
 	
+	if back_btn:
+		# Clear existing connections to prevent it from routing to the main menu
+		for c in back_btn.pressed.get_connections():
+			back_btn.pressed.disconnect(c["callable"])
+		back_btn.pressed.connect(_on_back_pressed)
+
 	if class_help_icon:
 		class_help_icon.theme = GlobalManager.tooltip_theme
 		# Mobile support: Make icon clickable to show tooltip
@@ -134,6 +172,14 @@ func _ready():
 		update_ui()
 		_update_visuals()
 		_update_navigation_buttons()
+		
+	if PlayerData and not PlayerData.has_seen_detail_tutorial:
+		get_tree().create_timer(0.5).timeout.connect(_start_detail_tutorial)
+
+func _exit_tree():
+	if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+		TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
+		TutorialManager.hide_tutorial()
 
 func _process(_delta):
 	if is_instance_valid(current_monster):
@@ -312,6 +358,8 @@ func update_ui():
 				moves_container.add_child(sep)
 
 func _on_view_toggle_toggled(_toggled_on: bool):
+	if view_toggle:
+		view_toggle.text = "View: Sprite" if _toggled_on else "View: Atom"
 	_update_visuals()
 
 func _navigate_monster(direction: int):
@@ -963,3 +1011,62 @@ func _show_run_confirmation(monster: MonsterData):
 	
 	add_child(_run_confirm_popup)
 	_run_confirm_popup.position = (get_viewport_rect().size - _run_confirm_popup.custom_minimum_size) / 2
+
+func _on_back_pressed():
+	if back_btn: back_btn.disabled = true
+	if get_tree().current_scene != self:
+		queue_free()
+	else:
+		GlobalManager.switch_scene("periodic_table")
+
+func _start_detail_tutorial():
+	if not TutorialManager: return
+	_tutorial_step = 0
+	
+	if TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+		TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
+		
+	TutorialManager.story_button.pressed.connect(_on_tutorial_next)
+	_advance_tutorial()
+
+func _on_tutorial_next():
+	_tutorial_step += 1
+	_advance_tutorial()
+
+func _advance_tutorial():
+	if not TutorialManager: return
+	
+	match _tutorial_step:
+		0:
+			TutorialManager.show_instruction("Welcome to the Element Detail View! Here you can review the combat capabilities of your synthesized elements.", null, "happy")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Next"
+		1:
+			var target = hp_label.get_parent() if hp_label else stats_label
+			TutorialManager.show_instruction("These are the unit's Base Stats. They determine health, damage, resistance, turn order, and critical hit chances in battle.", target, "talk")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Next"
+		2:
+			var target = class_container if class_container else class_label
+			TutorialManager.show_instruction("Every element belongs to an Atomic Class. Classes determine their battle role, like Glass Cannon or Sturdy Tank.", target, "talk")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Next"
+		3:
+			var target = stability_bar
+			TutorialManager.show_instruction("This is the Stability Bar. It represents the purity of your synthesis.", target, "warning")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Next"
+		4:
+			TutorialManager.show_instruction("Stability is crucial. It directly multiplies all base stats! For example, reaching 50% Stability grants a massive +25% bonus to all stats.", stability_bar, "talk")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Next"
+		5:
+			TutorialManager.show_instruction("At 100% Stability, the stat bonus reaches +50%, AND the unit unlocks its ultimate Class Mastery passive! Keep fusing to perfect your elements.", stability_bar, "happy")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Got it!"
+		_:
+			TutorialManager.hide_tutorial()
+			PlayerData.has_seen_detail_tutorial = true
+			PlayerData.save_game()
+			if TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+				TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)

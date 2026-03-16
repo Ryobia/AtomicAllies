@@ -8,6 +8,10 @@ signal cancel_targeting
 signal inspect_unit(index, is_player) # New signal for long press
 signal item_selected(item_id)
 signal swap_selected(index)
+signal battle_finished
+
+# Map item IDs to AtlasTextures in the Godot Inspector
+@export var item_icons: Dictionary = {}
 
 # --- Resource Icons ---
 @export var icon_energy: Texture2D
@@ -60,12 +64,15 @@ var _pressed_is_player: bool = false
 var _press_timer: float = 0.0
 var _long_press_triggered: bool = false
 var _stat_popup_instance: Control = null
+var _item_menu_instance: Control = null
+var _swap_menu_instance: Control = null
 
 var bench_container: HBoxContainer
 var _control_deck_grid: GridContainer = null
 var _default_columns: int = 1
 var _can_swap_state: bool = true
 
+var _reward_icons = {}
 var stat_popup_scene = preload("res://Scenes/StatPopup.tscn")
 var cooldowns: Dictionary = {}
 
@@ -1061,35 +1068,96 @@ func show_items(items: Dictionary):
 		if btn: btn.visible = false
 	if back_btn: back_btn.visible = false
 
-	if not move_container: return
-	if move_container is GridContainer:
-		move_container.columns = 1
+	if _item_menu_instance:
+		_item_menu_instance.queue_free()
 		
-	_toggle_grid_layout(true)
-	move_container.visible = true
+	_item_menu_instance = PanelContainer.new()
+	_item_menu_instance.set_anchors_preset(Control.PRESET_CENTER)
+	_item_menu_instance.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_item_menu_instance.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_item_menu_instance.custom_minimum_size = Vector2(800, 800)
+	_item_menu_instance.z_index = 100
 	
-	for child in move_container.get_children():
-		child.queue_free()
-		
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	_item_menu_instance.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 30)
+	margin.add_theme_constant_override("margin_right", 30)
+	margin.add_theme_constant_override("margin_top", 30)
+	margin.add_theme_constant_override("margin_bottom", 30)
+	_item_menu_instance.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 20)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "ITEMS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color("#ffd700"))
+	vbox.add_child(title)
+	
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+	
+	var grid = GridContainer.new()
+	grid.columns = 1
+	grid.add_theme_constant_override("h_separation", 20)
+	grid.add_theme_constant_override("v_separation", 20)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(grid)
+	
 	for item_id in items:
 		var count = items[item_id]
 		var data = CombatManager.get_item_data(item_id)
 		var btn = Button.new()
-		btn.text = "%s (x%d)" % [data.name, count]
+		
+		btn.text = " %s\n(x%d)" % [data.name, count]
+		if item_icons.has(item_id):
+			btn.icon = item_icons[item_id]
+			btn.expand_icon = true
+			
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		btn.custom_minimum_size = Vector2(350, 120)
 		_style_button(btn)
-		btn.pressed.connect(func(): item_selected.emit(item_id))
-		move_container.add_child(btn)
+		btn.add_theme_font_size_override("font_size", 36)
+		
+		btn.pressed.connect(func(): 
+			item_selected.emit(item_id)
+			if _item_menu_instance:
+				_item_menu_instance.queue_free()
+				_item_menu_instance = null
+		)
+		grid.add_child(btn)
 		
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Back"
-	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_btn.custom_minimum_size = Vector2(0, 80)
 	_style_button(cancel_btn)
-	cancel_btn.pressed.connect(show_actions)
-	move_container.add_child(cancel_btn)
+	cancel_btn.pressed.connect(func():
+		show_actions()
+	)
+	vbox.add_child(cancel_btn)
+	
+	add_child(_item_menu_instance)
 
 func show_actions():
+	if _item_menu_instance:
+		_item_menu_instance.queue_free()
+		_item_menu_instance = null
+		
+	if _swap_menu_instance:
+		_swap_menu_instance.queue_free()
+		_swap_menu_instance = null
+		
 	if move_container: move_container.visible = false
 	_toggle_grid_layout(false)
 	
@@ -1118,18 +1186,52 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		if btn: btn.visible = false
 	if back_btn: back_btn.visible = false
 		
-	# Show move container (reused for swap list)
-	if not move_container: return
-	_toggle_grid_layout(true)
-	move_container.visible = true
-	
-	if move_container is GridContainer:
-		move_container.columns = 1
+	if _swap_menu_instance:
+		_swap_menu_instance.queue_free()
 		
+	_swap_menu_instance = PanelContainer.new()
+	_swap_menu_instance.set_anchors_preset(Control.PRESET_CENTER)
+	_swap_menu_instance.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_swap_menu_instance.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_swap_menu_instance.custom_minimum_size = Vector2(800, 600)
+	_swap_menu_instance.z_index = 100
 	
-	# Clear old buttons
-	for child in move_container.get_children():
-		child.queue_free()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	_swap_menu_instance.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 30)
+	margin.add_theme_constant_override("margin_right", 30)
+	margin.add_theme_constant_override("margin_top", 30)
+	margin.add_theme_constant_override("margin_bottom", 30)
+	_swap_menu_instance.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 20)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "SWAP UNIT"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color("#ffd700"))
+	vbox.add_child(title)
+	
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(scroll)
+	
+	var grid = GridContainer.new()
+	grid.columns = 1
+	grid.add_theme_constant_override("h_separation", 20)
+	grid.add_theme_constant_override("v_separation", 20)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(grid)
 		
 	# Create buttons for benched monsters
 	for i in range(monsters.size()):
@@ -1137,25 +1239,28 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		var m = data.monster
 		var is_dead = data.is_dead
 		
+		var base_color = Color("#60fafc")
+		if m and "group" in m:
+			base_color = AtomicConfig.GROUP_COLORS.get(m.group, Color("#60fafc"))
+			
 		var btn = Button.new()
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		btn.custom_minimum_size = Vector2(0, 100)
-		_style_button(btn)
+		btn.custom_minimum_size = Vector2(350, 120)
+		_style_button(btn, base_color)
 		
-		var margin = MarginContainer.new()
-		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		margin.add_theme_constant_override("margin_left", 10)
-		margin.add_theme_constant_override("margin_right", 10)
-		margin.add_theme_constant_override("margin_top", 5)
-		margin.add_theme_constant_override("margin_bottom", 5)
-		btn.add_child(margin)
+		var btn_margin = MarginContainer.new()
+		btn_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		btn_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn_margin.add_theme_constant_override("margin_left", 10)
+		btn_margin.add_theme_constant_override("margin_right", 10)
+		btn_margin.add_theme_constant_override("margin_top", 10)
+		btn_margin.add_theme_constant_override("margin_bottom", 10)
+		btn.add_child(btn_margin)
 		
 		var hbox = HBoxContainer.new()
 		hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hbox.add_theme_constant_override("separation", 15)
-		margin.add_child(hbox)
+		btn_margin.add_child(hbox)
 		
 		var icon_con = Control.new()
 		icon_con.custom_minimum_size = Vector2(80, 80)
@@ -1165,6 +1270,12 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		
 		_load_monster_visual(icon_con, m)
 		
+		var text_vbox = VBoxContainer.new()
+		text_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		text_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		hbox.add_child(text_vbox)
+		
 		var lbl = Label.new()
 		if is_dead:
 			lbl.text = "%s (Fainted)" % [m.monster_name]
@@ -1173,26 +1284,54 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		else:
 			lbl.text = "%s" % [m.monster_name]
 			
-		lbl.add_theme_font_size_override("font_size", 24)
+		lbl.add_theme_font_size_override("font_size", 28)
 		lbl.add_theme_color_override("font_color", Color("#010813"))
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hbox.add_child(lbl)
+		text_vbox.add_child(lbl)
+		
+		var hp_bar = ProgressBar.new()
+		hp_bar.custom_minimum_size.y = 15
+		hp_bar.show_percentage = false
+		hp_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		
+		var max_hp = data.get("max_hp", m.get_current_stats().max_hp)
+		var cur_hp = data.get("hp", max_hp if not is_dead else 0)
+		
+		hp_bar.max_value = max_hp
+		hp_bar.value = cur_hp
+		
+		var bg_style = StyleBoxFlat.new()
+		bg_style.bg_color = Color(0, 0, 0, 0.3)
+		hp_bar.add_theme_stylebox_override("background", bg_style)
+		
+		_update_hp_bar_style(hp_bar, cur_hp, max_hp)
+		
+		text_vbox.add_child(hp_bar)
 		
 		if not is_dead:
-			btn.pressed.connect(func(): swap_selected.emit(i))
-		move_container.add_child(btn)
+			btn.pressed.connect(func(): 
+				swap_selected.emit(i)
+				if _swap_menu_instance:
+					_swap_menu_instance.queue_free()
+					_swap_menu_instance = null
+			)
+		grid.add_child(btn)
 		
 	if not forced:
 		# Cancel Button
 		var cancel_btn = Button.new()
 		cancel_btn.text = "Back"
 		cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cancel_btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		cancel_btn.custom_minimum_size = Vector2(0, 80)
 		_style_button(cancel_btn)
-		cancel_btn.pressed.connect(show_actions)
-		move_container.add_child(cancel_btn)
+		cancel_btn.pressed.connect(func():
+			show_actions()
+		)
+		vbox.add_child(cancel_btn)
+		
+	add_child(_swap_menu_instance)
 
 func _load_monster_visual(parent: Control, monster: MonsterData):
 	if not monster: return
@@ -1228,12 +1367,13 @@ func _load_monster_visual(parent: Control, monster: MonsterData):
 		tex_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 		parent.add_child(tex_rect)
 
-func _style_button(btn: Button):
+func _style_button(btn: Button, base_color: Color = Color("#60fafc")):
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color("#60fafc")
+	style.bg_color = base_color
 	style.bg_color.a = 0.75
 	style.border_color = Color("#010813")
 	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
 	
 	var hover_style = style.duplicate()
 	hover_style.bg_color = style.bg_color.lightened(0.2)
@@ -1278,6 +1418,8 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 	label.add_theme_color_override("font_color", Color("#ffd700") if player_won else Color("#ff4d4d"))
 	vbox.add_child(label)
 	
+	_reward_icons.clear()
+	
 	# Display Rewards
 	if player_won and not rewards.is_empty():
 		var reward_header = Label.new()
@@ -1302,6 +1444,7 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				icon.custom_minimum_size = Vector2(50, 50)
 				row.add_child(icon)
+				_reward_icons["binding_energy"] = icon
 			
 			var be_lbl = Label.new()
 			be_lbl.text = "+0 Binding Energy"
@@ -1327,6 +1470,7 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				icon.custom_minimum_size = Vector2(50, 50)
 				row.add_child(icon)
+				_reward_icons["neutron_dust"] = icon
 			
 			var dust_lbl = Label.new()
 			dust_lbl.text = "+0 Neutron Dust"
@@ -1352,6 +1496,7 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				icon.custom_minimum_size = Vector2(50, 50)
 				row.add_child(icon)
+				_reward_icons["gems"] = icon
 			
 			var gems_lbl = Label.new()
 			gems_lbl.text = "+0 Gems"
@@ -1366,9 +1511,82 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 	btn.text = "Continue"
 	btn.custom_minimum_size = Vector2(250, 60)
 	_style_button(btn) # Reuse your styling
-	btn.pressed.connect(_on_quit_confirmed)
+	btn.pressed.connect(_on_result_continue_pressed)
 	vbox.add_child(btn)
 
+func _on_result_continue_pressed():
+	if _reward_icons.is_empty():
+		battle_finished.emit()
+		return
+		
+	# Disable all buttons to prevent double click routing
+	var buttons = find_children("*", "Button", true, false)
+	for b in buttons:
+		if b is Button: b.disabled = true
+			
+	var duration = 0.8
+	var tween = create_tween()
+	tween.set_parallel(true)
+	
+	var header = get_tree().root.find_child("ResourceHeader", true, false)
+	if not header: header = find_child("ResourceHeader", true, false)
+	
+	if header:
+		header.visible = true
+		if "modulate" in header:
+			header.modulate.a = 0.0
+			tween.tween_property(header, "modulate:a", 1.0, 0.2)
+		elif header.get_child_count() > 0 and "modulate" in header.get_child(0):
+			var hc = header.get_child(0)
+			hc.modulate.a = 0.0
+			tween.tween_property(hc, "modulate:a", 1.0, 0.2)
+		
+	var animated_any = false
+	for type in _reward_icons:
+		var icon_rect = _reward_icons[type]
+		if is_instance_valid(icon_rect):
+			var fly_icon = Sprite2D.new()
+			fly_icon.texture = icon_rect.texture
+			var global_rect = icon_rect.get_global_rect()
+			fly_icon.global_position = global_rect.position + (global_rect.size / 2.0)
+			fly_icon.z_index = 300
+			
+			var tex_size = fly_icon.texture.get_size()
+			if tex_size.x > 0:
+				var s = min(global_rect.size.x, global_rect.size.y) / max(tex_size.x, 1.0)
+				fly_icon.scale = Vector2(s, s)
+			add_child(fly_icon)
+			
+			var target_pos = Vector2(size.x / 2.0, 50)
+			if header:
+				var target_node = null
+				if type == "binding_energy": target_node = header.find_child("*Binding*", true, false)
+				elif type == "neutron_dust": target_node = header.find_child("*Dust*", true, false)
+				elif type == "gems": target_node = header.find_child("*Gem*", true, false)
+				
+				if target_node:
+					var tgt_rect = target_node.get_global_rect()
+					target_pos = tgt_rect.position + (tgt_rect.size / 2.0)
+				elif header.has_method("get_global_rect"):
+					var head_rect = header.get_global_rect()
+					target_pos = head_rect.position + (head_rect.size / 2.0)
+				elif header.get_child_count() > 0 and header.get_child(0).has_method("get_global_rect"):
+					var head_rect = header.get_child(0).get_global_rect()
+					target_pos = head_rect.position + (head_rect.size / 2.0)
+					
+			tween.tween_property(fly_icon, "global_position", target_pos, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+			tween.tween_property(fly_icon, "scale", Vector2(0.2, 0.2), duration)
+			tween.tween_property(fly_icon, "modulate:a", 0.0, 0.2).set_delay(duration - 0.2)
+			
+			get_tree().create_timer(duration).timeout.connect(fly_icon.queue_free)
+			animated_any = true
+			
+	if animated_any:
+		var seq = create_tween()
+		seq.tween_interval(duration + 0.1)
+		seq.tween_callback(func(): battle_finished.emit())
+	else:
+		battle_finished.emit()
 func _toggle_grid_layout(is_move_view: bool):
 	if _control_deck_grid:
 		if is_move_view:

@@ -61,7 +61,7 @@ const GROUP_TO_RACE_MAP = {
 # The "Cost" of each enemy type in slots
 const WEIGHTS = {
     "grunt": 1,
-    "assassin": 2,
+    "assassin": 3,
     "brute": 2,
     "commander": 3,
     "king": 5
@@ -107,7 +107,7 @@ func start_node_run(target_z: int):
     var base_waves = 3 + int(target_z / 16.0)
     
     if current_enemy_race == "brood":
-        max_run_waves = base_waves + 2 # Swarm: More waves
+        max_run_waves = base_waves + 1 # Swarm: +1 wave
     else:
         max_run_waves = base_waves
     
@@ -141,22 +141,7 @@ func on_battle_ended(player_won: bool, rewards: Dictionary = {}, final_team_stat
                 # Continue Run
                 current_run_wave += 1
                 
-                var skip_rest = false
-                if current_enemy_race == "brood":
-                    # Swarm behavior: Fight 2 waves back-to-back before resting
-                    # Wave 1 -> 2 (Skip Rest)
-                    # Wave 2 -> 3 (Rest)
-                    # Wave 3 -> 4 (Skip Rest)
-                    # Wave 4 -> 5 (Rest)
-                    if current_run_wave % 2 == 0:
-                        skip_rest = true
-                
-                if skip_rest:
-                    print("Swarm continues! Immediate next wave...")
-                    start_next_wave()
-                else:
-                    print("Wave Complete. Proceeding to Rest Site...")
-                    GlobalManager.switch_scene("rest_site")
+                print("Wave Complete. Proceeding to Rest Site...")
             else:
                 # Run Complete!
                 print("Run Complete! Blueprint Unlocked: ", current_run_target_z)
@@ -208,12 +193,15 @@ func generate_level_encounter(level: int) -> Array[MonsterData]:
     # 2. Determine Available Enemy Types based on progression
     var pool = ["grunt"]
     
+    # Base enemy type unlocks strictly on the target element (Z) to prevent creeping into next tiers mid-run
+    var unlock_level = current_run_target_z if is_rogue_run else level
+    
     # Special restriction for Lithium run: Only Grunts allowed
     if not (is_rogue_run and current_run_target_z == 3):
-        if level >= 2: pool.append("brute")
-        if level >= 7: pool.append("assassin")
-        if level >= 10: pool.append("commander")
-        if level >= 15: pool.append("king")
+        if unlock_level >= 2: pool.append("brute")
+        if unlock_level >= 7: pool.append("assassin")
+        if unlock_level >= 10: pool.append("commander")
+        if unlock_level >= 15: pool.append("king")
     
     # 3. Fill the Budget
     var current_weight = 0

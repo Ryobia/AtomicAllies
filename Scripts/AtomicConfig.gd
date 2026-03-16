@@ -188,39 +188,115 @@ const GROUP_MOVES = {
 	
 	# --- Enemy Movesets (Defaults) ---
 	# Void
-	Group.VOID_GRUNT: [ {"name": "Void Scratch", "power": 20, "accuracy": 100, "type": "Physical", "description": "Basic void attack."}],
-	Group.VOID_ASSASSIN: [ {"name": "Shadow Strike", "power": 40, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Snipe attack that bypasses the frontline."}],
-	Group.VOID_BRUTE: [ {"name": "Void Harden", "power": 0, "type": "Status_Friendly", "target_type": "Self", "effects": [{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3}]}, {"name": "Heavy Slam", "power": 50, "accuracy": 90, "type": "Physical"}],
-	Group.VOID_COMMANDER: [ {"name": "Void Command", "power": 0, "type": "Status_Friendly", "target_type": "Ally", "effects": [{"type": "stat_mod", "stat": "attack", "amount": 20, "percent": true, "duration": 3}, {"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 3}]}, {"name": "Obliterate", "power": 80, "accuracy": 85, "type": "Special"}],
-	Group.VOID_KING: [ {"name": "Entropy", "power": 100, "accuracy": 100, "type": "Special", "description": "Deals massive damage."}],
+	Group.VOID_GRUNT: [
+		{"name": "Void Scratch", "power": 20, "accuracy": 100, "type": "Physical", "description": "Basic void attack."},
+		{"name": "Void Fortify", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 25, "percent": true, "duration": 3}]}
+	],
+	Group.VOID_ASSASSIN: [
+		{"name": "Quick Slash", "power": 25, "accuracy": 100, "type": "Physical", "description": "Fast physical strike."},
+		{"name": "Shadow Strike", "power": 45, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Snipe attack that bypasses the frontline.", "cooldown": 3}
+	],
+	Group.VOID_BRUTE: [
+		{"name": "Heavy Slam", "power": 50, "accuracy": 90, "type": "Physical", "description": "A heavy physical attack."},
+		{"name": "Void Harden", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense heavily.", "cooldown": 4, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 40, "percent": true, "duration": 3}]}
+	],
+	Group.VOID_COMMANDER: [
+		{"name": "Void Strike", "power": 40, "accuracy": 100, "type": "Physical", "description": "Strong void attack."},
+		{"name": "Void Command", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Buffs an ally's Attack and Speed.", "cooldown": 4, "effects": [{"type": "stat_mod", "stat": "attack", "amount": 20, "percent": true, "duration": 3}, {"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 3}]},
+		{"name": "Obliterate", "power": 80, "accuracy": 85, "type": "Special", "description": "Devastating special attack.", "cooldown": 3}
+	],
+	Group.VOID_KING: [
+		{"name": "Royal Strike", "power": 50, "accuracy": 100, "type": "Physical", "description": "A commanding physical blow."},
+		{"name": "Entropy", "power": 100, "accuracy": 100, "type": "Special", "description": "Deals massive damage to a single target.", "cooldown": 4}
+	],
 	
 	# Eldritch
-	Group.ELDRITCH_GRUNT: [ {"name": "Mind Poke", "power": 20, "accuracy": 100, "type": "Special", "description": "Basic psychic attack."}],
-	Group.ELDRITCH_ASSASSIN: [ {"name": "Psychic Knife", "power": 45, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Snipe attack that bypasses the frontline."}],
-	Group.ELDRITCH_BRUTE: [ {"name": "Tentacle Crush", "power": 55, "accuracy": 90, "type": "Physical", "description": "Strong physical attack."}],
-	Group.ELDRITCH_COMMANDER: [ {"name": "Madness Aura", "power": 0, "type": "Status_Hostile", "description": "Applies a random debuff to all enemies."}],
-	Group.ELDRITCH_KING: [ {"name": "Cosmic Horror", "power": 120, "accuracy": 80, "type": "Special", "description": "Deals damage and reduces sanity."}],
+	Group.ELDRITCH_GRUNT: [
+		{"name": "Mind Poke", "power": 20, "accuracy": 100, "type": "Special", "description": "Basic psychic attack."},
+		{"name": "Weird Chant", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Slows the target.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
+	],
+	Group.ELDRITCH_ASSASSIN: [
+		{"name": "Tentacle Slap", "power": 25, "accuracy": 100, "type": "Physical", "description": "A quick physical slap."},
+		{"name": "Psychic Knife", "power": 45, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Snipe attack that bypasses the frontline.", "cooldown": 3}
+	],
+	Group.ELDRITCH_BRUTE: [
+		{"name": "Tentacle Crush", "power": 55, "accuracy": 90, "type": "Physical", "description": "Strong physical attack."},
+		{"name": "Eldritch Guard", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a protective shield.", "cooldown": 4, "effects": [{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.25}]}
+	],
+	Group.ELDRITCH_COMMANDER: [
+		{"name": "Eldritch Blast", "power": 40, "accuracy": 100, "type": "Special", "description": "Standard energy blast."},
+		{"name": "Madness Aura", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Applies a random debuff to all enemies.", "cooldown": 4, "effects": [{"effect": "madness_aura"}]}
+	],
+	Group.ELDRITCH_KING: [
+		{"name": "Mind Flay", "power": 50, "accuracy": 100, "type": "Special", "description": "A powerful psychic assault."},
+		{"name": "Cosmic Horror", "power": 120, "accuracy": 80, "type": "Special", "description": "Deals massive damage and reduces sanity.", "cooldown": 4}
+	],
 	
 	# Chaos
-	Group.CHAOS_GRUNT: [ {"name": "Glitch Hit", "power": 30, "accuracy": 80, "type": "Physical", "description": "Unstable physical attack."}],
-	Group.CHAOS_ASSASSIN: [ {"name": "Pixel Stab", "power": 50, "accuracy": 90, "type": "Physical", "description": "Strong physical attack."}],
-	Group.CHAOS_BRUTE: [ {"name": "Static Shield", "power": 0, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a shield and reflects damage."}],
-	Group.CHAOS_COMMANDER: [ {"name": "Scramble", "power": 40, "accuracy": 100, "type": "Special", "description": "Deals damage and shuffles the target team's positions."}],
-	Group.CHAOS_KING: [ {"name": "Reality Break", "power": 99, "accuracy": 50, "type": "Special", "description": "Deals massive damage with low accuracy."}],
+	Group.CHAOS_GRUNT: [
+		{"name": "Glitch Hit", "power": 30, "accuracy": 80, "type": "Physical", "description": "Unstable physical attack."},
+		{"name": "Stat Scramble", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Swaps the target's Attack and Defense.", "cooldown": 3, "effects": [{"effect": "swap_stats", "stats": ["attack", "defense"], "duration": 2}]}
+	],
+	Group.CHAOS_ASSASSIN: [
+		{"name": "Pixel Stab", "power": 50, "accuracy": 90, "type": "Physical", "description": "Strong physical attack."},
+		{"name": "Blink Strike", "power": 40, "accuracy": 100, "type": "Physical", "is_snipe": true, "description": "Teleports behind the vanguard.", "cooldown": 3}
+	],
+	Group.CHAOS_BRUTE: [
+		{"name": "Glitch Smash", "power": 45, "accuracy": 90, "type": "Physical", "description": "A heavy, glitchy smash."},
+		{"name": "Static Shield", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a shield and reflects damage.", "cooldown": 4, "effects": [{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.2}, {"type": "status", "status": "static_reflection", "damage_percent": 0.3, "duration": 2}]}
+	],
+	Group.CHAOS_COMMANDER: [
+		{"name": "Data Corruption", "power": 40, "accuracy": 100, "type": "Special", "description": "Corrupts the target."},
+		{"name": "Scramble", "power": 40, "accuracy": 100, "type": "Special", "description": "Deals damage and shuffles the target team's positions.", "cooldown": 4, "effects": [{"effect": "scramble_team"}]}
+	],
+	Group.CHAOS_KING: [
+		{"name": "Chaos Beam", "power": 50, "accuracy": 100, "type": "Special", "description": "A wild energy beam."},
+		{"name": "Reality Break", "power": 99, "accuracy": 50, "type": "Special", "description": "Deals massive damage with low accuracy.", "cooldown": 2}
+	],
 	
 	# Fission
-	Group.FISSION_GRUNT: [ {"name": "Rad Bite", "power": 25, "accuracy": 95, "type": "Physical", "description": "Radioactive bite."}],
-	Group.FISSION_ASSASSIN: [ {"name": "Gamma Ray", "power": 45, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "High-accuracy snipe attack."}],
-	Group.FISSION_BRUTE: [ {"name": "Lead Wall", "power": 0, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a massive shield to self."}],
-	Group.FISSION_COMMANDER: [ {"name": "Chain Reaction", "power": 60, "accuracy": 90, "type": "Special", "description": "Deals damage and triggers a chain reaction."}],
-	Group.FISSION_KING: [ {"name": "Meltdown", "power": 150, "accuracy": 100, "type": "Special"}],
+	Group.FISSION_GRUNT: [
+		{"name": "Rad Bite", "power": 25, "accuracy": 95, "type": "Physical", "description": "Radioactive bite."},
+		{"name": "Toxic Spit", "power": 0, "accuracy": 90, "type": "Status_Hostile", "description": "Poisons the target.", "cooldown": 3, "effects": [{"type": "status", "status": "poison", "damage_percent": 0.1, "duration": 3}]}
+	],
+	Group.FISSION_ASSASSIN: [
+		{"name": "Fast Decay", "power": 30, "accuracy": 100, "type": "Special", "description": "Quick burst of radiation."},
+		{"name": "Gamma Ray", "power": 45, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "High-accuracy snipe attack.", "cooldown": 3}
+	],
+	Group.FISSION_BRUTE: [
+		{"name": "Heavy Fission", "power": 45, "accuracy": 95, "type": "Physical", "description": "A heavy, glowing slam."},
+		{"name": "Lead Wall", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a massive shield to self.", "cooldown": 4, "effects": [{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.4}]}
+	],
+	Group.FISSION_COMMANDER: [
+		{"name": "Isotope Toss", "power": 40, "accuracy": 100, "type": "Physical", "description": "Throws a volatile isotope."},
+		{"name": "Chain Reaction", "power": 60, "accuracy": 90, "type": "Special", "description": "Deals damage and triggers a chain reaction.", "cooldown": 4, "effects": [{"effect": "chain_reaction", "amount": 60}]}
+	],
+	Group.FISSION_KING: [
+		{"name": "Nuclear Pulse", "power": 50, "accuracy": 100, "type": "Special", "description": "A constant wave of heat and radiation."},
+		{"name": "Meltdown", "power": 150, "accuracy": 100, "type": "Special", "description": "Catastrophic damage to the entire battlefield.", "cooldown": 5, "effects": [{"effect": "meltdown", "amount": 80}]}
+	],
 	
 	# Brood
-	Group.BROOD_GRUNT: [ {"name": "Mandible Bite", "power": 25, "accuracy": 95, "type": "Physical", "description": "Physical bite attack."}],
-	Group.BROOD_ASSASSIN: [ {"name": "Neurotoxin", "power": 35, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Snipe attack that poisons the target."}],
-	Group.BROOD_BRUTE: [ {"name": "Chitin Shell", "power": 0, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a shield and increases Defense."}],
-	Group.BROOD_COMMANDER: [ {"name": "Pheromones", "power": 0, "type": "Status_Friendly", "target_type": "Ally", "description": "Buffs Attack and Speed of all allies."}],
-	Group.BROOD_KING: [ {"name": "Hive Mind", "power": 90, "accuracy": 100, "type": "Special", "description": "Deals damage and calls for reinforcements."}]
+	Group.BROOD_GRUNT: [
+		{"name": "Mandible Bite", "power": 25, "accuracy": 95, "type": "Physical", "description": "Physical bite attack."},
+		{"name": "Swarm Call", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Attack.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "attack", "amount": 25, "percent": true, "duration": 3}]}
+	],
+	Group.BROOD_ASSASSIN: [
+		{"name": "Sting", "power": 30, "accuracy": 100, "type": "Physical", "description": "A sharp, venomous sting."},
+		{"name": "Neurotoxin", "power": 35, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Snipe attack that poisons the target.", "cooldown": 3, "effects": [{"type": "status", "status": "poison", "damage_percent": 0.1, "duration": 3}]}
+	],
+	Group.BROOD_BRUTE: [
+		{"name": "Slam", "power": 45, "accuracy": 95, "type": "Physical", "description": "Throws its heavy body into the enemy."},
+		{"name": "Chitin Shell", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a shield and increases Defense.", "cooldown": 4, "effects": [{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.25}, {"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3}]}
+	],
+	Group.BROOD_COMMANDER: [
+		{"name": "Acid Spray", "power": 40, "accuracy": 100, "type": "Special", "description": "Sprays corrosive acid."},
+		{"name": "Pheromones", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Buffs Attack and Speed of all allies.", "cooldown": 4, "effects": [{"effect": "pheromones"}]}
+	],
+	Group.BROOD_KING: [
+		{"name": "Royal Mandible", "power": 50, "accuracy": 100, "type": "Physical", "description": "A vicious bite from the sovereign."},
+		{"name": "Hive Mind", "power": 90, "accuracy": 100, "type": "Special", "description": "Deals damage and calls for reinforcements.", "cooldown": 5, "effects": [{"effect": "call_reinforcements"}]}
+	]
 }
 
 # Unique Moves (Z -> Move Dictionary) - Placeholder for 118 elements
@@ -1483,9 +1559,13 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 		breakdown.hp.ship_upgrade = PlayerData.get_upgrade_level("combat_hull") * 0.05
 		breakdown.atk.ship_upgrade = PlayerData.get_upgrade_level("combat_optics") * 0.05
 		breakdown.def.ship_upgrade = PlayerData.get_upgrade_level("combat_shielding") * 0.05
+		breakdown.spd.ship_upgrade = PlayerData.get_upgrade_level("gravimetric_sensor") * 0.05
+		breakdown.crit.ship_upgrade = PlayerData.get_upgrade_level("cybernetic_implant") * 2.0 # Flat 2% per level
+		
 		hp_mult += breakdown.hp.ship_upgrade
 		atk_mult += breakdown.atk.ship_upgrade
 		def_mult += breakdown.def.ship_upgrade
+		spd_mult += breakdown.spd.ship_upgrade
 	
 	match group:
 		Group.ALKALINE_EARTH:
@@ -1541,7 +1621,7 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 	final_stats["attack"] = int((base.atk * 2.0) * stability_multiplier * atk_mult)
 	final_stats["defense"] = int((base.def * 2.0) * stability_multiplier * def_mult)
 	final_stats["speed"] = int((base.spd * 2.0) * stability_multiplier * spd_mult)
-	final_stats["crit_chance"] = int(breakdown.crit.base) # Keep crit flat for now, but editable via baseline
+	final_stats["crit_chance"] = int(breakdown.crit.base + breakdown.crit.ship_upgrade) # Added ship upgrade flat crit bonus
 	
 	return {"final_stats": final_stats, "breakdown": breakdown}
 

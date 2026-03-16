@@ -299,10 +299,10 @@ func play_attack(is_physical: bool = false):
 				
 				sprite.animation_finished.connect(_on_finish, CONNECT_ONE_SHOT)
 				
-				while not finished and timer.time_left > 0:
+				while not finished and is_inside_tree() and timer.time_left > 0:
 					await get_tree().process_frame
 				
-				if not finished and sprite.animation_finished.is_connected(_on_finish):
+				if not finished and is_instance_valid(sprite) and sprite.animation_finished.is_connected(_on_finish):
 					sprite.animation_finished.disconnect(_on_finish)
 			else:
 				await tween.finished
@@ -319,13 +319,14 @@ func play_attack(is_physical: bool = false):
 				
 				sprite.animation_finished.connect(_on_finish, CONNECT_ONE_SHOT)
 				
-				while not finished and timer.time_left > 0:
+				while not finished and is_inside_tree() and timer.time_left > 0:
 					await get_tree().process_frame
 				
-				if not finished and sprite.animation_finished.is_connected(_on_finish):
+				if not finished and is_instance_valid(sprite) and sprite.animation_finished.is_connected(_on_finish):
 					sprite.animation_finished.disconnect(_on_finish)
 			else:
-				await get_tree().create_timer(0.5).timeout
+				if is_inside_tree():
+					await get_tree().create_timer(0.5).timeout
 		else:
 			# Fallback Pulse
 			var tween = create_tween()
@@ -333,7 +334,8 @@ func play_attack(is_physical: bool = false):
 			tween.tween_property(sprite, "scale", Vector2.ONE, 0.1)
 			await tween.finished
 
-	sprite.play("idle")
+	if is_instance_valid(sprite) and is_inside_tree():
+		sprite.play("idle")
 
 func play_move():
 	var has_anim = sprite.sprite_frames.has_animation("move")
@@ -347,7 +349,8 @@ func play_move():
 	tween.tween_property(sprite, "position:y", original_pos.y, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	
 	await tween.finished
-	sprite.play("idle")
+	if is_instance_valid(sprite) and is_inside_tree():
+		sprite.play("idle")
 
 func has_status(status_name: String) -> bool:
 	for effect in active_effects:
