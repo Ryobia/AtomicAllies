@@ -13,6 +13,8 @@ const ATB_SPEED_SCALE = 10.0 # Multiplier to make the bars fill at a reasonable 
 @export var player_spawn_points: Array[Marker2D]
 @export var enemy_spawn_points: Array[Marker2D]
 
+const SPAWN_MAP = [1, 0, 2] # 0->Center, 1->Left, 2->Right
+
 # --- State ---
 enum BattleState { SETUP, COUNTING, ACTION_SELECTION, TARGET_SELECTION, EXECUTING, END }
 var current_state = BattleState.SETUP
@@ -21,6 +23,8 @@ var active_player_monsters: Array = []
 var active_enemy_monsters: Array = []
 var all_monsters: Array = [] # Combined list for ATB processing
 var benched_player_monsters: Array[MonsterData] = []
+var current_player_team: Array[MonsterData] = []
+var _temp_item_targets: Array[MonsterData] = []
 
 var turn_queue: Array = []
 var current_acting_unit: BattleMonster = null
@@ -189,15 +193,10 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 		PlayerData.active_team = player_roster
 	
 	benched_player_monsters.clear()
+	current_player_team = player_roster.duplicate()
 	
-	# Mapping for 3v3 Triangle: 
-	# Team Index 0 (Vanguard) -> Spawn Point 1 (Center)
-	# Team Index 1 (Flank)    -> Spawn Point 0 (Left)
-	# Team Index 2 (Flank)    -> Spawn Point 2 (Right)
-	var spawn_map = [1, 0, 2]
-	
-	for i in range(player_roster.size()):
-		var unit_data = player_roster[i]
+	for i in range(current_player_team.size()):
+		var unit_data = current_player_team[i]
 		if unit_data == null: continue
 
 		var is_dead = false
@@ -214,16 +213,13 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 				is_dead = true
 		
 		if i < 3:
-			if is_dead:
-				benched_player_monsters.append(unit_data)
-				continue
-
-			var spawn_idx = i
-			if player_spawn_points.size() >= 3:
-				spawn_idx = spawn_map[i]
-			
-			if spawn_idx < player_spawn_points.size():
-				spawn_unit(unit_data, player_spawn_points[spawn_idx], true, i)
+			if not is_dead:
+				var spawn_idx = i
+				if player_spawn_points.size() >= 3:
+					spawn_idx = SPAWN_MAP[i]
+				
+				if spawn_idx < player_spawn_points.size():
+					spawn_unit(unit_data, player_spawn_points[spawn_idx], true, i)
 		else:
 			benched_player_monsters.append(unit_data)
 		
@@ -243,7 +239,7 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	for i in range(enemy_count):
 		var spawn_idx = i
 		if i < 3 and enemy_spawn_points.size() >= 3:
-			spawn_idx = spawn_map[i]
+			spawn_idx = SPAWN_MAP[i]
 			
 		if spawn_idx < enemy_spawn_points.size():
 			spawn_unit(enemy_data_list[i], enemy_spawn_points[spawn_idx], false)
@@ -252,11 +248,11 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	print("BattleManager: Battle started with %d vs %d units." % [player_count, enemy_count])
 	_update_team_passives()
 	
-	# Mastery: Alkali & Nonmetals (100% Stability) -> Free Turn at Start
+	# Mastery: Nonmetals (100% Stability) -> Free Turn at Start
 	var all_units = active_player_monsters + active_enemy_monsters
 	for unit in all_units:
 		if not unit: continue
-		if (unit.data.group == AtomicConfig.Group.ALKALI_METAL or unit.data.group == AtomicConfig.Group.NONMETAL) and unit.data.stability >= 100:
+		if unit.data.group == AtomicConfig.Group.NONMETAL and unit.data.stability >= 100:
 			unit.atb_value = 100.0
 			_show_mastery_trigger(unit, "Mastery: Free Turn!")
 		
@@ -833,18 +829,20 @@ func _on_item_selected(item_id: String):
 	
 	if target_allies:
 		if is_revive:
+			_temp_item_targets.clear()
 			var valid_bench_indices = []
-			for i in range(benched_player_monsters.size()):
-				var m = benched_player_monsters[i]
+			for m in current_player_team:
 				var is_dead = false
 				if roster_hp_cache.has(m):
 					var state = roster_hp_cache[m]
 					var hp = state if typeof(state) == TYPE_INT else state.get("hp", 1)
 					if typeof(hp) != TYPE_INT and typeof(hp) != TYPE_FLOAT: hp = 0
 					if hp <= 0: is_dead = true
-				if is_dead: valid_bench_indices.append(i)
-			if not valid_bench_indices.is_empty():
-				bench_info = { "indices": valid_bench_indices, "data": benched_player_monsters }
+				if is_dead:
+					_temp_item_targets.append(m)
+					valid_bench_indices.append(_temp_item_targets.size() - 1)
+			if not _temp_item_targets.is_empty():
+				bench_info = { "indices": valid_bench_indices, "data": _temp_item_targets }
 		else:
 			for i in range(active_player_monsters.size()):
 				if active_player_monsters[i] and not active_player_monsters[i].is_dead:
@@ -901,7 +899,7 @@ func _on_target_selected(index: int):
 		if selected_item_id != "":
 			var item_id = selected_item_id
 			selected_item_id = ""
-			_perform_item_on_bench(current_acting_unit, bench_idx, item_id)
+			_perform_item_on_data(current_acting_unit, _temp_item_targets[bench_idx], item_id)
 			return
 			
 		_perform_bench_swap_move(current_acting_unit, bench_idx, selected_move)
@@ -1007,14 +1005,15 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	await get_tree().create_timer(2.0).timeout
 	
 	# Swap data: Active goes to bench, Bench goes to active
-	benched_player_monsters.remove_at(bench_index)
-	benched_player_monsters.append(active_unit.data)
+	var active_idx = active_player_monsters.find(active_unit)
+	benched_player_monsters[bench_index] = active_unit.data
+	current_player_team[active_idx] = new_data
+	current_player_team[bench_index + 3] = active_unit.data
 	
 	# Swap physical unit
 	var marker = active_unit.get_parent()
-	var index = active_player_monsters.find(active_unit)
 	
-	if index == -1:
+	if active_idx == -1:
 		push_error("BattleManager: Active unit not found in roster during swap!")
 		return
 	
@@ -1027,10 +1026,10 @@ func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index
 	
 	log_event.emit("Go! %s!" % new_data.monster_name)
 		
-	spawn_unit(new_data, marker, true, index)
+	spawn_unit(new_data, marker, true, active_idx)
 	
 	# The new unit is the last added to active_player_monsters by spawn_unit
-	var new_unit = active_player_monsters[index]
+	var new_unit = active_player_monsters[active_idx]
 	
 	new_unit.atb_value = 0 # Start fresh
 	new_unit.play_move() # Play enter animation
@@ -1241,7 +1240,10 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					if current_hit_damage > 0:
 						defender.take_damage(current_hit_damage)
 						if is_instance_valid(defender):
-							_show_damage_number(defender, current_hit_damage, "crit" if result.is_crit else "damage")
+							var dmg_type = "damage"
+							if result.get("is_crit", false): dmg_type = "crit"
+							if result.get("is_reaction", false): dmg_type = "reaction"
+							_show_damage_number(defender, current_hit_damage, dmg_type)
 						total_damage_dealt += current_hit_damage
 						
 					if i < hits - 1:
@@ -1650,36 +1652,38 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 					_swap_active_positions(attacker, lowest_unit)
 				elif lowest_benched_data:
 					if amount > 0:
-						var max_hp = lowest_benched_data.get_current_stats().max_hp
-						var hp = max_hp
+						var max_hp_val = lowest_benched_data.get_current_stats().max_hp
+						var hp_val = max_hp_val
 						if roster_hp_cache.has(lowest_benched_data):
 							var state = roster_hp_cache[lowest_benched_data]
-							if typeof(state) == TYPE_INT: hp = state
-							elif typeof(state) == TYPE_DICTIONARY: hp = state.get("hp", max_hp)
+							if typeof(state) == TYPE_INT: hp_val = state
+							elif typeof(state) == TYPE_DICTIONARY: hp_val = state.get("hp", max_hp_val)
 							
-						var actual_heal = min(amount, max_hp - hp)
-						if actual_heal > 0:
-							var new_hp = hp + actual_heal
+						var actual_heal_val = min(amount, max_hp_val - hp_val)
+						if actual_heal_val > 0:
+							var new_hp_val = hp_val + actual_heal_val
 							if typeof(roster_hp_cache.get(lowest_benched_data)) == TYPE_INT:
-								roster_hp_cache[lowest_benched_data] = new_hp
+								roster_hp_cache[lowest_benched_data] = new_hp_val
 							elif typeof(roster_hp_cache.get(lowest_benched_data)) == TYPE_DICTIONARY:
-								roster_hp_cache[lowest_benched_data]["hp"] = new_hp
+								roster_hp_cache[lowest_benched_data]["hp"] = new_hp_val
 							else:
-								roster_hp_cache[lowest_benched_data] = {"hp": new_hp, "stats": {}}
+								roster_hp_cache[lowest_benched_data] = {"hp": new_hp_val, "stats": {}}
 							log_event.emit("%s (Benched) was healed!" % lowest_benched_data.monster_name)
 							
-					benched_player_monsters.remove_at(lowest_benched_idx)
-					benched_player_monsters.append(attacker.data)
+					var active_idx = active_player_monsters.find(attacker)
+					benched_player_monsters[lowest_benched_idx] = attacker.data
+					current_player_team[active_idx] = lowest_benched_data
+					current_player_team[lowest_benched_idx + 3] = attacker.data
+					
 					_strip_temporary_buffs(attacker)
 					roster_hp_cache[attacker.data] = { "hp": attacker.current_hp, "stats": attacker.stats.duplicate(), "effects": attacker.active_effects.duplicate(true), "meta": _get_persistent_meta(attacker) }
 					
 					var marker = attacker.get_parent()
-					var slot_index = active_player_monsters.find(attacker)
 					all_monsters.erase(attacker)
 					attacker.queue_free()
 					
-					spawn_unit(lowest_benched_data, marker, true, slot_index)
-					var new_unit = active_player_monsters[slot_index]
+					spawn_unit(lowest_benched_data, marker, true, active_idx)
+					var new_unit = active_player_monsters[active_idx]
 					new_unit.atb_value = 0
 					new_unit.play_move()
 					
@@ -1932,10 +1936,9 @@ func perform_item(user: BattleMonster, target: BattleMonster, item_id: String):
 	await get_tree().create_timer(2.0).timeout
 	end_turn()
 
-func _perform_item_on_bench(user: BattleMonster, bench_index: int, item_id: String):
+func _perform_item_on_data(user: BattleMonster, m_data: MonsterData, item_id: String):
 	current_state = BattleState.EXECUTING
 	var data = CombatManager.get_item_data(item_id)
-	var m_data = benched_player_monsters[bench_index]
 	var item_name = data.get("name", "Item")
 	
 	log_event.emit("%s used %s on %s!" % [user.data.monster_name, item_name, m_data.monster_name])
@@ -1955,6 +1958,20 @@ func _perform_item_on_bench(user: BattleMonster, bench_index: int, item_id: Stri
 			roster_hp_cache[m_data] = { "hp": heal_amt, "stats": {} }
 			
 		log_event.emit("%s was revived!" % m_data.monster_name)
+		
+		var team_idx = current_player_team.find(m_data)
+		if team_idx != -1 and team_idx < 3:
+			if active_player_monsters[team_idx] == null:
+				var s_idx = SPAWN_MAP[team_idx] if SPAWN_MAP.size() > team_idx else team_idx
+				if s_idx < player_spawn_points.size():
+					var marker = player_spawn_points[s_idx]
+					spawn_unit(m_data, marker, true, team_idx)
+					var revived_unit = active_player_monsters[team_idx]
+					if revived_unit:
+						revived_unit.atb_value = 0
+						revived_unit.play_move()
+					_update_team_passives()
+					_refresh_team_ui(true)
 		
 	PlayerData.consume_item(item_id, 1)
 	
@@ -2369,22 +2386,33 @@ func _apply_post_transition_mastery_damage(attacker: BattleMonster, amount: int)
 		log_event.emit("%s's healing energy strikes %s!" % [attacker.data.monster_name, target.data.monster_name])
 
 func _scramble_team(is_player: bool):
-	var team = active_player_monsters if is_player else active_enemy_monsters
 	var spawn_points = player_spawn_points if is_player else enemy_spawn_points
 	
-	# Shuffle the array in place
-	team.shuffle()
+	if is_player:
+		var front_count = min(3, current_player_team.size())
+		var front_data = current_player_team.slice(0, front_count)
+		front_data.shuffle()
+		
+		var new_active = [null, null, null]
+		for i in range(front_count):
+			current_player_team[i] = front_data[i]
+			for u in active_player_monsters:
+				if u and u.data == front_data[i]:
+					new_active[i] = u
+					break
+		active_player_monsters = new_active
+		_sync_roster_order()
+	else:
+		active_enemy_monsters.shuffle()
 	
-	# Re-assign physical positions based on new index
-	# Mapping for 3v3 Triangle: 0->Center, 1->Left, 2->Right
-	var spawn_map = [1, 0, 2]
+	var team = active_player_monsters if is_player else active_enemy_monsters
 	
 	for i in range(team.size()):
 		var unit = team[i]
 		if unit == null: continue
 		var spawn_idx = i
 		if i < 3 and spawn_points.size() >= 3:
-			spawn_idx = spawn_map[i]
+			spawn_idx = SPAWN_MAP[i]
 			
 		if spawn_idx < spawn_points.size():
 			var marker = spawn_points[spawn_idx]
@@ -2394,10 +2422,6 @@ func _scramble_team(is_player: bool):
 				marker.add_child(unit)
 				unit.position = Vector2.ZERO
 				
-	if is_player:
-		_sync_roster_order()
-	
-	# Update HUD to reflect new order
 	if battle_hud:
 		var player_data = []
 		for u in active_player_monsters: 
@@ -2425,8 +2449,10 @@ func _perform_bench_swap_move(attacker: BattleMonster, bench_index: int, move: M
 	await attacker.play_move()
 	
 	# Swap Data
-	benched_player_monsters.remove_at(bench_index)
-	benched_player_monsters.append(attacker.data)
+	var active_idx = active_player_monsters.find(attacker)
+	benched_player_monsters[bench_index] = attacker.data
+	current_player_team[active_idx] = new_monster_data
+	current_player_team[bench_index + 3] = attacker.data
 	
 	# Save Attacker State
 	_strip_temporary_buffs(attacker)
@@ -2434,12 +2460,11 @@ func _perform_bench_swap_move(attacker: BattleMonster, bench_index: int, move: M
 	
 	# Swap Visuals
 	var marker = attacker.get_parent()
-	var slot_index = active_player_monsters.find(attacker)
 	all_monsters.erase(attacker)
 	attacker.queue_free()
 	
-	spawn_unit(new_monster_data, marker, true, slot_index)
-	var new_unit = active_player_monsters[slot_index]
+	spawn_unit(new_monster_data, marker, true, active_idx)
+	var new_unit = active_player_monsters[active_idx]
 	new_unit.atb_value = 0
 	new_unit.play_move()
 	
@@ -2507,16 +2532,18 @@ func _swap_active_positions(unit1: BattleMonster, unit2: BattleMonster):
 	team[idx1] = unit2
 	team[idx2] = unit1
 	
-	# Re-assign physical positions
-	# Mapping for 3v3 Triangle: 0->Center, 1->Left, 2->Right
-	var spawn_map = [1, 0, 2]
+	if is_player:
+		var temp = current_player_team[idx1]
+		current_player_team[idx1] = current_player_team[idx2]
+		current_player_team[idx2] = temp
+		_sync_roster_order()
 	
 	for i in [idx1, idx2]:
 		var unit = team[i]
 		if unit == null: continue
 		var spawn_idx = i
 		if i < 3 and spawn_points.size() >= 3:
-			spawn_idx = spawn_map[i]
+			spawn_idx = SPAWN_MAP[i]
 			
 		if spawn_idx < spawn_points.size():
 			var marker = spawn_points[spawn_idx]
@@ -2527,12 +2554,6 @@ func _swap_active_positions(unit1: BattleMonster, unit2: BattleMonster):
 	
 	log_event.emit("Positions swapped!")
 	
-	if is_player:
-		_sync_roster_order()
-	
-	# Update HUD (reuse logic via _scramble_team refresh pattern)
-	# We can just call _scramble_team logic here effectively by just refreshing UI since array is swapped
-	# But since _scramble_team shuffles, we just need the refresh part:
 	_refresh_team_ui(is_player)
 
 func _handle_reinforcements(caller: BattleMonster):
@@ -2696,8 +2717,6 @@ func _force_bench_dead_unit(unit: BattleMonster):
 	var index = active_player_monsters.find(unit)
 	if index != -1:
 		active_player_monsters[index] = null
-	
-	benched_player_monsters.append(unit.data)
 	
 	# Save state
 	_strip_temporary_buffs(unit)
@@ -3051,6 +3070,9 @@ func _show_damage_number(unit: Node2D, amount: int, type: String = "damage"):
 		"crit":
 			color = Color("#ffd700") # Gold
 			scale_factor = 1.5
+		"reaction":
+			color = Color("#60fafc") # Cyan
+			scale_factor = 1.4
 			
 	label.text = prefix + str(amount)
 	label.add_theme_color_override("font_color", color)
@@ -3287,21 +3309,6 @@ func _strip_temporary_buffs(unit: BattleMonster):
 func _sync_roster_order():
 	if not PlayerData: return
 	
-	var new_team: Array[MonsterData] = []
-	for u in active_player_monsters:
-		if is_instance_valid(u):
-			new_team.append(u.data)
-		else:
-			new_team.append(null)
-			
-	for d in benched_player_monsters:
-		if d:
-			new_team.append(d)
-			
-	# Trim trailing nulls
-	while new_team.size() > 0 and new_team.back() == null:
-		new_team.pop_back()
-		
-	PlayerData.active_team = new_team
+	PlayerData.active_team = current_player_team.duplicate()
 	if PlayerData.has_method("save_game"):
 		PlayerData.save_game()

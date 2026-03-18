@@ -120,7 +120,7 @@ const BASELINES = {
 
 # Mastery Bonus Descriptions (100% Stability)
 const MASTERY_BONUSES = {
-	Group.ALKALI_METAL: "Mastery: Gain a free turn at the start of combat.",
+	Group.ALKALI_METAL: "Mastery: Critical strikes deal 1.75x damage instead of 1.5x.",
 	Group.ALKALINE_EARTH: "Mastery: Begin combat with a shield equal to 25% of Max HP.",
 	Group.TRANSITION_METAL: "Mastery: The second hit from a double-attack deals full damage.",
 	Group.POST_TRANSITION: "Mastery: Healing an ally also deals that much damage to a random enemy.",

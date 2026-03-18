@@ -44,6 +44,8 @@ var stabilizer_checkbox: CheckBox
 var buy_stabilizer_btn: Button
 var catalyst_checkbox: CheckBox
 var buy_catalyst_btn: Button
+var purity_checkbox: CheckBox
+var buy_purity_btn: Button
 
 var _fusion_overlay: ColorRect
 var _synthesis_complete_overlay: ColorRect
@@ -60,6 +62,8 @@ var current_sort_mode: SortMode = SortMode.ATOMIC_NUMBER
 var sort_btn: Button
 var search_bar: LineEdit
 var search_text: String = ""
+
+var _tutorial_step: int = 0
 
 var _ambient_particles: CPUParticles2D
 
@@ -132,9 +136,12 @@ func _ready():
 			catalyst_checkbox = container.get_node_or_null("CatalystCheckBox")
 			buy_stabilizer_btn = container.get_node_or_null("BuyStabilizerButton")
 			buy_catalyst_btn = container.get_node_or_null("BuyCatalystButton")
+			purity_checkbox = container.get_node_or_null("PurityCheckBox")
+			buy_purity_btn = container.get_node_or_null("BuyPurityButton")
 			
 			_style_checkbox(stabilizer_checkbox)
 			_style_checkbox(catalyst_checkbox)
+			_style_checkbox(purity_checkbox)
 			
 			# Connect Signals
 			if not stabilizer_checkbox.toggled.is_connected(_on_stabilizer_toggled):
@@ -145,6 +152,10 @@ func _ready():
 				catalyst_checkbox.toggled.connect(_on_catalyst_toggled)
 			if buy_catalyst_btn and not buy_catalyst_btn.pressed.is_connected(_on_buy_catalyst_pressed):
 				buy_catalyst_btn.pressed.connect(_on_buy_catalyst_pressed)
+			if purity_checkbox and not purity_checkbox.toggled.is_connected(_on_purity_toggled):
+				purity_checkbox.toggled.connect(_on_purity_toggled)
+			if buy_purity_btn and not buy_purity_btn.pressed.is_connected(_on_buy_purity_pressed):
+				buy_purity_btn.pressed.connect(_on_buy_purity_pressed)
 			
 		popup_particles = fusion_confirm_popup.find_child("PopupParticles", true, false)
 	
@@ -344,6 +355,15 @@ func _ready():
 	# Trigger tutorial check
 	if TutorialManager:
 		TutorialManager.check_tutorial_progress()
+
+	# Start post-game Nexus tutorial
+	if PlayerData and not PlayerData.has_seen_nexus_tutorial and PlayerData.tutorial_step >= 999:
+		get_tree().create_timer(0.5).timeout.connect(_start_nexus_tutorial)
+
+func _exit_tree():
+	if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+		TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
+		TutorialManager.hide_tutorial()
 
 func _on_mode_toggle_pressed():
 	is_fission_mode = not is_fission_mode
@@ -969,6 +989,8 @@ func _on_breed_pressed():
 			stabilizer_checkbox.button_pressed = false
 		if catalyst_checkbox:
 			catalyst_checkbox.button_pressed = false
+		if purity_checkbox:
+			purity_checkbox.button_pressed = false
 			
 		_refresh_boosters_ui()
 			
@@ -1013,6 +1035,18 @@ func _refresh_boosters_ui():
 			buy_catalyst_btn.visible = true
 			buy_catalyst_btn.text = "Buy Catalyst (500 Dust)"
 
+	# Purity Seal
+	if purity_checkbox and buy_purity_btn:
+		var count = PlayerData.get_item_count("purity_seal")
+		if count > 0:
+			purity_checkbox.visible = true
+			buy_purity_btn.visible = false
+			purity_checkbox.text = "Use Purity Seal (+5%% Stab) [%d Owned]" % count
+		else:
+			purity_checkbox.visible = false
+			buy_purity_btn.visible = true
+			buy_purity_btn.text = "Buy Purity Seal (400 Dust)"
+
 func _on_buy_stabilizer_pressed():
 	var cost = 250
 	_handle_buy_booster("magnetic_stabilizer", cost, buy_stabilizer_btn, stabilizer_checkbox, "Buy Stabilizer (250 Dust)")
@@ -1020,6 +1054,10 @@ func _on_buy_stabilizer_pressed():
 func _on_buy_catalyst_pressed():
 	var cost = 500
 	_handle_buy_booster("quantum_catalyst", cost, buy_catalyst_btn, catalyst_checkbox, "Buy Catalyst (500 Dust)")
+
+func _on_buy_purity_pressed():
+	var cost = 400
+	_handle_buy_booster("purity_seal", cost, buy_purity_btn, purity_checkbox, "Buy Purity Seal (400 Dust)")
 
 func _handle_buy_booster(item_id: String, cost: int, btn: Button, checkbox: CheckBox, default_text: String):
 	if PlayerData.spend_resource("neutron_dust", cost):
@@ -1038,6 +1076,9 @@ func _on_stabilizer_toggled(_pressed: bool):
 	_update_chance_display()
 
 func _on_catalyst_toggled(_pressed: bool):
+	_update_chance_display()
+
+func _on_purity_toggled(_pressed: bool):
 	_update_chance_display()
 
 func _update_chance_display():
@@ -1075,13 +1116,17 @@ func _update_confirm_label(base_chance: float, cost: int, target_z: int):
 		final_chance += 10.0
 	if catalyst_checkbox and catalyst_checkbox.button_pressed:
 		final_chance += 25.0
+		
+	var purity_text = ""
+	if purity_checkbox and purity_checkbox.button_pressed:
+		purity_text = "\nGuaranteed Stability: +8%"
 	
 	var target_name = "Unknown"
 	var m = _get_monster_by_atomic_number(target_z)
 	if m: target_name = m.monster_name
 	
-	confirm_label.text = "Fuse %s and %s?\nTarget Z: %d (%s)\nSuccess Rate: %d%%\nCost: %d Binding Energy" % \
-		[parent_1.monster_name, parent_2.monster_name, target_z, target_name, int(final_chance), cost]
+	confirm_label.text = "Fuse %s and %s?\nTarget Z: %d (%s)\nSuccess Rate: %d%%%s\nCost: %d Binding Energy" % \
+		[parent_1.monster_name, parent_2.monster_name, target_z, target_name, int(final_chance), purity_text, cost]
 
 func _on_confirm_fusion_pressed():
 	if fusion_confirm_popup:
@@ -1110,16 +1155,20 @@ func _on_confirm_fusion_pressed():
 		
 		# Consume boosters if checked
 		var bonus = 0
+		var stab_bonus = 0
 		if stabilizer_checkbox and stabilizer_checkbox.button_pressed:
 			if PlayerData.consume_item("magnetic_stabilizer", 1):
 				bonus += 10
 		if catalyst_checkbox and catalyst_checkbox.button_pressed:
 			if PlayerData.consume_item("quantum_catalyst", 1):
 				bonus += 25
+		if purity_checkbox and purity_checkbox.button_pressed:
+			if PlayerData.consume_item("purity_seal", 1):
+				stab_bonus += 5
 		
 		# Pass bonus to SynthesisManager if it supports it
 		if SynthesisManager.has_method("attempt_fusion_with_bonus"):
-			SynthesisManager.attempt_fusion_with_bonus(parent_1, parent_2, bonus)
+			SynthesisManager.attempt_fusion_with_bonus(parent_1, parent_2, bonus, stab_bonus)
 		else:
 			# Fallback to standard (Bonus item consumed but effect depends on Manager implementation)
 			SynthesisManager.attempt_fusion(parent_1, parent_2)
@@ -1733,3 +1782,44 @@ func _style_checkbox(checkbox: CheckBox):
 	checkbox.add_theme_stylebox_override("pressed", sb_hover)
 	checkbox.add_theme_stylebox_override("focus", sb_hover)
 	checkbox.add_theme_stylebox_override("hover_pressed", sb_hover)
+
+func _start_nexus_tutorial():
+	if not TutorialManager: return
+	_tutorial_step = 0
+	
+	if TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+		TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
+		
+	TutorialManager.story_button.pressed.connect(_on_tutorial_next)
+	_advance_tutorial()
+
+func _on_tutorial_next():
+	_tutorial_step += 1
+	_advance_tutorial()
+
+func _advance_tutorial():
+	if not TutorialManager: return
+	
+	match _tutorial_step:
+		0:
+			TutorialManager.show_instruction("Welcome back to the Nexus! Let me explain some of the advanced lab equipment.", null, "happy")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Next"
+		1:
+			TutorialManager.show_instruction("This is the Stability Indicator. Fusing parents with higher stability dramatically increases your chance of a successful synthesis.", stability_bar, "talk")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Next"
+		2:
+			TutorialManager.show_instruction("We have also installed a Fission Reactor! Use this toggle to switch the lab into Fission Mode.", mode_toggle_btn, "warning")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Next"
+		3:
+			TutorialManager.show_instruction("Fission breaks down a heavy element into a random, lighter element. It's the perfect way to farm Hydrogen and Helium to boost their stability!", null, "talk")
+			TutorialManager.story_button.visible = true
+			TutorialManager.story_button.text = "Got it!"
+		_:
+			TutorialManager.hide_tutorial()
+			PlayerData.has_seen_nexus_tutorial = true
+			PlayerData.save_game()
+			if TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
+				TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)

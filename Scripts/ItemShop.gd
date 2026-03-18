@@ -33,6 +33,14 @@ const SHOP_ITEMS = [
 		"category": "Fusion"
 	},
 	{
+		"id": "purity_seal",
+		"name": "Purity Seal",
+		"description": "Increases the guaranteed stability gain of your next successful fusion by 5%.",
+		"cost": 400,
+		"currency": "neutron_dust",
+		"category": "Fusion"
+	},
+	{
 		"id": "repair_nanites",
 		"name": "Repair Nanites",
 		"description": "Restores 50% HP to a unit during combat.",
@@ -63,6 +71,17 @@ const SHOP_ITEMS = [
 		"description": "Reduces fusion time by 10% per level.",
 		"base_cost": 500,
 		"cost_scale": 1.5,
+		"max_level": 5,
+		"currency": "neutron_dust",
+		"category": "Ship Upgrades",
+		"is_upgrade": true
+	},
+	{
+		"id": "resource_extractor",
+		"name": "Resource Extractor",
+		"description": "Increases Binding Energy, Neutron Dust, and Gems gained from Discovery Runs by 10% per level.",
+		"base_cost": 800,
+		"cost_scale": 1.4,
 		"max_level": 5,
 		"currency": "neutron_dust",
 		"category": "Ship Upgrades",

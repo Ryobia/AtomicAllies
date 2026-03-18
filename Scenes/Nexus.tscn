@@ -129,7 +129,7 @@ scale = Vector2(1.4595922, 1.4821618)
 sprite_frames = ExtResource("4_26528")
 animation = &"core"
 autoplay = "core"
-frame_progress = 0.5667622
+frame_progress = 0.67791784
 centered = false
 
 [node name="FusionSign" type="AnimatedSprite2D" parent="Background" unique_id=1202715435]
@@ -138,7 +138,7 @@ scale = Vector2(1.5425925, 1.6835284)
 sprite_frames = ExtResource("5_hoak4")
 animation = &"sign"
 autoplay = "sign"
-frame_progress = 0.60251504
+frame_progress = 0.89331156
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
 visible = false
@@ -298,7 +298,6 @@ text = "Select Element"
 oversampling_override = 1.0
 
 [node name="FusionConfirmPopup" type="PanelContainer" parent="." unique_id=1747203823]
-visible = false
 z_index = 10
 custom_minimum_size = Vector2(800, 700)
 layout_mode = 1
@@ -350,6 +349,16 @@ theme_override_font_sizes/font_size = 46
 theme_override_styles/normal = SubResource("StyleBoxFlat_26528")
 
 [node name="BuyCatalystButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=1974865229]
+layout_mode = 2
+theme_override_font_sizes/font_size = 46
+theme_override_styles/normal = SubResource("StyleBoxFlat_26528")
+
+[node name="PurityCheckBox" type="CheckBox" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=946654780]
+layout_mode = 2
+theme_override_font_sizes/font_size = 46
+theme_override_styles/normal = SubResource("StyleBoxFlat_26528")
+
+[node name="BuyPurityButton" type="Button" parent="FusionConfirmPopup/MarginContainer/VBoxContainer" unique_id=60303946]
 layout_mode = 2
 theme_override_font_sizes/font_size = 46
 theme_override_styles/normal = SubResource("StyleBoxFlat_26528")

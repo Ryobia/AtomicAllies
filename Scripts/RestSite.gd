@@ -34,7 +34,7 @@ func _ready():
 	
 	# Update title with wave info
 	if title_label and CampaignManager:
-		title_label.text = "Rest Site - Wave %d Complete" % (CampaignManager.current_run_wave - 1)
+		title_label.text = "Rest Site - Wave %d/%d Complete" % [CampaignManager.current_run_wave - 1, CampaignManager.max_run_waves]
 	_update_loot_label()
 	
 	# Find the container added in the editor

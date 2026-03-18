@@ -131,6 +131,22 @@ func _ready():
 	bench_container.position.y -= 580 # Offset above player row
 	add_child(bench_container)
 	
+	# Dynamically add the Wave Indicator if in a run
+	if CampaignManager and CampaignManager.is_rogue_run:
+		var wave_lbl = Label.new()
+		wave_lbl.text = "WAVE %d / %d" % [CampaignManager.current_run_wave, CampaignManager.max_run_waves]
+		wave_lbl.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		wave_lbl.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		wave_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		wave_lbl.offset_top = 40
+		wave_lbl.add_theme_font_size_override("font_size", 48)
+		wave_lbl.add_theme_color_override("font_color", Color("#60fafc"))
+		wave_lbl.add_theme_color_override("font_outline_color", Color("#010813"))
+		wave_lbl.add_theme_constant_override("outline_size", 8)
+		wave_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wave_lbl.z_index = 50
+		add_child(wave_lbl)
+	
 	_build_ui_cache()
 
 func _process(delta):
@@ -1119,26 +1135,32 @@ func show_items(items: Dictionary):
 	if _item_menu_instance:
 		_item_menu_instance.queue_free()
 		
-	_item_menu_instance = PanelContainer.new()
-	_item_menu_instance.set_anchors_preset(Control.PRESET_CENTER)
-	_item_menu_instance.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_item_menu_instance.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_item_menu_instance.custom_minimum_size = Vector2(950, 950)
+	_item_menu_instance = ColorRect.new()
+	_item_menu_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_item_menu_instance.color = Color(0, 0, 0, 0.75)
+	_item_menu_instance.mouse_filter = Control.MOUSE_FILTER_STOP
 	_item_menu_instance.z_index = 100
+	
+	var panel = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel.custom_minimum_size = Vector2(950, 950)
+	_item_menu_instance.add_child(panel)
 	
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color("#010813")
 	style.border_color = Color("#60fafc")
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(12)
-	_item_menu_instance.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", style)
 	
 	var margin = MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 30)
 	margin.add_theme_constant_override("margin_right", 30)
 	margin.add_theme_constant_override("margin_top", 30)
 	margin.add_theme_constant_override("margin_bottom", 30)
-	_item_menu_instance.add_child(margin)
+	panel.add_child(margin)
 	
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 20)
@@ -1247,6 +1269,15 @@ func show_items(items: Dictionary):
 	vbox.add_child(cancel_btn)
 	
 	add_child(_item_menu_instance)
+	
+	# Animate in
+	panel.pivot_offset = panel.custom_minimum_size / 2.0
+	panel.scale = Vector2(0.9, 0.9)
+	_item_menu_instance.modulate.a = 0.0
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(_item_menu_instance, "modulate:a", 1.0, 0.2)
+	tween.tween_property(panel, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func show_actions():
 	if _item_menu_instance:
@@ -1290,26 +1321,32 @@ func show_swap_options(monsters: Array, forced: bool = false, replacing_name: St
 	if _swap_menu_instance:
 		_swap_menu_instance.queue_free()
 		
-	_swap_menu_instance = PanelContainer.new()
-	_swap_menu_instance.set_anchors_preset(Control.PRESET_CENTER)
-	_swap_menu_instance.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_swap_menu_instance.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_swap_menu_instance.custom_minimum_size = Vector2(950, 750)
+	_swap_menu_instance = ColorRect.new()
+	_swap_menu_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_swap_menu_instance.color = Color(0, 0, 0, 0.75)
+	_swap_menu_instance.mouse_filter = Control.MOUSE_FILTER_STOP
 	_swap_menu_instance.z_index = 100
+	
+	var panel = PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel.custom_minimum_size = Vector2(950, 950)
+	_swap_menu_instance.add_child(panel)
 	
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color("#010813")
 	style.border_color = Color("#60fafc")
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(12)
-	_swap_menu_instance.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", style)
 	
 	var margin = MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 30)
 	margin.add_theme_constant_override("margin_right", 30)
 	margin.add_theme_constant_override("margin_top", 30)
 	margin.add_theme_constant_override("margin_bottom", 30)
-	_swap_menu_instance.add_child(margin)
+	panel.add_child(margin)
 	
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 20)
@@ -1453,6 +1490,15 @@ func show_swap_options(monsters: Array, forced: bool = false, replacing_name: St
 		
 	add_child(_swap_menu_instance)
 	
+	# Animate in
+	panel.pivot_offset = panel.custom_minimum_size / 2.0
+	panel.scale = Vector2(0.9, 0.9)
+	_swap_menu_instance.modulate.a = 0.0
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(_swap_menu_instance, "modulate:a", 1.0, 0.2)
+	tween.tween_property(panel, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
 	if replacing_index != -1:
 		highlight_active_unit(true, replacing_index)
 
@@ -1544,10 +1590,21 @@ func show_result(player_won: bool, rewards: Dictionary = {}):
 	center.add_child(vbox)
 	
 	var label = Label.new()
-	label.text = "VICTORY!" if player_won else "DEFEAT..."
+	var title_text = "DEFEAT..."
+	var title_color = Color("#ff4d4d")
+	if player_won:
+		if CampaignManager and CampaignManager.is_rogue_run:
+			# Subtract 1 because the wave counter has already been incremented for the next wave
+			title_text = "WAVE %d/%d COMPLETE" % [CampaignManager.current_run_wave - 1, CampaignManager.max_run_waves]
+			title_color = Color("#60fafc") # Cyan for intermediate waves
+		else:
+			title_text = "VICTORY!"
+			title_color = Color("#ffd700") # Gold for final victory
+			
+	label.text = title_text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 80)
-	label.add_theme_color_override("font_color", Color("#ffd700") if player_won else Color("#ff4d4d"))
+	label.add_theme_color_override("font_color", title_color)
 	vbox.add_child(label)
 	
 	_reward_icons.clear()

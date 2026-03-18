@@ -40,6 +40,7 @@ var has_seen_shop_tutorial: bool = false
 var has_seen_replay_tutorial: bool = false
 var has_seen_detail_tutorial: bool = false
 var has_seen_synergy_tutorial: bool = false
+var has_seen_nexus_tutorial: bool = false
 
 # Resources
 var resources = {
@@ -202,7 +203,8 @@ func save_game():
 		"has_seen_shop_tutorial": has_seen_shop_tutorial,
 		"has_seen_replay_tutorial": has_seen_replay_tutorial,
 		"has_seen_detail_tutorial": has_seen_detail_tutorial,
-		"has_seen_synergy_tutorial": has_seen_synergy_tutorial
+		"has_seen_synergy_tutorial": has_seen_synergy_tutorial,
+		"has_seen_nexus_tutorial": has_seen_nexus_tutorial
 	}
 	
 	# Serialize Monsters
@@ -298,6 +300,9 @@ func load_game():
 		if "has_seen_synergy_tutorial" in save_data:
 			has_seen_synergy_tutorial = save_data["has_seen_synergy_tutorial"]
 
+		if "has_seen_nexus_tutorial" in save_data:
+			has_seen_nexus_tutorial = save_data["has_seen_nexus_tutorial"]
+
 		if "monsters" in save_data:
 			owned_monsters.clear()
 			for m_data in save_data["monsters"]:
@@ -337,6 +342,7 @@ func reset_save():
 	has_seen_replay_tutorial = false
 	has_seen_detail_tutorial = false
 	has_seen_synergy_tutorial = false
+	has_seen_nexus_tutorial = false
 	ship_upgrades.clear()
 	seen_enemies.clear()
 	inventory.clear()

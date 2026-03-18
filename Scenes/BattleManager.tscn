@@ -45,6 +45,14 @@ region = Rect2(239.30331, 67.91556, 179.44629, 214.8388)
 atlas = ExtResource("6_r3dt2")
 region = Rect2(45.44023, 67.72489, 179.60536, 214.59341)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_jbp3h"]
+atlas = ExtResource("6_r3dt2")
+region = Rect2(45.296524, 378.05972, 180.9987, 214.4664)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kyqq8"]
+atlas = ExtResource("6_hoy3w")
+region = Rect2(1251.0006, 1382.0001, 360.00037, 427.00037)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_r3dt2"]
 atlas = ExtResource("6_hoy3w")
 region = Rect2(862.87683, 758.1448, 361.98352, 428.09937)
@@ -160,7 +168,9 @@ item_icons = {
 "plasma_injector": SubResource("AtlasTexture_20fcw"),
 "power_cell": SubResource("AtlasTexture_24cr6"),
 "purifying_salt": SubResource("AtlasTexture_6mgkg"),
-"repair_nanites": SubResource("AtlasTexture_swlla")
+"purity_seal": SubResource("AtlasTexture_jbp3h"),
+"repair_nanites": SubResource("AtlasTexture_swlla"),
+"resource_extractor": SubResource("AtlasTexture_kyqq8")
 }
 icon_energy = SubResource("AtlasTexture_r3dt2")
 icon_dust = SubResource("AtlasTexture_wivlx")

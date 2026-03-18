@@ -63,9 +63,9 @@ func calculate_synthesis_duration(z: int, stability: int) -> float:
 	return duration
 
 func attempt_fusion(parent_a: MonsterData, parent_b: MonsterData):
-	attempt_fusion_with_bonus(parent_a, parent_b, 0)
+	attempt_fusion_with_bonus(parent_a, parent_b, 0, 0)
 
-func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bonus_percent: int):
+func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bonus_percent: int, stability_bonus: int = 0):
 	var initial_target_z = parent_a.atomic_number + parent_b.atomic_number
 	
 	# Check for empty chamber first
@@ -108,7 +108,7 @@ func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bon
 		print("Rolling for Z%d (Chance: %.1f%%)... Rolled: %.1f" % [current_z, chance, roll])
 		
 		if roll <= chance:
-			final_stability = _calculate_result_stability(current_z)
+			final_stability = _calculate_result_stability(current_z, stability_bonus)
 			break # Success! We stabilized at current_z
 		
 		# Failure: Decay and try again
@@ -118,7 +118,7 @@ func attempt_fusion_with_bonus(parent_a: MonsterData, parent_b: MonsterData, bon
 	# If we reach 1, it is guaranteed (Hydrogen is the baseline)
 	if current_z == 1:
 		print("Stabilized at Hydrogen (Z=1).")
-		final_stability = _calculate_result_stability(1)
+		final_stability = _calculate_result_stability(1, stability_bonus)
 	
 	var base_duration = calculate_synthesis_duration(current_z, int(final_stability))
 	
@@ -191,7 +191,7 @@ func _calculate_dust_reward(base_amount: int) -> int:
 	var siphon_level = PlayerData.get_upgrade_level("dust_efficiency")
 	return int(base_amount * (1.0 + (siphon_level * 0.10)))
 
-func _calculate_result_stability(z: int) -> int:
+func _calculate_result_stability(z: int, bonus_flat: int = 0) -> int:
 	var current_val = 0 # Base floor (so min result is 1% for new/low elements)
 	
 	if PlayerData:
@@ -203,7 +203,7 @@ func _calculate_result_stability(z: int) -> int:
 				if owned.stability > current_val:
 					current_val = owned.stability
 	
-	var min_val = clampi(current_val + 3, 1, 100)
+	var min_val = clampi(current_val + 3 + bonus_flat, 1, 100)
 	
 	if min_val >= 100: return 100
 	

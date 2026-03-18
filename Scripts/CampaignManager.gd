@@ -125,13 +125,20 @@ func start_node_run(target_z: int):
 func on_battle_ended(player_won: bool, rewards: Dictionary = {}, final_team_state: Dictionary = {}):
     if is_rogue_run:
         if player_won:
+            var loot_multiplier = 1.0
+            if PlayerData:
+                loot_multiplier += PlayerData.get_upgrade_level("resource_extractor") * 0.10
+            
             # Stash the energy
             if rewards.has("binding_energy"):
-                current_run_energy += rewards["binding_energy"]
+                current_run_energy += int(rewards["binding_energy"] * loot_multiplier)
             if rewards.has("neutron_dust"):
-                current_run_dust += rewards["neutron_dust"]
+                current_run_dust += int(rewards["neutron_dust"] * loot_multiplier)
             if rewards.has("gems"):
-                current_run_gems += rewards["gems"]
+                var gem_calc = rewards["gems"] * loot_multiplier
+                var gem_int = int(gem_calc)
+                if randf() < (gem_calc - float(gem_int)): gem_int += 1
+                current_run_gems += gem_int
             
             # Update HP state for next wave
             for monster in final_team_state:

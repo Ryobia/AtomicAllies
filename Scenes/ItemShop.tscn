@@ -82,6 +82,14 @@ region = Rect2(238.89554, 68.58986, 179.13882, 213.1939)
 atlas = ExtResource("4_rm0e0")
 region = Rect2(44.7209, 68.589615, 180.53838, 214.1269)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_okvlh"]
+atlas = ExtResource("4_rm0e0")
+region = Rect2(45.041367, 378.001, 181.93002, 215.45981)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8jdnl"]
+atlas = ExtResource("3_862br")
+region = Rect2(1249.7358, 1381.7131, 360.70142, 428.58252)
+
 [node name="ItemShop" type="Control" unique_id=341176545]
 layout_mode = 3
 anchors_preset = 15
@@ -107,8 +115,10 @@ item_icons = {
 "plasma_injector": SubResource("AtlasTexture_gvyt4"),
 "power_cell": SubResource("AtlasTexture_a1qoc"),
 "purifying_salt": SubResource("AtlasTexture_idt13"),
+"purity_seal": SubResource("AtlasTexture_okvlh"),
 "quantum_catalyst": SubResource("AtlasTexture_fjxrw"),
 "repair_nanites": SubResource("AtlasTexture_rm0e0"),
+"resource_extractor": SubResource("AtlasTexture_8jdnl"),
 "scanner_range": SubResource("AtlasTexture_rxewf")
 }
 

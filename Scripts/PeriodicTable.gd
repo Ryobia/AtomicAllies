@@ -723,6 +723,11 @@ func _setup_legend_ui():
 	style.bg_color = Color("#60fafc")
 	style.bg_color.a = 0.9
 	style.set_corner_radius_all(8)
+	style.set_border_width_all(4)
+	style.border_color = Color("#010813")
+	style.shadow_color = Color(0, 0, 0, 0.6)
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(2, 4)
 	
 	var hover_style = style.duplicate()
 	hover_style.bg_color = style.bg_color.lightened(0.2)
@@ -730,19 +735,21 @@ func _setup_legend_ui():
 	# --- Synergy Button ---
 	var syn_btn = Button.new()
 	syn_btn.text = "Synergies"
-	syn_btn.add_theme_font_size_override("font_size", 32)
+	syn_btn.add_theme_font_size_override("font_size", 48)
 	syn_btn.add_theme_stylebox_override("normal", style)
 	syn_btn.add_theme_stylebox_override("hover", hover_style)
 	syn_btn.add_theme_stylebox_override("pressed", style)
 	syn_btn.add_theme_color_override("font_color", Color("#010813"))
+	syn_btn.add_theme_color_override("font_outline_color", Color("#010813"))
+	syn_btn.add_theme_constant_override("outline_size", 3)
 	
 	# Position top-left
 	syn_btn.anchor_left = 0.0
 	syn_btn.anchor_right = 0.0
 	syn_btn.offset_left = 30
-	syn_btn.offset_top = 30
-	syn_btn.offset_right = 220
-	syn_btn.offset_bottom = 100
+	syn_btn.offset_top = 50
+	syn_btn.offset_right = 315
+	syn_btn.offset_bottom = 135
 	syn_btn.pressed.connect(_show_synergy_popup)
 	_ui_layer.add_child(syn_btn)
 	_synergy_btn = syn_btn

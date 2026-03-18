@@ -124,6 +124,7 @@ func execute_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 		"success": true,
 		"damage": 0,
 		"is_crit": false,
+		"is_reaction": false,
 		"hit": false,
 		"messages": [],
 		"effects": [] # List of effects applied
@@ -217,26 +218,36 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 				has_debuff = true
 				break
 		if has_debuff:
-			final_damage *= move.get_meta("damage_multiplier", 1.0)
-			result.messages.append("Bonus Damage vs Debuffed!")
+			var mult = move.get_meta("damage_multiplier", 1.0)
+			var bonus = (final_damage * mult) - final_damage
+			final_damage *= mult
+			result.messages.append("Bonus vs Debuffed! (+%d Dmg)" % int(bonus))
+			result.is_reaction = true
 	
 	# Speed Scaling (Einsteinium)
 	if move.get_meta("speed_scaling", false):
 		var spd_diff = max(0, attacker.stats.speed - defender.stats.speed)
 		if spd_diff > 0:
 			var multiplier = 1.0 + (spd_diff * 0.05) # 5% per point of speed difference
+			var bonus = (final_damage * multiplier) - final_damage
 			final_damage *= multiplier
-			result.messages.append("Relativistic Speed Bonus! (%.2fx)" % multiplier)
+			result.messages.append("Relativistic Speed Bonus! (%.2fx, +%d Dmg)" % [multiplier, int(bonus)])
 			
+	var crit_mult = 1.5
+	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL and attacker.data.stability >= 100:
+		crit_mult = 1.75
+
 	# Critical Hit Calculation
 	var crit_chance = attacker.stats.get("crit_chance", 5) + move.get_meta("crit_bonus", 0.0)
 	if randf() * 100.0 < crit_chance:
-		final_damage *= 1.5
+		final_damage *= crit_mult
 		result.is_crit = true
 	
 	# Alkali Metal Full Set Bonus: First attack is a guaranteed critical hit
 	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
-		var alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
+		var alkali_count = 0
+		if PlayerData:
+			alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
 		var total_alkali = 0
 		if MonsterManifest:
 			for m in MonsterManifest.all_monsters:
@@ -246,14 +257,20 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 		if alkali_count >= total_alkali and total_alkali > 0:
 			if not attacker.has_meta("full_set_crit_used"):
 				if not result.is_crit:
-					final_damage *= 1.5
+					var prev = final_damage
+					final_damage *= crit_mult
+					var bonus = final_damage - prev
 					result.is_crit = true
-				result.messages.append("Full Set Critical!")
+					result.messages.append("Full Set Critical! (+%d Dmg)" % int(bonus))
+				else:
+					result.messages.append("Full Set Critical!")
 				attacker.set_meta("full_set_crit_used", true)
 	
 	# Actinide Passive: Deal bonus 10% max health damage
 	if attacker.data.group == AtomicConfig.Group.ACTINIDE:
-		final_damage += (attacker.max_hp * 0.1)
+		var bonus = attacker.max_hp * 0.1
+		final_damage += bonus
+		result.messages.append("Actinide Nuke! (+%d Dmg)" % int(bonus))
 	
 	# Check for physical resistance
 	if move.type == "Physical":
@@ -288,11 +305,14 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 				
 				if condition_met:
 					var multiplier = effect.get("damage_multiplier", 1.0)
+					var bonus_dmg = (final_damage * multiplier) - final_damage
 					final_damage *= multiplier
 					
-					var reaction_name = effect.get("reaction_name", "Reaction")
-					result.messages.append("%s! Bonus Damage!" % reaction_name)
+					var default_name = str(effect.get("status", "Reaction")).replace("_", " ").capitalize()
+					var reaction_name = effect.get("reaction_name", default_name)
+					result.messages.append("%s Bonus! (+%d Dmg)" % [reaction_name, int(bonus_dmg)])
 					result.effects.append({ "target": defender, "effect": "remove_status", "status": effect.get("status") })
+					result.is_reaction = true
 	
 	# Message for generic crits (if not handled by Full Set message)
 	if result.is_crit and not "Full Set Critical!" in result.messages:
@@ -368,7 +388,10 @@ func _apply_data_driven_effects(attacker: BattleMonster, defender: BattleMonster
 
 		# Apply Crit Multiplier to resolved amount if applicable
 		if effect.get("is_crit", false):
-			effect["amount"] = int(effect.get("amount", 0) * 1.5)
+			var eff_crit_mult = 1.5
+			if attacker.data.group == AtomicConfig.Group.ALKALI_METAL and attacker.data.stability >= 100:
+				eff_crit_mult = 1.75
+			effect["amount"] = int(effect.get("amount", 0) * eff_crit_mult)
 
 		# Add specific target reference for BattleManager
 		effect["target"] = target
@@ -456,8 +479,9 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 				multiplier = 2.0
 				msg = "Perfect Double Hit!"
 			
+			var bonus_dmg = (result.damage * multiplier) - result.damage
 			result.damage = int(result.damage * multiplier)
-			result.messages.append(msg)
+			result.messages.append("%s (+%d Dmg)" % [msg, int(bonus_dmg)])
 			
 	# Trigger chain reaction mark
 	if result.hit and move.power > 0:
@@ -567,8 +591,10 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 					unique_groups[member.group] = true
 			
 			var multiplier = clampi(unique_groups.size(), 1, 6)
+			var bonus = (result.damage * multiplier) - result.damage
 			result.damage *= multiplier
-			result.messages.append("Resonance! %dx Damage!" % multiplier)
+			result.messages.append("Resonance! %dx Damage! (+%d Dmg)" % [multiplier, int(bonus)])
+			result.is_reaction = true
 			
 		"Violet Flare":
 			var debuff_count = 0
@@ -588,8 +614,10 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			
 			var multiplier = 1 + debuff_count
 			if multiplier > 1:
+				var bonus = (result.damage * multiplier) - result.damage
 				result.damage *= multiplier
-				result.messages.append("Flare intensified! %dx Damage!" % multiplier)
+				result.messages.append("Flare intensified! %dx Damage! (+%d Dmg)" % [multiplier, int(bonus)])
+				result.is_reaction = true
 
 		"Obliterate":
 			result.messages.append("%s unleashes void energy!" % attacker.data.monster_name)

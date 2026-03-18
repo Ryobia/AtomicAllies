@@ -23,6 +23,13 @@ var _target_slot_index: int = -1
 var _collection_popup_node: Control = null
 var _anim_cache: Dictionary = {} # Cache loaded animations to reduce disk I/O
 
+# Drag and Drop State
+var _dragged_slot_index: int = -1
+var _drag_start_pos: Vector2 = Vector2.ZERO
+var _is_dragging_slot: bool = false
+var _drag_proxy: Control = null
+var _drag_offset: Vector2 = Vector2.ZERO
+
 var team_slot_scene = preload("res://Scenes/TeamSlot.tscn")
 var legend_item_scene = preload("res://Scenes/LegendItem.tscn")
 
@@ -195,7 +202,13 @@ func _update_team_display():
 			anim_frames = _get_anim_frames(monster)
 			
 		slot.setup(monster, team_idx, _target_slot_index != -1, anim_frames)
-		slot.pressed.connect(func(): _on_team_slot_pressed(team_idx))
+		slot.set_meta("team_idx", team_idx)
+		
+		var overlay = Control.new()
+		overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+		slot.add_child(overlay)
+		overlay.gui_input.connect(_on_slot_overlay_gui_input.bind(team_idx, slot))
 		
 		if monster and monster.stability >= 100:
 			var panel_style = slot.get_theme_stylebox("panel", "PanelContainer")
@@ -219,6 +232,105 @@ func _update_team_display():
 		start_btn.disabled = not has_member
 	if clear_btn:
 		clear_btn.disabled = not has_member
+
+func _on_slot_overlay_gui_input(event: InputEvent, index: int, slot: Control):
+	var pos = Vector2.ZERO
+	var is_press = false
+	var is_release = false
+	var is_motion = false
+	
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		pos = event.global_position
+		is_press = event.pressed
+		is_release = not event.pressed
+	elif event is InputEventScreenTouch:
+		pos = event.position
+		is_press = event.pressed
+		is_release = not event.pressed
+	elif event is InputEventMouseMotion:
+		pos = event.global_position
+		is_motion = true
+	elif event is InputEventScreenDrag:
+		pos = event.position
+		is_motion = true
+		
+	if is_press:
+		_dragged_slot_index = index
+		_drag_start_pos = pos
+		_is_dragging_slot = false
+		_drag_offset = slot.global_position - pos
+		slot.modulate = Color(0.8, 0.8, 0.8)
+		
+	elif is_motion and _dragged_slot_index == index:
+		if not _is_dragging_slot and pos.distance_to(_drag_start_pos) > 15.0:
+			_start_drag(index)
+			
+		if _is_dragging_slot and is_instance_valid(_drag_proxy):
+			_drag_proxy.global_position = pos + _drag_offset
+			
+	elif is_release and _dragged_slot_index == index:
+		if _is_dragging_slot:
+			_handle_slot_drop(pos)
+		else:
+			_on_team_slot_pressed(index)
+		_cleanup_drag()
+
+func _start_drag(index: int):
+	_is_dragging_slot = true
+	var original_slot = _get_slot_node_by_index(index)
+	if original_slot:
+		original_slot.modulate.a = 0.3 # Make original translucent
+		
+		# Generate a visual clone that follows the mouse
+		_drag_proxy = original_slot.duplicate(0)
+		_drag_proxy.modulate.a = 0.8
+		_drag_proxy.z_index = 100
+		
+		_drag_proxy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for child in _drag_proxy.find_children("*", "Control", true, false):
+			child.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			
+		add_child(_drag_proxy)
+		_drag_proxy.global_position = original_slot.global_position
+
+func _handle_slot_drop(pos: Vector2):
+	var target_idx = -1
+	for child in team_container.get_children():
+		if child.get_global_rect().has_point(pos):
+			target_idx = child.get_meta("team_idx", -1)
+			break
+			
+	if target_idx != -1 and target_idx != _dragged_slot_index:
+		# Swap the data array directly
+		var temp = PlayerData.active_team[_dragged_slot_index]
+		PlayerData.active_team[_dragged_slot_index] = PlayerData.active_team[target_idx]
+		PlayerData.active_team[target_idx] = temp
+		
+		if PlayerData.has_method("save_game"):
+			PlayerData.save_game()
+			
+		_update_team_display()
+
+func _cleanup_drag():
+	if _dragged_slot_index != -1:
+		var original_slot = _get_slot_node_by_index(_dragged_slot_index)
+		if original_slot:
+			original_slot.modulate = Color.WHITE
+			original_slot.modulate.a = 1.0
+			
+	if is_instance_valid(_drag_proxy):
+		_drag_proxy.queue_free()
+		
+	_drag_proxy = null
+	_is_dragging_slot = false
+	_dragged_slot_index = -1
+
+func _get_slot_node_by_index(idx: int) -> Control:
+	if not team_container: return null
+	for child in team_container.get_children():
+		if child.has_meta("team_idx") and child.get_meta("team_idx") == idx:
+			return child
+	return null
 
 	# Tutorial Hook: Check if we can advance
 	if TutorialManager:
