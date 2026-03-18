@@ -459,12 +459,19 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			result.damage = int(result.damage * multiplier)
 			result.messages.append(msg)
 			
-	# Nonmetal: Chain Reaction
-	if attacker.data.group == AtomicConfig.Group.NONMETAL:
+	# Trigger chain reaction mark
+	if result.hit and move.power > 0:
+		for effect in defender.active_effects:
+			if effect.get("status") == "chain_reaction_mark":
+				result.effects.append({ "effect": "chain_reaction", "amount": result.damage })
+				result.effects.append({ "target": defender, "effect": "remove_status", "status": "chain_reaction_mark" })
+				break # Only trigger once per hit
+
+	# Nonmetal: Apply Unstable on hit
+	if attacker.data.group == AtomicConfig.Group.NONMETAL and result.hit and move.power > 0:
 		var count = PlayerData.class_resonance.get(AtomicConfig.Group.NONMETAL, 0)
-		var chance = 0.05 * count # +5% chance per element
+		var multiplier = 1.20 + (count * 0.05)
 		
-		# Full Set Bonus: Guaranteed Chain Reaction
 		var total_nm = 0
 		if MonsterManifest:
 			for m in MonsterManifest.all_monsters:
@@ -472,16 +479,9 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 					total_nm += 1
 		
 		if count >= total_nm and total_nm > 0:
-			chance = 1.0
+			multiplier += 0.10
 			
-		if randf() < chance:
-			var chain_effect = { "effect": "chain_reaction", "amount": result.damage }
-			
-			# Mastery: Nonmetals (100% Stability) -> Status effects chain react
-			if attacker.data.stability >= 100:
-				chain_effect["copy_status"] = true
-				
-			result.effects.append(chain_effect)
+		result.effects.append({ "target": defender, "status": "unstable", "duration": 2, "damage_multiplier": multiplier, "type": "status" })
 
 	# Metalloid: +5% Debuff Effectiveness (Increase stat drop amount)
 	if attacker.data.group == AtomicConfig.Group.METALLOID:

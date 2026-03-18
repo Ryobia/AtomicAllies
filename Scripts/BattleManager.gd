@@ -252,11 +252,11 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 	print("BattleManager: Battle started with %d vs %d units." % [player_count, enemy_count])
 	_update_team_passives()
 	
-	# Mastery: Alkali Metals (100% Stability) -> Free Turn at Start
+	# Mastery: Alkali & Nonmetals (100% Stability) -> Free Turn at Start
 	var all_units = active_player_monsters + active_enemy_monsters
 	for unit in all_units:
 		if not unit: continue
-		if unit.data.group == AtomicConfig.Group.ALKALI_METAL and unit.data.stability >= 100:
+		if (unit.data.group == AtomicConfig.Group.ALKALI_METAL or unit.data.group == AtomicConfig.Group.NONMETAL) and unit.data.stability >= 100:
 			unit.atb_value = 100.0
 			_show_mastery_trigger(unit, "Mastery: Free Turn!")
 		
@@ -2264,52 +2264,16 @@ func _get_swap_options() -> Array:
 	return options
 
 func _update_team_passives():
-	# Apply Team Auras (Passives)
-	var nonmetal_count_p = 0
-	for u in active_player_monsters:
-		if u and not u.is_dead and u.data.group == AtomicConfig.Group.NONMETAL:
-			nonmetal_count_p += 1
-			
-	for u in active_player_monsters:
-		if not u: continue
-		# First, remove any existing nonmetal passive to prevent incorrect stacking on re-calc
-		if "active_effects" in u:
+	# Clean up legacy nonmetal passives from old saves to prevent bugs
+	var all_units = active_player_monsters + active_enemy_monsters
+	for u in all_units:
+		if u and "active_effects" in u:
 			for i in range(u.active_effects.size() - 1, -1, -1):
 				var effect = u.active_effects[i]
 				if effect.get("source") == "nonmetal_passive":
 					if u.stats.has(effect.get("stat")):
 						u.stats[effect.get("stat")] -= effect.get("amount", 0)
 					u.active_effects.remove_at(i)
-		
-		# Nonmetal Aura: Allies gain 5% attack per Nonmetal
-		if nonmetal_count_p > 0:
-			var buff_id = "persist_nonmetal_atk_fraction"
-			var existing_fraction = u.get_meta(buff_id, 0.0)
-			
-			# Calculate buff based on base stats to prevent compounding with other in-battle buffs
-			var base_attack = u.data.get_current_stats().attack
-			var buff_value = (base_attack * (0.05 * nonmetal_count_p)) + existing_fraction
-			
-			var integer_part = int(buff_value)
-			var fractional_part = buff_value - float(integer_part)
-			
-			u.set_meta(buff_id, fractional_part)
-			
-			if integer_part > 0:
-				u.apply_effect({ "target": u, "stat": "attack", "amount": integer_part, "duration": 99, "type": "stat_mod", "source": "nonmetal_passive" })
-
-	var nonmetal_count_e = 0
-	for u in active_enemy_monsters:
-		if not u.is_dead and u.data.group == AtomicConfig.Group.NONMETAL:
-			nonmetal_count_e += 1
-			
-	for u in active_enemy_monsters:
-		# Enemies don't persist, so no need for fractional logic, but we fix the compounding.
-		if nonmetal_count_e > 0:
-			var base_attack = u.data.get_current_stats().attack
-			var amount = int(base_attack * (0.05 * nonmetal_count_e))
-			if amount > 0:
-				u.apply_effect({ "target": u, "stat": "attack", "amount": amount, "duration": 99, "type": "stat_mod", "source": "nonmetal_passive" })
 
 func _apply_turn_start_passives(unit: BattleMonster):
 	var group = unit.data.group

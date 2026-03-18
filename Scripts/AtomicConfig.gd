@@ -125,7 +125,7 @@ const MASTERY_BONUSES = {
 	Group.TRANSITION_METAL: "Mastery: The second hit from a double-attack deals full damage.",
 	Group.POST_TRANSITION: "Mastery: Healing an ally also deals that much damage to a random enemy.",
 	Group.METALLOID: "Mastery: Increases the chance to stun on-hit to 25%.",
-	Group.NONMETAL: "Mastery: Chain Reactions can now also spread status effects.",
+	Group.NONMETAL: "Mastery: Gain a free turn at the start of combat.",
 	Group.HALOGEN: "Mastery: At the start of combat, poisons a random enemy.",
 	Group.NOBLE_GAS: "Mastery: Doubles passive HP regeneration to 10% per turn.",
 	Group.ACTINIDE: "Mastery: Reduces passive HP decay from 10% to 5%.",
@@ -156,13 +156,13 @@ const GROUP_MOVES = {
 	],
 	Group.NONMETAL: [
 		{
-			"name": "Covalent Link",
-			"power": 0,
+			"name": "Chain Reaction",
+			"power": 15,
 			"accuracy": 100,
-			"type": "Status_Hostile",
-			"description": "Marks enemy. Next attack from a different element deals bonus damage.",
+			"type": "Special",
+			"description": "A weak attack that marks the enemy. The next attack against them will trigger a chain reaction.",
 			"effects": [ {
-				"type": "status", "status": "marked_covalent", "duration": 3, "damage_multiplier": 1.2, "condition": "cross_element", "reaction_name": "Covalent Reaction", "message": "%s is marked for reaction!"
+				"type": "status", "status": "chain_reaction_mark", "duration": 3, "message": "%s is primed for a chain reaction!"
 			}],
 			"cooldown": 2
 		},

@@ -10,6 +10,7 @@ const STATUS_DESCRIPTIONS = {
 	"unstable": "Takes 1.2x damage from next attack.",
 	"poison": "Taking damage over time based on Max HP.",
 	"vulnerable": "Takes increased damage.",
+	"chain_reaction_mark": "Next attack against this unit triggers a Chain Reaction.",
 	"corrosion": "Taking damage over time (ignores DEF).",
 	"invulnerable": "Immune to all damage and status.",
 	"reactive_vapor": "Takes damage when attacking enemies.",

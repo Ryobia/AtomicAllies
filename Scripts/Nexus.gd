@@ -17,9 +17,21 @@ var parent_1: MonsterData
 var parent_2: MonsterData
 var selecting_slot: int = 0 # Tracks if we are picking Parent 1 or Parent 2
 
+# Fission UI References
+var mode_toggle_btn: Button
+var fusion_container: Control
+var fission_container: Control
+var fission_parent_btn: Button
+var fission_action_btn: TextureButton
+var fission_status_label: Label
+var fission_icon_rect: TextureRect
+var fission_parent: MonsterData
+var is_fission_mode: bool = false
+
 # Visual References
 var atom_p1: Node2D
 var atom_p2: Node2D
+var atom_fission: Node2D
 var fusion_failure_popup
 
 # Confirmation UI
@@ -32,6 +44,9 @@ var stabilizer_checkbox: CheckBox
 var buy_stabilizer_btn: Button
 var catalyst_checkbox: CheckBox
 var buy_catalyst_btn: Button
+
+var _fusion_overlay: ColorRect
+var _synthesis_complete_overlay: ColorRect
 
 var synthesis_complete_popup
 
@@ -55,6 +70,23 @@ func _ready():
 	breed_btn = find_child("BreedButton", true, false)
 	status_label = find_child("StatusLabel", true, false)
 	
+	# Fission Nodes
+	mode_toggle_btn = find_child("ModeToggleButton", true, false)
+	fusion_container = find_child("FusionContainer", true, false)
+	fission_container = find_child("FissionContainer", true, false)
+	fission_parent_btn = find_child("FissionParentButton", true, false)
+	fission_action_btn = find_child("FissionActionBtn", true, false)
+	fission_status_label = find_child("FissionStatusLabel", true, false)
+	fission_icon_rect = find_child("FissionIcon", true, false)
+	
+	if mode_toggle_btn: mode_toggle_btn.pressed.connect(_on_mode_toggle_pressed)
+	if fission_parent_btn: fission_parent_btn.pressed.connect(func(): _open_selection(3))
+	if fission_action_btn: fission_action_btn.pressed.connect(_on_fission_action_pressed)
+	
+	if fusion_container and fission_container:
+		fusion_container.visible = true
+		fission_container.visible = false
+	
 	_create_ambient_dust()
 	
 	_update_background_transform()
@@ -62,6 +94,23 @@ func _ready():
 	
 	fusion_confirm_popup = find_child("FusionConfirmPopup", true, false)
 	if fusion_confirm_popup:
+		_fusion_overlay = ColorRect.new()
+		_fusion_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_fusion_overlay.color = Color(0, 0, 0, 0.75)
+		_fusion_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+		_fusion_overlay.z_index = 99
+		_fusion_overlay.visible = false
+		add_child(_fusion_overlay)
+		
+		fusion_confirm_popup.z_index = 100
+		fusion_confirm_popup.visibility_changed.connect(func():
+			if is_instance_valid(_fusion_overlay):
+				_fusion_overlay.visible = fusion_confirm_popup.visible
+				if fusion_confirm_popup.visible:
+					_fusion_overlay.move_to_front()
+					fusion_confirm_popup.move_to_front()
+		)
+		
 		fusion_confirm_popup.visible = false
 		
 		confirm_fuse_btn = fusion_confirm_popup.find_child("ConfirmButton", true, false)
@@ -127,6 +176,23 @@ func _ready():
 	
 	synthesis_complete_popup = find_child("SynthesisCompletePopup", true, false)
 	if synthesis_complete_popup:
+		_synthesis_complete_overlay = ColorRect.new()
+		_synthesis_complete_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_synthesis_complete_overlay.color = Color(0, 0, 0, 0.75)
+		_synthesis_complete_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+		_synthesis_complete_overlay.z_index = 99
+		_synthesis_complete_overlay.visible = false
+		add_child(_synthesis_complete_overlay)
+		
+		synthesis_complete_popup.z_index = 100
+		synthesis_complete_popup.visibility_changed.connect(func():
+			if is_instance_valid(_synthesis_complete_overlay):
+				_synthesis_complete_overlay.visible = synthesis_complete_popup.visible
+				if synthesis_complete_popup.visible:
+					_synthesis_complete_overlay.move_to_front()
+					synthesis_complete_popup.move_to_front()
+		)
+		
 		synthesis_complete_popup.visible = false
 		var ok_btn = synthesis_complete_popup.find_child("OkButton", true, false)
 		if ok_btn:
@@ -279,6 +345,35 @@ func _ready():
 	if TutorialManager:
 		TutorialManager.check_tutorial_progress()
 
+func _on_mode_toggle_pressed():
+	is_fission_mode = not is_fission_mode
+	if fusion_container: fusion_container.visible = not is_fission_mode
+	if fission_container: fission_container.visible = is_fission_mode
+	if mode_toggle_btn:
+		mode_toggle_btn.text = "Switch \n to Fusion" if is_fission_mode else "Switch \n to Fission"
+	_animate_button_press(mode_toggle_btn)
+	
+	# Clear previously selected elements when switching modes
+	parent_1 = null
+	parent_2 = null
+	fission_parent = null
+	
+	if parent_1_btn: parent_1_btn.text = "Select Parent 1"
+	if parent_2_btn: parent_2_btn.text = "Select Parent 2"
+	if fission_parent_btn: fission_parent_btn.text = "Select Element"
+	
+	if is_instance_valid(atom_p1): atom_p1.queue_free()
+	if is_instance_valid(atom_p2): atom_p2.queue_free()
+	if is_instance_valid(atom_fission): atom_fission.queue_free()
+	atom_p1 = null
+	atom_p2 = null
+	atom_fission = null
+	
+	if fission_icon_rect: fission_icon_rect.visible = false
+	
+	_update_success_rate_preview()
+	check_breeding_status()
+
 func _on_sort_pressed():
 	if current_sort_mode == SortMode.ATOMIC_NUMBER: current_sort_mode = SortMode.NAME
 	elif current_sort_mode == SortMode.NAME: current_sort_mode = SortMode.STABILITY
@@ -295,14 +390,19 @@ func _on_search_text_changed(new_text: String):
 	_populate_selection_list()
 
 func _on_fusion_error(message: String):
-	# Remove old AcceptDialog usage and create a custom styled popup
+	var overlay = ColorRect.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.color = Color(0, 0, 0, 0.75)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.z_index = 100
+	add_child(overlay)
+	
 	var popup = PanelContainer.new()
 	popup.name = "CustomErrorPopup"
 	popup.set_anchors_preset(Control.PRESET_CENTER)
 	popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	popup.grow_vertical = Control.GROW_DIRECTION_BOTH
 	popup.custom_minimum_size = Vector2(600, 0)
-	popup.z_index = 100
 	
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color("#010813")
@@ -356,10 +456,10 @@ func _on_fusion_error(message: String):
 	btn.add_theme_color_override("font_color", Color("#010813"))
 	btn.add_theme_font_size_override("font_size", 36)
 	
-	btn.pressed.connect(popup.queue_free)
+	btn.pressed.connect(overlay.queue_free)
 	vbox.add_child(btn)
 	
-	add_child(popup)
+	overlay.add_child(popup)
 	
 	# Animate
 	popup.scale = Vector2.ZERO
@@ -370,19 +470,25 @@ func _on_capsule_created(capsule_data):
 	# Reset Data
 	parent_1 = null
 	parent_2 = null
+	fission_parent = null
 	
 	# Reset UI
 	if parent_1_btn: parent_1_btn.text = "Select Parent 1"
 	if parent_2_btn: parent_2_btn.text = "Select Parent 2"
+	if fission_parent_btn: fission_parent_btn.text = "Select Element"
 	
 	if status_label:
 		status_label.text = "Fusion Successful! Sent to Synthesis Chamber."
+	if fission_status_label:
+		fission_status_label.text = "Fission Successful! Sent to Synthesis Chamber."
 	
 	# Clear Visuals
 	if is_instance_valid(atom_p1): atom_p1.queue_free()
 	if is_instance_valid(atom_p2): atom_p2.queue_free()
+	if is_instance_valid(atom_fission): atom_fission.queue_free()
 	atom_p1 = null
 	atom_p2 = null
+	atom_fission = null
 	
 	check_breeding_status()
 	_update_success_rate_preview()
@@ -412,6 +518,14 @@ func check_breeding_status():
 	else:
 		status_label.text = "Select two Elements to Fuse."
 		breed_btn.disabled = false
+
+	if fission_status_label and fission_action_btn:
+		if PlayerData.get_first_empty_chamber_index() == -1:
+			fission_status_label.text = "No Synthesis Chambers available!"
+			fission_action_btn.disabled = true
+		else:
+			fission_status_label.text = "Select an Element to Fission."
+			fission_action_btn.disabled = false
 
 # --- Selection Logic ---
 func _open_selection(slot: int):
@@ -462,6 +576,10 @@ func _populate_selection_list():
 	for monster in sorted_list:
 		# Skip if this monster is already selected in the other slot
 		if (selecting_slot == 1 and monster == parent_2) or (selecting_slot == 2 and monster == parent_1):
+			continue
+			
+		# Fission check: Can't fission Hydrogen (Z=1)
+		if selecting_slot == 3 and monster.atomic_number <= 1:
 			continue
 			
 		var current_time = int(Time.get_unix_time_from_system())
@@ -647,6 +765,28 @@ func _on_monster_selected(monster: MonsterData):
 		# Tutorial: Advance if P2 selected
 		if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_PARENT_2:
 			TutorialManager.advance_step()
+	elif selecting_slot == 3:
+		fission_parent = monster
+		if fission_parent_btn: fission_parent_btn.text = monster.monster_name
+		
+		if fission_status_label:
+			var cost = int(AtomicConfig.calculate_fusion_cost(monster.atomic_number) / 2.0)
+			fission_status_label.text = "Cost: %d Binding Energy" % cost
+			
+		if fission_icon_rect:
+			fission_icon_rect.visible = true
+			if is_instance_valid(atom_fission): atom_fission.queue_free()
+			
+			var target_size = fission_icon_rect.size
+			if target_size == Vector2.ZERO: target_size = fission_icon_rect.custom_minimum_size
+			if target_size == Vector2.ZERO: target_size = Vector2(200, 200)
+			
+			var visual = _create_monster_visual(monster, target_size)
+			if visual:
+				fission_icon_rect.add_child(visual)
+				visual.position = target_size / 2.0
+				atom_fission = visual
+				_start_bobbing_tween(visual)
 	
 	# Tutorial: Advance if P1 selected
 	if selecting_slot == 1 and TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.SELECT_PARENT_1:
@@ -654,6 +794,149 @@ func _on_monster_selected(monster: MonsterData):
 	
 	selection_panel.visible = false
 	_update_success_rate_preview()
+
+# --- Fission Logic ---
+func _on_fission_action_pressed():
+	_animate_button_press(fission_action_btn)
+	
+	if not fission_parent:
+		if fission_status_label: fission_status_label.text = "Select an element to fission!"
+		return
+		
+	var chamber_idx = PlayerData.get_first_empty_chamber_index()
+	if chamber_idx == -1:
+		_on_fusion_error("No empty Synthesis Chambers available!")
+		return
+		
+	# Cost is half the fusion cost of the parent
+	var cost = int(AtomicConfig.calculate_fusion_cost(fission_parent.atomic_number) / 2.0)
+	if PlayerData.resources.get("binding_energy", 0) < cost:
+		if fission_status_label: fission_status_label.text = "Not enough Binding Energy!"
+		return
+		
+	_show_fission_confirmation(cost)
+
+func _show_fission_confirmation(cost: int):
+	var overlay = ColorRect.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.color = Color(0, 0, 0, 0.75)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.z_index = 100
+	add_child(overlay)
+	
+	var popup = PanelContainer.new()
+	popup.name = "FissionConfirmPopup"
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	popup.grow_vertical = Control.GROW_DIRECTION_BOTH
+	popup.custom_minimum_size = Vector2(800, 400)
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	popup.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 40)
+	margin.add_theme_constant_override("margin_right", 40)
+	margin.add_theme_constant_override("margin_top", 40)
+	margin.add_theme_constant_override("margin_bottom", 40)
+	popup.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 30)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "CONFIRM FISSION"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", Color("#ffd700"))
+	vbox.add_child(title)
+	
+	var desc = Label.new()
+	desc.text = "Fission %s?\nCost: %d Binding Energy" % [fission_parent.monster_name, cost]
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_font_size_override("font_size", 42)
+	vbox.add_child(desc)
+	
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 30)
+	vbox.add_child(hbox)
+	
+	var btn_style = StyleBoxFlat.new()
+	btn_style.bg_color = Color("#60fafc")
+	btn_style.set_corner_radius_all(8)
+	
+	var hover_style = btn_style.duplicate()
+	hover_style.bg_color = Color("#a0fcfd")
+	
+	var confirm_btn = Button.new()
+	confirm_btn.text = "Confirm"
+	confirm_btn.custom_minimum_size = Vector2(250, 90)
+	confirm_btn.add_theme_font_size_override("font_size", 42)
+	confirm_btn.add_theme_color_override("font_color", Color("#010813"))
+	confirm_btn.add_theme_stylebox_override("normal", btn_style)
+	confirm_btn.add_theme_stylebox_override("hover", hover_style)
+	confirm_btn.add_theme_stylebox_override("pressed", btn_style)
+	confirm_btn.pressed.connect(func():
+		_execute_fission(cost)
+		overlay.queue_free()
+	)
+	hbox.add_child(confirm_btn)
+	
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.custom_minimum_size = Vector2(250, 90)
+	cancel_btn.add_theme_font_size_override("font_size", 42)
+	cancel_btn.add_theme_color_override("font_color", Color("#010813"))
+	cancel_btn.add_theme_stylebox_override("normal", btn_style)
+	cancel_btn.add_theme_stylebox_override("hover", hover_style)
+	cancel_btn.add_theme_stylebox_override("pressed", btn_style)
+	cancel_btn.pressed.connect(overlay.queue_free)
+	hbox.add_child(cancel_btn)
+	
+	overlay.add_child(popup)
+	
+	# Animate in
+	popup.pivot_offset = Vector2(400, 200)
+	popup.scale = Vector2(0.9, 0.9)
+	popup.modulate.a = 0.0
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(popup, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(popup, "modulate:a", 1.0, 0.2)
+
+func _execute_fission(cost: int):
+	var chamber_idx = PlayerData.get_first_empty_chamber_index()
+	if chamber_idx == -1:
+		_on_fusion_error("No empty Synthesis Chambers available!")
+		return
+		
+	if not PlayerData.spend_resource("binding_energy", cost):
+		if fission_status_label: fission_status_label.text = "Not enough Binding Energy!"
+		return
+		
+	# Apply fatigue to the parent element (1 min per Z, like fusion)
+	var cooldown_seconds = fission_parent.atomic_number * 60
+	fission_parent.fatigue_expiry = int(Time.get_unix_time_from_system()) + cooldown_seconds
+	PlayerData.save_game()
+	
+	# Calculate random lower element and its stability
+	var target_z = randi_range(1, fission_parent.atomic_number - 1)
+	var final_stability = SynthesisManager._calculate_result_stability(target_z)
+	var duration = int(max(0, SynthesisManager.calculate_synthesis_duration(target_z, final_stability)))
+	var finish_time = int(Time.get_unix_time_from_system()) + duration
+	
+	_play_fission_animation()
+	
+	var capsule = PlayerData.add_capsule_to_chamber(chamber_idx, target_z, fission_parent.atomic_number, 0, finish_time, int(final_stability))
+	SynthesisManager.capsule_created.emit(capsule)
 
 # --- Breeding Logic ---
 func _on_breed_pressed():
@@ -1225,6 +1508,117 @@ func _play_fusion_animation():
 		if is_instance_valid(p2_proxy): p2_proxy.queue_free()
 		if icon1: icon1.visible = false
 		if icon2: icon2.visible = false
+	)
+
+func _play_fission_animation():
+	if not atom_fission: return
+	
+	# Create proxy to animate independently
+	var proxy = _create_visual_proxy(atom_fission)
+	atom_fission.visible = false
+	
+	var target_pos = size / 2
+	target_pos.y -= 250
+	
+	var flare = find_child("Flare", true, false)
+	if flare:
+		flare.visible = true
+		flare.z_index = 20
+		flare.scale = Vector2.ZERO
+		flare.modulate.a = 0.0
+		flare.position = target_pos
+
+	var capsule = find_child("Capsule", true, false)
+	if capsule:
+		capsule.visible = true
+		capsule.scale = Vector2.ZERO
+		capsule.position = target_pos
+		capsule.z_index = 21
+		
+		var anim_path = "res://Assets/Animations/CapsuleStabilizing.tres"
+		if ResourceLoader.exists(anim_path):
+			var frames = load(anim_path)
+			if capsule is AnimatedSprite2D:
+				capsule.sprite_frames = frames
+				capsule.play("energycapsule")
+			elif capsule is Sprite2D:
+				if frames is SpriteFrames and frames.has_animation("energycapsule"):
+					capsule.texture = frames.get_frame_texture("energycapsule", 0)
+					
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+	
+	# Move proxy to center
+	tween.tween_property(proxy, "global_position", target_pos, 0.6)
+	
+	# Burst and Split Action
+	tween.chain().tween_callback(func():
+		_shake_screen(0.4, 15.0)
+		
+		if flare:
+			var f_tween = create_tween().set_parallel(true)
+			f_tween.tween_property(flare, "scale", Vector2(3.0, 3.0), 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+			f_tween.tween_property(flare, "modulate:a", 1.0, 0.1)
+			f_tween.chain().tween_property(flare, "modulate:a", 0.0, 0.4).set_delay(0.1)
+			f_tween.parallel().tween_property(flare, "scale", Vector2(0.0, 0.0), 0.4).set_delay(0.1)
+			
+		var burst = CPUParticles2D.new()
+		burst.emitting = true
+		burst.one_shot = true
+		burst.explosiveness = 1.0
+		burst.amount = 80
+		burst.lifetime = 0.6
+		burst.spread = 180.0
+		burst.gravity = Vector2.ZERO
+		burst.initial_velocity_min = 200.0
+		burst.initial_velocity_max = 500.0
+		burst.scale_amount_min = 4.0
+		burst.scale_amount_max = 10.0
+		burst.color = Color("#60fafc")
+		burst.z_index = 22
+		burst.global_position = target_pos
+		add_child(burst)
+		get_tree().create_timer(1.0).timeout.connect(burst.queue_free)
+		
+		if is_instance_valid(proxy):
+			# Clone the visual twice to represent the atom shattering into halves
+			var left_half = proxy.duplicate()
+			var right_half = proxy.duplicate()
+			add_child(left_half)
+			add_child(right_half)
+			left_half.global_position = target_pos
+			right_half.global_position = target_pos
+			
+			var split_tween = create_tween().set_parallel(true)
+			split_tween.tween_property(left_half, "global_position:x", target_pos.x - 250, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			split_tween.tween_property(right_half, "global_position:x", target_pos.x + 250, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			split_tween.tween_property(left_half, "modulate:a", 0.0, 0.4)
+			split_tween.tween_property(right_half, "modulate:a", 0.0, 0.4)
+			split_tween.tween_property(left_half, "scale", Vector2.ZERO, 0.4)
+			split_tween.tween_property(right_half, "scale", Vector2.ZERO, 0.4)
+			
+			split_tween.chain().tween_callback(func():
+				if is_instance_valid(left_half): left_half.queue_free()
+				if is_instance_valid(right_half): right_half.queue_free()
+			)
+			proxy.visible = false
+	)
+	
+	# Capsule Animation Sequence
+	if capsule:
+		var c_tween = create_tween()
+		c_tween.tween_interval(0.6) # Wait for proxy to hit center
+		c_tween.tween_property(capsule, "scale", Vector2(1.0, 1.0), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
+		var exit_pos = Vector2(100, size.y - 100)
+		c_tween.chain().tween_property(capsule, "global_position", exit_pos, 0.8).set_delay(0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		c_tween.parallel().tween_property(capsule, "scale", Vector2(0.0, 0.0), 0.8).set_delay(0.3)
+		
+	var finish_tween = create_tween()
+	finish_tween.tween_interval(2.5)
+	finish_tween.tween_callback(func():
+		if is_instance_valid(proxy): proxy.queue_free()
 	)
 
 func _create_visual_proxy(original: Node2D) -> Node2D:

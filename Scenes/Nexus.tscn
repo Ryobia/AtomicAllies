@@ -6,12 +6,16 @@
 [ext_resource type="SpriteFrames" uid="uid://ci117btk7g17s" path="res://Assets/Animations/fusioncore.tres" id="4_26528"]
 [ext_resource type="SpriteFrames" uid="uid://bkevs5h52wjk2" path="res://Assets/Animations/FusionSign.tres" id="5_hoak4"]
 [ext_resource type="Texture2D" uid="uid://dtmntevxwbd33" path="res://data/ElectronGlow.tres" id="5_ut1jl"]
-[ext_resource type="Texture2D" uid="uid://b4cloiewemyyx" path="res://Assets/initiatefusionbtn.png" id="7_26528"]
+[ext_resource type="Texture2D" uid="uid://b65ksbl6np8ci" path="res://Assets/fusefissionbuttons.png" id="6_hoak4"]
 [ext_resource type="Texture2D" uid="uid://dslgli1r16a2t" path="res://Assets/menuicons.png" id="7_lkuis"]
 [ext_resource type="Texture2D" uid="uid://cslxtqfgxgb0m" path="res://Assets/battleassetsheet.png" id="8_26528"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n15nf"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n15nf"]
+atlas = ExtResource("6_hoak4")
+region = Rect2(78.51016, 114.15654, 737.3745, 736.0435)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hoak4"]
 atlas = ExtResource("8_26528")
@@ -22,6 +26,16 @@ bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7ece5"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.9019608)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7ece5"]
+atlas = ExtResource("6_hoak4")
+region = Rect2(884.12964, 111.77451, 734.7125, 737.3745)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_06dvn"]
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_328ks"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h8wke"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -77,6 +91,23 @@ height = 256
 fill = 1
 fill_from = Vector2(0.51304346, 0.51304346)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hoak4"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+border_blend = true
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [node name="Nexus" type="Control" unique_id=1082065202]
 layout_mode = 3
 anchors_preset = 15
@@ -98,7 +129,7 @@ scale = Vector2(1.4595922, 1.4821618)
 sprite_frames = ExtResource("4_26528")
 animation = &"core"
 autoplay = "core"
-frame_progress = 0.86234105
+frame_progress = 0.5667622
 centered = false
 
 [node name="FusionSign" type="AnimatedSprite2D" parent="Background" unique_id=1202715435]
@@ -107,7 +138,7 @@ scale = Vector2(1.5425925, 1.6835284)
 sprite_frames = ExtResource("5_hoak4")
 animation = &"sign"
 autoplay = "sign"
-frame_progress = 0.9922046
+frame_progress = 0.60251504
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
 visible = false
@@ -139,27 +170,10 @@ grow_vertical = 2
 [node name="GridContainer" type="GridContainer" parent="SelectionPanel/ScrollContainer" unique_id=1099717871]
 layout_mode = 2
 
-[node name="BreedButton" type="TextureButton" parent="." unique_id=885097726]
-z_index = 5
+[node name="FusionContainer" type="VBoxContainer" parent="." unique_id=479629868]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.5
-anchor_top = 0.578
-anchor_right = 0.5
-anchor_bottom = 0.578
-offset_left = -244.0
-offset_top = -88.0
-offset_right = 241.0
-offset_bottom = 88.0
-grow_horizontal = 2
-grow_vertical = 2
-texture_normal = ExtResource("7_26528")
-texture_pressed = ExtResource("7_26528")
-
-[node name="VboxContainer" type="VBoxContainer" parent="." unique_id=479629868]
-layout_mode = 1
-anchors_preset = -1
-anchor_top = 0.66200006
+anchor_top = 0.539
 anchor_right = 1.0
 anchor_bottom = 0.866
 offset_top = 0.95983887
@@ -167,11 +181,21 @@ offset_bottom = -0.00012207031
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VboxContainer" unique_id=1394945458]
+[node name="BreedButton" type="TextureButton" parent="FusionContainer" unique_id=885097726]
+z_index = 5
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_normal = SubResource("AtlasTexture_n15nf")
+ignore_texture_size = true
+stretch_mode = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="FusionContainer" unique_id=1394945458]
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
+size_flags_vertical = 0
 
-[node name="HelpIcon" type="TextureRect" parent="VboxContainer/VBoxContainer" unique_id=1787347281]
+[node name="HelpIcon" type="TextureRect" parent="FusionContainer/VBoxContainer" unique_id=1787347281]
 custom_minimum_size = Vector2(66, 66)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -180,7 +204,7 @@ texture = SubResource("AtlasTexture_hoak4")
 expand_mode = 5
 stretch_mode = 4
 
-[node name="StabilityLabel" type="Label" parent="VboxContainer/VBoxContainer" unique_id=1425843288]
+[node name="StabilityLabel" type="Label" parent="FusionContainer/VBoxContainer" unique_id=1425843288]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
@@ -188,7 +212,7 @@ theme_override_constants/outline_size = 11
 theme_override_font_sizes/font_size = 42
 horizontal_alignment = 1
 
-[node name="StabilityBar" type="ProgressBar" parent="VboxContainer/VBoxContainer" unique_id=1065992710]
+[node name="StabilityBar" type="ProgressBar" parent="FusionContainer/VBoxContainer" unique_id=1065992710]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 size_flags_vertical = 1
@@ -199,22 +223,23 @@ theme_override_font_sizes/font_size = 32
 value = 100.0
 show_percentage = false
 
-[node name="StatusLabel" type="Label" parent="VboxContainer" unique_id=1683976128]
+[node name="StatusLabel" type="Label" parent="FusionContainer" unique_id=1683976128]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_3h3en")
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VboxContainer" unique_id=1544332229]
+[node name="HBoxContainer" type="HBoxContainer" parent="FusionContainer" unique_id=1544332229]
 layout_mode = 2
 size_flags_vertical = 3
 alignment = 1
 
-[node name="Parent1Button" type="Button" parent="VboxContainer/HBoxContainer" unique_id=823115648]
+[node name="Parent1Button" type="Button" parent="FusionContainer/HBoxContainer" unique_id=823115648]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_7ece5")
@@ -222,14 +247,52 @@ text = "Select Element 1"
 icon_alignment = 1
 expand_icon = true
 
-[node name="Parent2Button" type="Button" parent="VboxContainer/HBoxContainer" unique_id=798526465]
+[node name="Parent2Button" type="Button" parent="FusionContainer/HBoxContainer" unique_id=798526465]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_7ece5")
 text = "Select Element 2"
+
+[node name="FissionContainer" type="VBoxContainer" parent="." unique_id=691920439]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.66200006
+anchor_right = 1.0
+anchor_bottom = 0.866
+offset_top = -151.04016
+offset_bottom = 2.2800293
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="FissionActionBtn" type="TextureButton" parent="FissionContainer" unique_id=867114902]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_horizontal = 4
+texture_normal = SubResource("AtlasTexture_7ece5")
+ignore_texture_size = true
+stretch_mode = 6
+
+[node name="FissionStatusLabel" type="Label" parent="FissionContainer" unique_id=1856906148]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_06dvn")
+horizontal_alignment = 1
+
+[node name="FissionParentButton" type="Button" parent="FissionContainer" unique_id=1538269318]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_328ks")
+text = "Select Element"
 
 [node name="ErrorPopup" type="AcceptDialog" parent="." unique_id=1400983032]
 oversampling_override = 1.0
@@ -443,4 +506,40 @@ texture = SubResource("GradientTexture2D_26528")
 
 [node name="Capsule" type="Sprite2D" parent="." unique_id=1637598762]
 
-[connection signal="pressed" from="BreedButton" to="." method="_on_breed_button_pressed"]
+[node name="FissionIcon" type="TextureRect" parent="." unique_id=1725951056]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.4
+anchor_top = 0.421
+anchor_right = 0.4
+anchor_bottom = 0.421
+offset_left = -125.0
+offset_top = -125.0
+offset_right = 125.0
+offset_bottom = 125.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ModeToggleButton" type="Button" parent="." unique_id=1992948987]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.7
+anchor_top = 0.622
+anchor_right = 1.0
+anchor_bottom = 0.622
+offset_left = -8.0
+offset_top = -4.0
+offset_right = -30.0
+offset_bottom = 4.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 40
+theme_override_styles/normal = SubResource("StyleBoxFlat_hoak4")
+text = "Switch
+To Fission"
+
+[connection signal="pressed" from="FusionContainer/BreedButton" to="." method="_on_breed_button_pressed"]
