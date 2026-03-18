@@ -154,7 +154,7 @@ func _populate_list():
 		btn.add_theme_color_override("font_color", Color("#60fafc"))
 		
 		var style = StyleBoxFlat.new()
-		style.bg_color = Color(0.1, 0.1, 0.1, 0.5)
+		style.bg_color = Color("#010813dd")
 		style.border_width_bottom = 1
 		style.border_color = Color("#60fafc")
 		style.content_margin_left = 20

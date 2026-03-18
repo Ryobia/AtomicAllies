@@ -69,6 +69,9 @@ func setup(unit: BattleMonster):
             var lbl = Label.new()
             lbl.text = "No active effects."
             lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+            lbl.add_theme_font_size_override("font_size", 32)
+            lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+            lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
             effects_container.add_child(lbl)
         else:
             # Group permanent stat mods
@@ -179,6 +182,45 @@ func setup(unit: BattleMonster):
                 desc_lbl.visible = (desc_text != "")
                 
                 effects_container.add_child(card)
+
+    # --- Moves ---
+    # Looks for a VBoxContainer named "MovesContainer" to populate
+    var moves_container = find_child("MovesContainer", true, false)
+    if moves_container:
+        for child in moves_container.get_children():
+            child.queue_free()
+            
+        var moves = CombatManager.get_active_moves(unit.data)
+        for m in moves:
+            var is_on_cooldown = false
+            var cd_turns = 0
+            if "move_cooldowns" in unit and unit.move_cooldowns.has(m.name):
+                is_on_cooldown = true
+                cd_turns = unit.move_cooldowns[m.name]
+            
+            var m_lbl = RichTextLabel.new()
+            m_lbl.bbcode_enabled = true
+            m_lbl.fit_content = true
+            m_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            m_lbl.add_theme_font_size_override("normal_font_size", 36)
+            
+            var type_color = "#ff4d4d" if m.type == "Physical" else ("#60fafc" if m.type == "Special" else "#2ecc71")
+            var cd_text = "[color=#ff4d4d](Cooldown: %d)[/color]" % cd_turns if is_on_cooldown else "[color=#a0a0a0](Ready)[/color]"
+            
+            m_lbl.text = "[center][color=%s]%s[/color] (Pwr: %d) %s\n[font_size=26][color=#cccccc]%s[/color][/font_size][/center]" % [type_color, m.name, m.power, cd_text, m.description]
+            
+            var panel = PanelContainer.new()
+            var style = StyleBoxFlat.new()
+            style.bg_color = Color("#010813").lightened(0.05)
+            style.set_corner_radius_all(8)
+            style.content_margin_left = 10
+            style.content_margin_right = 10
+            style.content_margin_top = 10
+            style.content_margin_bottom = 10
+            panel.add_theme_stylebox_override("panel", style)
+            
+            panel.add_child(m_lbl)
+            moves_container.add_child(panel)
 
     # --- Close Button ---
     var close_btn = find_child("CloseButton", true, false)

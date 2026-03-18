@@ -673,6 +673,8 @@ func _generate_rewards() -> Array:
 		{ "type": "item", "id": "power_cell", "amount": 1, "name": "Power Cell", "desc": "Get 1 Power Cell", "weight": 15.0 },
 		{ "type": "item", "id": "ion_battery", "amount": 1, "name": "Ion Battery", "desc": "Get 1 Ion Battery", "weight": 20.0 },
 		{ "type": "item", "id": "plasma_injector", "amount": 1, "name": "Plasma Injector", "desc": "Get 1 Plasma Injector", "weight": 20.0 },
+		{ "type": "item", "id": "purifying_salt", "amount": 1, "name": "Purifying Salt", "desc": "Get 1 Purifying Salt", "weight": 20.0 },
+		{ "type": "item", "id": "defibrillator", "amount": 1, "name": "Defibrillator", "desc": "Get 1 Defibrillator", "weight": 10.0, "is_rare": true }
 	]
 	
 	var selected = []

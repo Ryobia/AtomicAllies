@@ -954,11 +954,45 @@ func show_moves(moves: Array, move_cooldowns: Dictionary = {}):
 	# Create new buttons
 	for move in moves:
 		var btn = Button.new()
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		btn.custom_minimum_size = Vector2(0, 160)
+		_style_button(btn)
+		
+		var margin = MarginContainer.new()
+		margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.add_theme_constant_override("margin_left", 10)
+		margin.add_theme_constant_override("margin_right", 10)
+		margin.add_theme_constant_override("margin_top", 10)
+		margin.add_theme_constant_override("margin_bottom", 10)
+		btn.add_child(margin)
+		
+		var vbox = VBoxContainer.new()
+		vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		margin.add_child(vbox)
 
 		if move_cooldowns.has(move.name):
 			var turns_left = move_cooldowns[move.name]
-			btn.text = "%s\n(Cooldown: %d)" % [move.name, turns_left]
 			btn.disabled = true
+			
+			var snipe_text = " [Snipe]" if move.is_snipe else ""
+			var title_lbl = Label.new()
+			title_lbl.text = "%s%s" % [move.name, snipe_text]
+			title_lbl.add_theme_font_size_override("font_size", 54)
+			title_lbl.add_theme_color_override("font_color", Color("#010813"))
+			title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			vbox.add_child(title_lbl)
+			
+			var stats_lbl = Label.new()
+			stats_lbl.text = "Pwr: %d  |  Acc: %d%%  |  CD: %d\n(Wait %d Turns)" % [move.power, move.accuracy, move.cooldown, turns_left]
+			stats_lbl.add_theme_font_size_override("font_size", 39)
+			stats_lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
+			stats_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			stats_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			vbox.add_child(stats_lbl)
 			
 			# Visual Cooldown Indicator (Progress Bar Overlay)
 			var progress = ProgressBar.new()
@@ -982,15 +1016,29 @@ func show_moves(moves: Array, move_cooldowns: Dictionary = {}):
 			btn.add_child(progress)
 		else:
 			var snipe_text = " [Snipe]" if move.is_snipe else ""
-			btn.text = "%s%s\n(%d Pwr)" % [move.name, snipe_text, move.power]
+			
+			var title_lbl = Label.new()
+			title_lbl.text = "%s%s" % [move.name, snipe_text]
+			title_lbl.add_theme_font_size_override("font_size", 54)
+			title_lbl.add_theme_color_override("font_color", Color("#010813"))
+			title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			title_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			vbox.add_child(title_lbl)
+			
+			var stats_lbl = Label.new()
+			stats_lbl.text = "Pwr: %d  |  Acc: %d%%  |  CD: %d" % [move.power, move.accuracy, move.cooldown]
+			stats_lbl.add_theme_font_size_override("font_size", 42)
+			stats_lbl.add_theme_color_override("font_color", Color("#010813"))
+			stats_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			stats_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			vbox.add_child(stats_lbl)
+			
 			btn.pressed.connect(func(): _on_move_btn_pressed(move))
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		_style_button(btn)
 		move_container.add_child(btn)
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Back"
 	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_btn.custom_minimum_size = Vector2(0, 100)
 	_style_button(cancel_btn)
 	cancel_btn.pressed.connect(show_actions)
 	move_container.add_child(cancel_btn)
@@ -1033,7 +1081,7 @@ func show_move_details(move: MoveData):
 	var title = Label.new()
 	var snipe_text = " [Snipe]" if move.is_snipe else ""
 	title.text = "%s%s" % [move.name, snipe_text]
-	title.add_theme_font_size_override("font_size", 64)
+	title.add_theme_font_size_override("font_size", 72)
 	title.add_theme_color_override("font_color", Color("#60fafc"))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
@@ -1041,7 +1089,7 @@ func show_move_details(move: MoveData):
 	var stats = Label.new()
 	stats.text = "Type: %s  |  Power: %d  |  Acc: %d%%" % [move.type, move.power, move.accuracy]
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stats.add_theme_font_size_override("font_size", 42)
+	stats.add_theme_font_size_override("font_size", 48)
 	stats.add_theme_color_override("font_color", Color.WHITE)
 	vbox.add_child(stats)
 	
@@ -1050,7 +1098,7 @@ func show_move_details(move: MoveData):
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	desc.add_theme_font_size_override("font_size", 42)
+	desc.add_theme_font_size_override("font_size", 48)
 	desc.add_theme_color_override("font_color", Color("#cccccc"))
 	vbox.add_child(desc)
 	
@@ -1075,7 +1123,7 @@ func show_items(items: Dictionary):
 	_item_menu_instance.set_anchors_preset(Control.PRESET_CENTER)
 	_item_menu_instance.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_item_menu_instance.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_item_menu_instance.custom_minimum_size = Vector2(800, 800)
+	_item_menu_instance.custom_minimum_size = Vector2(950, 950)
 	_item_menu_instance.z_index = 100
 	
 	var style = StyleBoxFlat.new()
@@ -1099,7 +1147,7 @@ func show_items(items: Dictionary):
 	var title = Label.new()
 	title.text = "ITEMS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", 56)
 	title.add_theme_color_override("font_color", Color("#ffd700"))
 	vbox.add_child(title)
 	
@@ -1115,26 +1163,77 @@ func show_items(items: Dictionary):
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(grid)
 	
+	scroll.scroll_started.connect(func():
+		for child in grid.get_children():
+			child.modulate = Color.WHITE
+	)
+	
 	for item_id in items:
 		var count = items[item_id]
 		var data = CombatManager.get_item_data(item_id)
-		var btn = Button.new()
 		
-		btn.text = " %s\n(x%d)" % [data.name, count]
-		if item_icons.has(item_id):
-			btn.icon = item_icons[item_id]
-			btn.expand_icon = true
-			
+		var btn = PanelContainer.new()
+		btn.mouse_filter = Control.MOUSE_FILTER_PASS
+		
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.custom_minimum_size = Vector2(350, 120)
-		_style_button(btn)
-		btn.add_theme_font_size_override("font_size", 36)
+		btn.custom_minimum_size = Vector2(350, 160)
+		_style_panel(btn)
 		
-		btn.pressed.connect(func(): 
-			item_selected.emit(item_id)
-			if _item_menu_instance:
-				_item_menu_instance.queue_free()
-				_item_menu_instance = null
+		var btn_margin = MarginContainer.new()
+		btn_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		btn_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn_margin.add_theme_constant_override("margin_left", 15)
+		btn_margin.add_theme_constant_override("margin_right", 20)
+		btn.add_child(btn_margin)
+		
+		var hbox = HBoxContainer.new()
+		hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hbox.add_theme_constant_override("separation", 20)
+		btn_margin.add_child(hbox)
+		
+		if item_icons.has(item_id):
+			var icon_rect = TextureRect.new()
+			icon_rect.texture = item_icons[item_id]
+			icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			icon_rect.custom_minimum_size = Vector2(80, 80)
+			icon_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			hbox.add_child(icon_rect)
+			
+		var text_vbox = VBoxContainer.new()
+		text_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		text_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		hbox.add_child(text_vbox)
+		
+		var title_lbl = Label.new()
+		title_lbl.text = "%s (x%d)" % [data.name, count]
+		title_lbl.add_theme_font_size_override("font_size", 42)
+		title_lbl.add_theme_color_override("font_color", Color("#010813"))
+		text_vbox.add_child(title_lbl)
+		
+		var desc_lbl = Label.new()
+		desc_lbl.text = data.get("desc", "")
+		desc_lbl.add_theme_font_size_override("font_size", 32)
+		desc_lbl.add_theme_color_override("font_color", Color("#010813"))
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text_vbox.add_child(desc_lbl)
+		
+		btn.gui_input.connect(func(event):
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+				if event.pressed:
+					btn.set_meta("press_pos", event.global_position)
+					btn.modulate = Color(0.8, 0.8, 0.8)
+				else:
+					btn.modulate = Color.WHITE
+					var start_pos = btn.get_meta("press_pos", Vector2.ZERO)
+					if event.global_position.distance_to(start_pos) < 30.0:
+						if Rect2(Vector2.ZERO, btn.size).has_point(event.position):
+							item_selected.emit(item_id)
+							if _item_menu_instance:
+								_item_menu_instance.queue_free()
+								_item_menu_instance = null
 		)
 		grid.add_child(btn)
 		
@@ -1161,6 +1260,8 @@ func show_actions():
 	if move_container: move_container.visible = false
 	_toggle_grid_layout(false)
 	
+	highlight_active_unit(true, -1) # Clear any swap highlights
+	
 	for btn in action_buttons:
 		if btn: 
 			btn.visible = true
@@ -1180,7 +1281,7 @@ func set_swap_disabled(disabled: bool):
 func _on_move_btn_pressed(move):
 	move_selected.emit(move)
 
-func show_swap_options(monsters: Array, forced: bool = false):
+func show_swap_options(monsters: Array, forced: bool = false, replacing_name: String = "", replacing_index: int = -1):
 	# Hide main actions
 	for btn in action_buttons:
 		if btn: btn.visible = false
@@ -1193,7 +1294,7 @@ func show_swap_options(monsters: Array, forced: bool = false):
 	_swap_menu_instance.set_anchors_preset(Control.PRESET_CENTER)
 	_swap_menu_instance.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_swap_menu_instance.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_swap_menu_instance.custom_minimum_size = Vector2(800, 600)
+	_swap_menu_instance.custom_minimum_size = Vector2(950, 750)
 	_swap_menu_instance.z_index = 100
 	
 	var style = StyleBoxFlat.new()
@@ -1215,9 +1316,12 @@ func show_swap_options(monsters: Array, forced: bool = false):
 	margin.add_child(vbox)
 	
 	var title = Label.new()
-	title.text = "SWAP UNIT"
+	if replacing_name != "":
+		title.text = "REPLACE %s" % replacing_name.to_upper()
+	else:
+		title.text = "SWAP UNIT"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", 56)
 	title.add_theme_color_override("font_color", Color("#ffd700"))
 	vbox.add_child(title)
 	
@@ -1233,6 +1337,11 @@ func show_swap_options(monsters: Array, forced: bool = false):
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(grid)
 		
+	scroll.scroll_started.connect(func():
+		for child in grid.get_children():
+			child.modulate = Color.WHITE
+	)
+		
 	# Create buttons for benched monsters
 	for i in range(monsters.size()):
 		var data = monsters[i]
@@ -1243,10 +1352,11 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		if m and "group" in m:
 			base_color = AtomicConfig.GROUP_COLORS.get(m.group, Color("#60fafc"))
 			
-		var btn = Button.new()
+		var btn = PanelContainer.new()
+		btn.mouse_filter = Control.MOUSE_FILTER_PASS
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.custom_minimum_size = Vector2(350, 120)
-		_style_button(btn, base_color)
+		btn.custom_minimum_size = Vector2(350, 160)
+		_style_panel(btn, base_color)
 		
 		var btn_margin = MarginContainer.new()
 		btn_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1279,12 +1389,12 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		var lbl = Label.new()
 		if is_dead:
 			lbl.text = "%s (Fainted)" % [m.monster_name]
-			btn.disabled = true
 			btn.modulate = Color(0.5, 0.5, 0.5, 0.8)
+			btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		else:
 			lbl.text = "%s" % [m.monster_name]
 			
-		lbl.add_theme_font_size_override("font_size", 28)
+		lbl.add_theme_font_size_override("font_size", 36)
 		lbl.add_theme_color_override("font_color", Color("#010813"))
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1311,11 +1421,21 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		text_vbox.add_child(hp_bar)
 		
 		if not is_dead:
-			btn.pressed.connect(func(): 
-				swap_selected.emit(i)
-				if _swap_menu_instance:
-					_swap_menu_instance.queue_free()
-					_swap_menu_instance = null
+			btn.gui_input.connect(func(event):
+				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+					if event.pressed:
+						btn.set_meta("press_pos", event.global_position)
+						btn.modulate = Color(0.8, 0.8, 0.8)
+					else:
+						btn.modulate = Color.WHITE
+						var start_pos = btn.get_meta("press_pos", Vector2.ZERO)
+						if event.global_position.distance_to(start_pos) < 30.0:
+							if Rect2(Vector2.ZERO, btn.size).has_point(event.position):
+								highlight_active_unit(true, -1) # Clear highlight upon selection
+								swap_selected.emit(i)
+								if _swap_menu_instance:
+									_swap_menu_instance.queue_free()
+									_swap_menu_instance = null
 			)
 		grid.add_child(btn)
 		
@@ -1332,6 +1452,9 @@ func show_swap_options(monsters: Array, forced: bool = false):
 		vbox.add_child(cancel_btn)
 		
 	add_child(_swap_menu_instance)
+	
+	if replacing_index != -1:
+		highlight_active_unit(true, replacing_index)
 
 func _load_monster_visual(parent: Control, monster: MonsterData):
 	if not monster: return
@@ -1386,6 +1509,15 @@ func _style_button(btn: Button, base_color: Color = Color("#60fafc")):
 	btn.add_theme_font_size_override("font_size", 50)
 	btn.add_theme_constant_override("outline_size", 3)
 	btn.add_theme_color_override("font_outline_color", Color("#010813"))
+
+func _style_panel(panel: PanelContainer, base_color: Color = Color("#60fafc")):
+	var style = StyleBoxFlat.new()
+	style.bg_color = base_color
+	style.bg_color.a = 0.75
+	style.border_color = Color("#010813")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	panel.add_theme_stylebox_override("panel", style)
 
 func show_result(player_won: bool, rewards: Dictionary = {}):
 	# Hide interaction buttons

@@ -14,12 +14,17 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4sgmj"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_right = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ibyab"]
 bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 
 [node name="StatPopup" type="PanelContainer" unique_id=1735982455]
 z_index = 100
-custom_minimum_size = Vector2(900, 100)
+custom_minimum_size = Vector2(900, 500)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -54,6 +59,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_4sgmj")
 horizontal_alignment = 1
 
 [node name="DefenseLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=911392613]
@@ -61,6 +67,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_4sgmj")
 horizontal_alignment = 1
 
 [node name="AttackLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=903148752]
@@ -70,14 +77,19 @@ size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 
-[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=864772590]
+[node name="GridContainer2" type="GridContainer" parent="MarginContainer/VBoxContainer" unique_id=1618847209]
+layout_mode = 2
+columns = 2
+
+[node name="CritLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer2" unique_id=1719402323]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_4sgmj")
 horizontal_alignment = 1
 
-[node name="CritLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer" unique_id=1719402323]
+[node name="SpeedLabel" type="Label" parent="MarginContainer/VBoxContainer/GridContainer2" unique_id=864772590]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -88,6 +100,10 @@ horizontal_alignment = 1
 layout_mode = 2
 size_flags_vertical = 3
 columns = 3
+
+[node name="MovesContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=143377479]
+layout_mode = 2
+size_flags_vertical = 3
 
 [node name="CloseButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=369144118]
 layout_mode = 2

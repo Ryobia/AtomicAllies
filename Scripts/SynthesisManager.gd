@@ -140,9 +140,7 @@ func complete_synthesis(z_num: int, incoming_stability: int = 50):
 	if z_num > MAX_Z:
 		print("Synthesis failed: Z%d exceeds ship capacity." % z_num)
 		var dust = _calculate_dust_reward(z_num * 5)
-		if PlayerData:
-			PlayerData.add_resource("neutron_dust", dust)
-		fusion_completed.emit(z_num, false, dust)
+		fusion_completed.emit(z_num, false, { "type": "capacity", "dust": dust, "z": z_num })
 		return
 
 	# 1. Find the monster data for this Atomic Number
@@ -164,20 +162,14 @@ func complete_synthesis(z_num: int, incoming_stability: int = 50):
 		
 		# Always award dust for duplicates
 		var dust_amount = _calculate_dust_reward(z_num * 10)
-		if PlayerData:
-			PlayerData.add_resource("neutron_dust", dust_amount)
 			
-		var msg = "Duplicate Z-%d found!\nDissolved into %d Neutron Dust." % [z_num, dust_amount]
-		
+		var old_stab = existing.stability
 		# Check for stability upgrade
 		if incoming_stability > existing.stability:
 			existing.stability = incoming_stability
 			PlayerData.save_game()
-			msg += "\nStability increased to %d%%!" % incoming_stability
-		else:
-			msg += "\nCurrent Stability: %d%% (New: %d%%)" % [existing.stability, incoming_stability]
 		
-		fusion_completed.emit(z_num, false, msg)
+		fusion_completed.emit(z_num, false, { "type": "duplicate", "dust": dust_amount, "old_stability": old_stab, "new_stability": incoming_stability, "z": z_num })
 		
 	else:
 		# NEW DISCOVERY -> ADD TO COLLECTION

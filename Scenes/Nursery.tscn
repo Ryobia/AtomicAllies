@@ -4,11 +4,14 @@
 [ext_resource type="Texture2D" uid="uid://ist0tl0il484" path="res://Images/Synthesis.png" id="2_8qu53"]
 [ext_resource type="Texture2D" uid="uid://cwwsh0aaj3yvn" path="res://Assets/ItemSheet2.png" id="2_36rvm"]
 [ext_resource type="Script" uid="uid://i8qoui2cnkcf" path="res://Scripts/FusionResultPopup.gd" id="3_5odor"]
-[ext_resource type="Texture2D" uid="uid://45erlgkidmf0" path="res://Assets/xpetcsheet.png" id="3_8qu53"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_5jn0c"]
 atlas = ExtResource("2_36rvm")
 region = Rect2(90.181915, 1383.3636, 360.0001, 424.54553)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8qu53"]
+atlas = ExtResource("2_36rvm")
+region = Rect2(1250.8447, 756.86365, 360.00012, 428.182)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5odor"]
 content_margin_left = 10.0
@@ -37,6 +40,10 @@ expand_margin_left = 10.0
 expand_margin_top = 10.0
 expand_margin_right = 10.0
 expand_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_8qu53"]
+color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+thickness = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_36rvm"]
 bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
@@ -68,8 +75,8 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_36rvm"]
-atlas = ExtResource("3_8qu53")
-region = Rect2(587, 60.917, 323, 401)
+atlas = ExtResource("2_36rvm")
+region = Rect2(1250.9092, 757.9091, 358.1819, 425.45465)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qwcqv"]
 bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
@@ -87,6 +94,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_xqppg")
 icon_gem = SubResource("AtlasTexture_5jn0c")
+icon_dust = SubResource("AtlasTexture_8qu53")
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1314204874]
 self_modulate = Color(1, 1, 1, 0.85490197)
@@ -157,7 +165,7 @@ size_flags_vertical = 10
 
 [node name="FusionResultPopup" type="PanelContainer" parent="." unique_id=580002729]
 z_index = 100
-custom_minimum_size = Vector2(500, 500)
+custom_minimum_size = Vector2(700, 700)
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
@@ -182,8 +190,8 @@ theme_override_constants/separation = 11
 
 [node name="Label" type="Label" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=261919470]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
-theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_color = Color(1, 0.84313726, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 0.84313726, 0, 1)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 50
 text = " NEW ELEMENT DISCOVERED "
@@ -196,16 +204,27 @@ size_flags_vertical = 3
 
 [node name="NameLabel" type="Label" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=743603166]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="NumberLabel" type="Label" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=994789245]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=513174827]
+layout_mode = 2
+theme_override_constants/separation = 5
+theme_override_styles/separator = SubResource("StyleBoxLine_8qu53")
 
 [node name="OkButton" type="Button" parent="FusionResultPopup/MarginContainer/VBoxContainer" unique_id=179383258]
 layout_mode = 2
@@ -221,9 +240,8 @@ text = "CLAIM ALLY
 "
 
 [node name="DissolvePopup" type="Panel" parent="." unique_id=1411993256]
-visible = false
 z_index = 20
-custom_minimum_size = Vector2(600, 500)
+custom_minimum_size = Vector2(600, 600)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

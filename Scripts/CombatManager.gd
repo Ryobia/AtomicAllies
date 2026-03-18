@@ -6,12 +6,14 @@ extends Node
 
 # --- Battle Items ---
 const ITEM_DATA = {
-	"repair_nanites": { "name": "Repair Nanites", "target": "Ally", "effect": "heal_percent", "amount": 0.5 },
-	"adrenaline_shot": { "name": "Adrenaline Shot", "target": "Ally", "effect": "buff_stat", "stat": "attack", "amount": 20, "duration": 3 },
-	"emergency_shield": { "name": "Emergency Shield", "target": "Ally", "effect": "add_shield", "amount": 0.3 },
-	"power_cell": { "name": "Power Cell", "target": "Ally", "effect": "heal_percent", "amount": 1.0 },
-	"ion_battery": { "name": "Ion Battery", "target": "Ally", "effect": "buff_stat", "stat": "defense", "amount": 20, "duration": 3 },
-	"plasma_injector": { "name": "Plasma Injector", "target": "Ally", "effect": "buff_stat", "stat": "speed", "amount": 20, "duration": 3 }
+	"repair_nanites": { "name": "Repair Nanites", "target": "Ally", "effect": "heal_percent", "amount": 0.5, "desc": "Restores 50% Max HP." },
+	"adrenaline_shot": { "name": "Adrenaline Shot", "target": "Ally", "effect": "buff_stat", "stat": "attack", "amount": 20, "duration": 3, "desc": "Raises Attack by 20% for 3 turns." },
+	"emergency_shield": { "name": "Emergency Shield", "target": "Ally", "effect": "add_shield", "amount": 0.3, "desc": "Grants a 30% Max HP Shield." },
+	"power_cell": { "name": "Power Cell", "target": "Ally", "effect": "heal_percent", "amount": 1.0, "desc": "Restores 100% Max HP." },
+	"ion_battery": { "name": "Ion Battery", "target": "Ally", "effect": "buff_stat", "stat": "defense", "amount": 20, "duration": 3, "desc": "Raises Defense by 20% for 3 turns." },
+	"plasma_injector": { "name": "Plasma Injector", "target": "Ally", "effect": "buff_stat", "stat": "speed", "amount": 20, "duration": 3, "desc": "Raises Speed by 20% for 3 turns." },
+	"purifying_salt": { "name": "Purifying Salt", "target": "Ally", "effect": "cleanse_debuffs", "desc": "Removes all negative status effects and stat drops." },
+	"defibrillator": { "name": "Defibrillator", "target": "Ally", "effect": "revive", "amount": 0.5, "desc": "Revives a fallen unit with 50% HP." }
 }
 
 func get_item_data(item_id: String) -> Dictionary:
@@ -32,6 +34,38 @@ func apply_item_effect(target: BattleMonster, item_id: String):
 			var amount = int(target.max_hp * data.amount)
 			var current = target.get_meta("shield", 0)
 			target.set_meta("shield", current + amount)
+		"cleanse_debuffs":
+			if "active_effects" in target:
+				var cleaned = false
+				var effects = target.active_effects
+				for i in range(effects.size() - 1, -1, -1):
+					var eff = effects[i]
+					var is_debuff = false
+					if eff.get("type") == "stat_mod" and eff.get("amount", 0) < 0:
+						is_debuff = true
+					elif eff.has("status"):
+						var s = str(eff.get("status", "")).to_lower()
+						if eff.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "radiation", "refracted", "insanity", "singularity_hazard", "reactive_vapor"]:
+							is_debuff = true
+					elif eff.get("type") == "swap_stats":
+						is_debuff = true
+						
+					if is_debuff:
+						cleaned = true
+						if eff.get("type") == "stat_mod":
+							var stat = eff.get("stat")
+							var amt = eff.get("amount", 0)
+							if target.stats.has(stat): target.stats[stat] -= amt
+						elif eff.get("type") == "swap_stats":
+							var stats = eff.get("stats", [])
+							if stats.size() == 2:
+								var v1 = target.stats.get(stats[0], 0)
+								var v2 = target.stats.get(stats[1], 0)
+								target.stats[stats[0]] = v2
+								target.stats[stats[1]] = v1
+						effects.remove_at(i)
+				if cleaned and target.has_signal("effects_changed"):
+					target.effects_changed.emit(target.active_effects)
 
 # Retrieves moves for a monster, falling back to Group Defaults if necessary
 func get_active_moves(monster: MonsterData) -> Array:
@@ -614,12 +648,6 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 		"Neurotoxin":
 			result.effects.append({ "target": defender, "status": "poison", "damage_percent": 0.1, "duration": 3, "type": "status" })
 			result.messages.append("%s injects a deadly toxin!" % attacker.data.monster_name)
-			
-		"Static Shield":
-			var shield_amount = int(attacker.max_hp * 0.3)
-			result.effects.append({ "target": attacker, "effect": "add_shield", "amount": shield_amount })
-			result.effects.append({ "target": attacker, "status": "static_reflection", "duration": 3, "type": "status" })
-			result.messages.append("%s charges up a static field!" % attacker.data.monster_name)
 			
 		"Tentacle Crush":
 			result.messages.append("%s crushes with a tentacle!" % attacker.data.monster_name)

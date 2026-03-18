@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://7c7kha1t73g7" path="res://Assets/ItemSheet.png" id="2_j448o"]
 [ext_resource type="Texture2D" uid="uid://c52uw4kab01b3" path="res://Images/Shop.png" id="2_ykgfi"]
 [ext_resource type="Texture2D" uid="uid://cwwsh0aaj3yvn" path="res://Assets/ItemSheet2.png" id="3_862br"]
+[ext_resource type="Texture2D" uid="uid://b2kh1qmltxbae" path="res://Assets/ItemSheet3.png" id="4_rm0e0"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_862br"]
 atlas = ExtResource("2_j448o")
@@ -73,6 +74,14 @@ region = Rect2(863.0993, 1381.6696, 360.33063, 428.09924)
 atlas = ExtResource("2_j448o")
 region = Rect2(1250.4425, 1383.3778, 358.67786, 425.62)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_idt13"]
+atlas = ExtResource("4_rm0e0")
+region = Rect2(238.89554, 68.58986, 179.13882, 213.1939)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3qkuy"]
+atlas = ExtResource("4_rm0e0")
+region = Rect2(44.7209, 68.589615, 180.53838, 214.1269)
+
 [node name="ItemShop" type="Control" unique_id=341176545]
 layout_mode = 3
 anchors_preset = 15
@@ -88,6 +97,7 @@ item_icons = {
 "combat_shielding": SubResource("AtlasTexture_ssovg"),
 "coolant_gel": SubResource("AtlasTexture_862br"),
 "cybernetic_implant": SubResource("AtlasTexture_0et0f"),
+"defibrillator": SubResource("AtlasTexture_3qkuy"),
 "dust_efficiency": SubResource("AtlasTexture_kk033"),
 "emergency_shield": SubResource("AtlasTexture_fyjct"),
 "fusion_speed": SubResource("AtlasTexture_ypbag"),
@@ -96,6 +106,7 @@ item_icons = {
 "magnetic_stabilizer": SubResource("AtlasTexture_j448o"),
 "plasma_injector": SubResource("AtlasTexture_gvyt4"),
 "power_cell": SubResource("AtlasTexture_a1qoc"),
+"purifying_salt": SubResource("AtlasTexture_idt13"),
 "quantum_catalyst": SubResource("AtlasTexture_fjxrw"),
 "repair_nanites": SubResource("AtlasTexture_rm0e0"),
 "scanner_range": SubResource("AtlasTexture_rxewf")

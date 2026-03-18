@@ -606,18 +606,11 @@ func _show_detailed_stats_popup():
 	var breakdown = result.breakdown
 	var final_stats = result.final_stats
 
-	var text = ""
-	text += _format_stat_breakdown("HP", breakdown.hp, final_stats.max_hp)
-	text += _format_stat_breakdown("Attack", breakdown.atk, final_stats.attack)
-	text += _format_stat_breakdown("Defense", breakdown.def, final_stats.defense)
-	text += _format_stat_breakdown("Speed", breakdown.spd, final_stats.speed)
-	text += _format_stat_breakdown("Crit Chance", breakdown.crit, final_stats.crit_chance)
-	
 	# Create a custom popup
 	var popup = PanelContainer.new()
 	popup.name = "DetailedStatsPopup"
 	popup.set_anchors_preset(Control.PRESET_CENTER)
-	popup.custom_minimum_size = Vector2(900, 0)
+	popup.custom_minimum_size = Vector2(1050, 0)
 	popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	popup.grow_vertical = Control.GROW_DIRECTION_BOTH
 	popup.z_index = 100
@@ -649,13 +642,30 @@ func _show_detailed_stats_popup():
 	sep.modulate = Color("#60fafc")
 	vbox.add_child(sep)
 	
-	var rtl = RichTextLabel.new()
-	rtl.bbcode_enabled = true
-	rtl.text = text
-	rtl.fit_content = true
-	rtl.add_theme_font_size_override("normal_font_size", 42)
-	rtl.add_theme_font_size_override("bold_font_size", 42)
-	vbox.add_child(rtl)
+	var grid = GridContainer.new()
+	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 40)
+	grid.add_theme_constant_override("v_separation", 20)
+	vbox.add_child(grid)
+	
+	var stats_data = [
+		{"name": "HP", "breakdown": breakdown.hp, "val": final_stats.max_hp},
+		{"name": "Attack", "breakdown": breakdown.atk, "val": final_stats.attack},
+		{"name": "Defense", "breakdown": breakdown.def, "val": final_stats.defense},
+		{"name": "Speed", "breakdown": breakdown.spd, "val": final_stats.speed},
+		{"name": "Crit Chance", "breakdown": breakdown.crit, "val": final_stats.crit_chance}
+	]
+	
+	for stat in stats_data:
+		var rtl = RichTextLabel.new()
+		rtl.bbcode_enabled = true
+		rtl.text = _format_stat_breakdown(stat.name, stat.breakdown, stat.val)
+		rtl.fit_content = true
+		rtl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rtl.add_theme_font_size_override("normal_font_size", 38)
+		rtl.add_theme_font_size_override("bold_font_size", 38)
+		grid.add_child(rtl)
 	
 	var close_btn = Button.new()
 	close_btn.text = "Close"
@@ -676,22 +686,98 @@ func _format_stat_breakdown(stat_name: String, data: Dictionary, final_value: in
 	if data.ship_upgrade > 0: str += "[color=#a0a0a0]  • Ship Upgrade: +%d%%[/color]\n" % int(data.ship_upgrade * 100)
 	if data.lanthanide_set > 0: str += "[color=#a0a0a0]  • Lanthanide Set: +%d%%[/color]\n" % int(data.lanthanide_set * 100)
 		
-	str += "[color=#888888]  • Total Multiplier: x%.2f[/color]\n\n" % total_mult
+	str += "[color=#888888]  • Total Multiplier: x%.2f[/color]" % total_mult
 	return str
 
 func _on_stability_bar_input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var bonus = 0.0
-		if current_monster:
-			bonus = float(current_monster.stability) / 2.0
-			if current_monster.stability >= 100:
-				bonus += 10.0
+		_show_stability_details_popup()
+
+func _show_stability_details_popup():
+	if not current_monster: return
+
+	var popup = PanelContainer.new()
+	popup.name = "StabilityDetailsPopup"
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.custom_minimum_size = Vector2(1000, 0)
+	popup.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	popup.grow_vertical = Control.GROW_DIRECTION_BOTH
+	popup.z_index = 100
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	popup.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 40)
+	margin.add_theme_constant_override("margin_right", 40)
+	margin.add_theme_constant_override("margin_top", 40)
+	margin.add_theme_constant_override("margin_bottom", 40)
+	popup.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 30)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "Stability Overview"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", Color("#60fafc"))
+	vbox.add_child(title)
+	
+	var sep = HSeparator.new()
+	sep.modulate = Color("#60fafc")
+	vbox.add_child(sep)
+	
+	var rtl = RichTextLabel.new()
+	rtl.bbcode_enabled = true
+	rtl.fit_content = true
+	rtl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rtl.add_theme_font_size_override("normal_font_size", 42)
+	rtl.add_theme_font_size_override("bold_font_size", 42)
+	
+	var bonus = float(current_monster.stability) / 2.0
+	if current_monster.stability >= 100:
+		bonus += 10.0
 		
-		var text = "Stability amplifies stats.\n\n"
-		text += "Current Bonus: +%d%%\n\n" % int(bonus)
-		text += "Thresholds:\n• 50% Stability: +25% Stats\n• 100% Stability: +50% Stats\n\n"
-		text += "MASTERY:\nAt 100%, unlocks Class Potential for an extra +10%."
-		_show_tooltip_popup(text)
+	var mastery_desc = "Unknown Mastery."
+	if "group" in current_monster:
+		mastery_desc = AtomicConfig.MASTERY_BONUSES.get(current_monster.group, "Unknown Mastery.")
+		mastery_desc = mastery_desc.replace("Mastery: ", "") # Clean up prefix since we use our own title
+		
+	var text = "[center]Stability amplifies all base stats.\n\n"
+	text += "[color=#60fafc]Current Bonus: +%d%%[/color]\n\n" % int(bonus)
+	text += "[color=#a0a0a0]Thresholds:[/color]\n"
+	text += "• 50% Stability: [color=#2ecc71]+25% Stats[/color]\n"
+	text += "• 100% Stability: [color=#ffd700]+50% Stats[/color]\n\n"
+	text += "[color=#ffd700][b]100% MASTERY UNLOCK:[/b][/color]\n"
+	text += "+10% Class Potential Stats\n"
+	text += "[color=#ffd700]%s[/color][/center]" % mastery_desc
+	
+	rtl.text = text
+	vbox.add_child(rtl)
+	
+	var close_btn = Button.new()
+	close_btn.text = "Close"
+	close_btn.custom_minimum_size.y = 80
+	close_btn.add_theme_font_size_override("font_size", 40)
+	close_btn.pressed.connect(popup.queue_free)
+	vbox.add_child(close_btn)
+	
+	add_child(popup)
+	
+	# Animate popup in (Pop + Fade)
+	popup.pivot_offset = Vector2(500, 300) # Approximate center
+	popup.scale = Vector2(0.9, 0.9)
+	popup.modulate.a = 0.0
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(popup, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(popup, "modulate:a", 1.0, 0.2)
 
 func _show_tooltip_popup(text: String):
 	var popup = find_child("InfoPopup", true, false)

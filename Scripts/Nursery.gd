@@ -1,6 +1,7 @@
 extends Control
 
 @export var icon_gem: Texture2D
+@export var icon_dust: Texture2D
 
 var chambers_grid # Container for the 4 synthesis chambers
 
@@ -9,6 +10,8 @@ var dissolve_label
 var dissolve_ok_btn
 var fusion_result_popup
 var fusion_ok_btn
+var _dissolve_stability_box: VBoxContainer
+var _pending_dust_reward: int = 0
 
 var pending_stabilize_index: int = -1
 
@@ -280,14 +283,84 @@ func _on_stabilize_pressed(index):
 	if not capsule: return
 	
 	pending_stabilize_index = index
-	# Call the manager to finish the process
-	# This will trigger the fusion_completed signal
 	var stab = capsule.get("stability", 50)
 	
 	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.STABILIZE_CAPSULE:
 		TutorialManager.complete_tutorial()
 		
-	SynthesisManager.complete_synthesis(capsule.z, stab)
+	var slot = chambers_grid.get_child(index) if chambers_grid and chambers_grid.get_child_count() > index else self
+	var start_pos = slot.global_position + (slot.size / 2.0) if slot else (get_viewport_rect().size / 2.0)
+	
+	_play_stabilization_animation(capsule.z, stab, start_pos)
+
+func _play_stabilization_animation(z_target: int, stability: int, slot_global_pos: Vector2):
+	var ui_layer = CanvasLayer.new()
+	ui_layer.layer = 150
+	add_child(ui_layer)
+
+	var flash = ColorRect.new()
+	flash.color = Color(1, 1, 1, 0)
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	flash.mouse_filter = Control.MOUSE_FILTER_STOP
+	ui_layer.add_child(flash)
+
+	var dummy = AnimatedSprite2D.new()
+	var anim_path = "res://Assets/Animations/CapsuleStabilizing.tres"
+	if ResourceLoader.exists(anim_path):
+		dummy.sprite_frames = load(anim_path)
+		dummy.play("energycapsule")
+	
+	dummy.global_position = slot_global_pos
+	ui_layer.add_child(dummy)
+
+	var center_pos = get_viewport_rect().size / 2.0
+	var tween = create_tween()
+
+	tween.tween_property(dummy, "global_position", center_pos, 1.0).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(dummy, "scale", Vector2(2.5, 2.5), 1.0)
+
+	var shake_tween = create_tween()
+	shake_tween.tween_interval(1.0) 
+	for i in range(20):
+		var offset = Vector2(randf_range(-20, 20), randf_range(-20, 20))
+		shake_tween.tween_property(dummy, "position", center_pos + offset, 0.05)
+	shake_tween.tween_property(dummy, "position", center_pos, 0.05)
+
+	tween.chain().tween_property(flash, "color:a", 1.0, 0.3)
+
+	tween.tween_callback(func():
+		dummy.queue_free()
+		
+		# Spawn the expanding energy ring
+		var burst = CPUParticles2D.new()
+		burst.emitting = true
+		burst.one_shot = true
+		burst.explosiveness = 1.0
+		burst.amount = 120
+		burst.lifetime = 0.8
+		burst.spread = 180.0
+		burst.gravity = Vector2.ZERO
+		burst.initial_velocity_min = 400.0
+		burst.initial_velocity_max = 800.0
+		burst.scale_amount_min = 6.0
+		burst.scale_amount_max = 14.0
+		
+		var grad = Gradient.new()
+		grad.set_color(0, Color.WHITE)
+		grad.add_point(0.2, Color("#60fafc"))
+		grad.set_color(1, Color(0.376, 0.98, 0.988, 0.0)) # Transparent Cyan
+		burst.color_ramp = grad
+		
+		ui_layer.add_child(burst)
+		burst.global_position = center_pos
+		
+		SynthesisManager.complete_synthesis(z_target, stability)
+	)
+
+	tween.tween_property(flash, "color:a", 0.0, 0.8).set_delay(0.2)
+	tween.tween_callback(func():
+		ui_layer.queue_free()
+	)
 
 func _on_synthesis_completed(z_num, success, reward):
 	# Clear the chamber
@@ -298,15 +371,38 @@ func _on_synthesis_completed(z_num, success, reward):
 	
 	if not success:
 		# Duplicate found (Dissolved)
+		_pending_dust_reward = 0
 		if dissolve_label:
-			# If reward is a String, it's a pre-formatted message from the manager
-			if reward is String:
-				dissolve_label.text = reward
+			if typeof(reward) == TYPE_DICTIONARY:
+				if reward.get("type") == "capacity":
+					_pending_dust_reward = reward.get("dust", 0)
+					dissolve_label.text = "Ship Capacity Exceeded!\nZ-%d is too unstable.\nDissolved into %d Neutron Dust." % [reward.z, reward.dust]
+					_hide_stability_ui()
+				elif reward.get("type") == "duplicate":
+					_pending_dust_reward = reward.get("dust", 0)
+					dissolve_label.text = "Duplicate Z-%d found!\nDissolved into %d Neutron Dust." % [reward.z, reward.dust]
+					_show_stability_ui(reward.old_stability, reward.new_stability)
 			else:
-				if z_num > SynthesisManager.MAX_Z:
-					dissolve_label.text = "Ship Capacity Exceeded!\nZ-%d is too unstable.\nDissolved into %d Neutron Dust." % [z_num, reward]
+				if reward is String:
+					dissolve_label.text = reward
 				else:
-					dissolve_label.text = "Duplicate Z-%d found!\nDissolved into %d Neutron Dust." % [z_num, reward]
+					_pending_dust_reward = reward
+					if z_num > SynthesisManager.MAX_Z:
+						dissolve_label.text = "Ship Capacity Exceeded!\nZ-%d is too unstable.\nDissolved into %d Neutron Dust." % [z_num, reward]
+					else:
+						dissolve_label.text = "Duplicate Z-%d found!\nDissolved into %d Neutron Dust." % [z_num, reward]
+				_hide_stability_ui()
+				
+			# Show the actual monster icon instead of the generic vial placeholder
+			if dissolve_popup:
+				var icon_tex = dissolve_popup.find_child("IconTexture", true, false)
+				if icon_tex and PlayerData:
+					var path = PlayerData.get_monster_path_by_z(z_num)
+					if path != "" and ResourceLoader.exists(path):
+						var m = load(path)
+						if m and m.icon:
+							icon_tex.texture = m.icon
+							
 		if dissolve_popup: 
 			dissolve_popup.visible = true
 			dissolve_popup.move_to_front()
@@ -320,26 +416,203 @@ func _on_synthesis_completed(z_num, success, reward):
 			var name_lbl = fusion_result_popup.find_child("NameLabel", true, false)
 			var icon_tex = fusion_result_popup.find_child("IconTexture", true, false)
 			
+			if fusion_result_popup.has_method("populate_details"):
+				fusion_result_popup.populate_details(new_monster)
+				
 			if name_lbl: name_lbl.text = new_monster.monster_name
 			if icon_tex:
-				icon_tex.texture = new_monster.icon
-				# Clear previous atoms
+				icon_tex.texture = null
 				for child in icon_tex.get_children():
 					child.queue_free()
-				var atom = _create_atom(new_monster)
-				if atom:
-					icon_tex.add_child(atom)
-					# Wait one frame for layout to calculate correct size
+				
+				var anim_name = new_monster.monster_name.replace(" ", "")
+				if "animation_override" in new_monster and new_monster.animation_override != "":
+					anim_name = new_monster.animation_override
+					
+				var anim_path = "res://Assets/Animations/" + anim_name + ".tres"
+				if ResourceLoader.exists(anim_path):
+					var sprite = AnimatedSprite2D.new()
+					sprite.sprite_frames = load(anim_path)
+					icon_tex.add_child(sprite)
+					
 					get_tree().process_frame.connect(func():
-						if is_instance_valid(atom) and is_instance_valid(icon_tex):
-							atom.position = icon_tex.size / 2
+						if is_instance_valid(sprite) and is_instance_valid(icon_tex):
+							sprite.position = icon_tex.size / 2.0
+							var tex = sprite.sprite_frames.get_frame_texture("idle", 0) if sprite.sprite_frames.has_animation("idle") else null
+							if tex:
+								var s = min(icon_tex.size.x, icon_tex.size.y) / float(max(tex.get_height(), 1))
+								sprite.scale = Vector2(s, s)
+							if fusion_result_popup.has_method("setup_sprite_cycling"):
+								fusion_result_popup.setup_sprite_cycling(sprite)
 					, CONNECT_ONE_SHOT)
+				else:
+					icon_tex.texture = new_monster.icon
+					var atom = _create_atom(new_monster)
+					if atom:
+						icon_tex.add_child(atom)
+						get_tree().process_frame.connect(func():
+							if is_instance_valid(atom) and is_instance_valid(icon_tex):
+								atom.position = icon_tex.size / 2
+						, CONNECT_ONE_SHOT)
 	
 	update_ui()
 
+func _show_stability_ui(old_stab: int, new_stab: int):
+	if not _dissolve_stability_box:
+		_dissolve_stability_box = VBoxContainer.new()
+		_dissolve_stability_box.add_theme_constant_override("separation", 10)
+		
+		var title = Label.new()
+		title.name = "StabTitle"
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.add_theme_font_size_override("font_size", 32)
+		title.add_theme_color_override("font_color", Color.WHITE)
+		_dissolve_stability_box.add_child(title)
+		
+		var bar = ProgressBar.new()
+		bar.name = "StabBar"
+		bar.custom_minimum_size = Vector2(400, 30)
+		bar.show_percentage = false
+		
+		var bg = StyleBoxFlat.new()
+		bg.bg_color = Color("#050508")
+		bg.border_width_left = 2; bg.border_width_top = 2
+		bg.border_width_right = 2; bg.border_width_bottom = 2
+		bg.border_color = Color("#404050")
+		bg.set_corner_radius_all(6)
+		bar.add_theme_stylebox_override("background", bg)
+		
+		var fill = StyleBoxFlat.new()
+		fill.bg_color = Color("#60fafc")
+		fill.set_corner_radius_all(6)
+		fill.border_width_top = 2
+		fill.border_blend = true
+		bar.add_theme_stylebox_override("fill", fill)
+		
+		_dissolve_stability_box.add_child(bar)
+		
+		# Dynamically inject above the OK Button
+		var vbox = dissolve_popup.find_child("VBoxContainer", true, false)
+		if vbox and dissolve_ok_btn:
+			vbox.add_child(_dissolve_stability_box)
+			vbox.move_child(_dissolve_stability_box, dissolve_ok_btn.get_index())
+			
+	_dissolve_stability_box.visible = true
+	var title_lbl = _dissolve_stability_box.get_node("StabTitle")
+	var bar = _dissolve_stability_box.get_node("StabBar")
+	
+	bar.max_value = 100
+	bar.value = 0
+	
+	var fill_style = bar.get_theme_stylebox("fill").duplicate()
+	bar.add_theme_stylebox_override("fill", fill_style)
+	
+	var get_stab_colors = func(val: int) -> Dictionary:
+		if val >= 100: return {"bg": Color("#ffd700", 1.0), "border": Color("#ffffaa")}
+		elif val >= 80: return {"bg": Color("#60fafc", 0.9), "border": Color("#ccffff")}
+		elif val >= 50: return {"bg": Color("#2ecc71", 0.9), "border": Color("#aaffaa")}
+		else: return {"bg": Color("#ff4d4d", 0.9), "border": Color("#ffaaaa")}
+
+	var target_colors = get_stab_colors.call(new_stab)
+	var old_colors = get_stab_colors.call(old_stab)
+	var zero_colors = get_stab_colors.call(0)
+	
+	fill_style.bg_color = zero_colors.bg
+	fill_style.border_color = zero_colors.border
+
+	if bar.has_meta("pulse_tween"):
+		var t = bar.get_meta("pulse_tween")
+		if t and t.is_valid(): t.kill()
+		bar.set_meta("pulse_tween", null)
+
+	if new_stab > old_stab:
+		title_lbl.text = "Stability Increased: %d%% -> %d%%" % [old_stab, new_stab]
+		title_lbl.add_theme_color_override("font_color", Color("#2ecc71"))
+		
+		var tween = create_tween()
+		tween.tween_property(bar, "value", new_stab, 1.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(fill_style, "bg_color", target_colors.bg, 1.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(fill_style, "border_color", target_colors.border, 1.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		
+		if new_stab >= 100:
+			if old_stab < 100:
+				tween.chain().tween_callback(func(): _play_mastery_particles(bar))
+			tween.chain().tween_callback(func(): _start_pulse(bar, fill_style))
+	else:
+		title_lbl.text = "Best Stability: %d%% (Rolled %d%%)" % [old_stab, new_stab]
+		title_lbl.add_theme_color_override("font_color", Color("#a0a0a0"))
+		
+		# Animate drop to the bad roll, then bounce back up to their saved best
+		var tween = create_tween()
+		tween.tween_property(bar, "value", new_stab, 1.0).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(fill_style, "bg_color", target_colors.bg, 1.0).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(fill_style, "border_color", target_colors.border, 1.0).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		
+		tween.tween_property(bar, "value", old_stab, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT).set_delay(0.5)
+		tween.parallel().tween_property(fill_style, "bg_color", old_colors.bg, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT).set_delay(0.5)
+		tween.parallel().tween_property(fill_style, "border_color", old_colors.border, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT).set_delay(0.5)
+
+		if old_stab >= 100:
+			if new_stab < 100: tween.chain().tween_callback(func(): _play_mastery_particles(bar))
+			tween.chain().tween_callback(func(): _start_pulse(bar, fill_style))
+
+func _hide_stability_ui():
+	if _dissolve_stability_box:
+		_dissolve_stability_box.visible = false
+
 func _on_dissolve_ok_pressed():
 	if dissolve_popup: dissolve_popup.visible = false
-	update_ui()
+	
+	if _pending_dust_reward > 0:
+		_play_dust_fly_animation(_pending_dust_reward)
+		_pending_dust_reward = 0
+	else:
+		update_ui()
+
+func _play_dust_fly_animation(amount: int):
+	if not icon_dust:
+		# Fallback if no icon is assigned in the inspector
+		PlayerData.add_resource("neutron_dust", amount)
+		update_ui()
+		return
+		
+	var start_pos = get_viewport_rect().size / 2.0
+	var target_pos = Vector2(start_pos.x, 50)
+	
+	var header = get_tree().root.find_child("ResourceHeader", true, false)
+	if header:
+		header.visible = true
+		var dust_node = header.find_child("*Dust*", true, false)
+		if dust_node:
+			var rect = dust_node.get_global_rect()
+			target_pos = rect.position + (rect.size / 2.0)
+			
+	var fly_icon = Sprite2D.new()
+	fly_icon.texture = icon_dust
+	fly_icon.global_position = start_pos
+	fly_icon.z_index = 300
+	
+	var tex_size = icon_dust.get_size()
+	if tex_size.x > 0:
+		var s = 100.0 / max(tex_size.x, 1.0)
+		fly_icon.scale = Vector2(s, s)
+		
+	add_child(fly_icon)
+	
+	var duration = 0.8
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(fly_icon, "global_position", target_pos, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(fly_icon, "scale", Vector2(0.2, 0.2), duration)
+	tween.tween_property(fly_icon, "modulate:a", 0.0, 0.2).set_delay(duration - 0.2)
+	
+	var seq = create_tween()
+	seq.tween_interval(duration)
+	seq.tween_callback(func():
+		fly_icon.queue_free()
+		PlayerData.add_resource("neutron_dust", amount)
+		update_ui()
+	)
 
 func _on_fusion_ok_pressed():
 	if fusion_result_popup: fusion_result_popup.visible = false
@@ -386,6 +659,40 @@ func _start_bobbing_tween(node: Node2D):
 	tween.set_loops()
 	tween.tween_property(node, "position:y", start_y - 10, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(node, "position:y", start_y, 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _start_pulse(bar: ProgressBar, style: StyleBoxFlat):
+	var tween = create_tween()
+	tween.set_loops()
+	tween.tween_property(style, "bg_color", Color("#fff5cc"), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(style, "bg_color", Color("#ffd700"), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	bar.set_meta("pulse_tween", tween)
+
+func _play_mastery_particles(parent_node: Control):
+	var particles = CPUParticles2D.new()
+	particles.emitting = true
+	particles.one_shot = true
+	particles.amount = 60
+	particles.lifetime = 0.8
+	particles.explosiveness = 1.0
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	particles.emission_rect_extents = parent_node.size / 2.0
+	particles.spread = 180.0
+	particles.gravity = Vector2(0, 0)
+	particles.initial_velocity_min = 80.0
+	particles.initial_velocity_max = 160.0
+	particles.scale_amount_min = 4.0
+	particles.scale_amount_max = 8.0
+	particles.z_index = 50
+	
+	var grad = Gradient.new()
+	grad.set_color(0, Color("#ffffff"))
+	grad.add_point(0.2, Color("#ffd700"))
+	grad.set_color(1, Color(1.0, 0.84, 0.0, 0.0))
+	particles.color_ramp = grad
+	
+	parent_node.add_child(particles)
+	particles.position = parent_node.size / 2.0
+	get_tree().create_timer(1.0).timeout.connect(particles.queue_free)
 
 func _show_gem_confirmation(action_name: String, cost: int, on_confirm: Callable):
 	var popup = PanelContainer.new()

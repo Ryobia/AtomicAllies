@@ -69,7 +69,7 @@ const GROUP_COLORS = {
 
 # Baseline Stats (Scale 1-10) from the Design Document
 const BASELINES = {
-	Group.ALKALI_METAL: {"hp": 2, "atk": 8, "def": 2, "spd": 8, "crit": 10}, # Glass Cannons
+	Group.ALKALI_METAL: {"hp": 2, "atk": 7, "def": 2, "spd": 8, "crit": 10}, # Glass Cannons
 	Group.ALKALINE_EARTH: {"hp": 6, "atk": 4, "def": 7, "spd": 3, "crit": 5}, # Sturdy Tanks
 	Group.TRANSITION_METAL: {"hp": 6, "atk": 5, "def": 5, "spd": 4, "crit": 5}, # Bruisers
 	Group.POST_TRANSITION: {"hp": 5, "atk": 5, "def": 5, "spd": 5, "crit": 5}, # Utility
@@ -135,8 +135,8 @@ const MASTERY_BONUSES = {
 # Default Movesets based on Group
 const GROUP_MOVES = {
 	Group.ALKALI_METAL: [
-		{"name": "Electron Jettison", "power": 35, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": -100, "percent": true, "duration": 2, "target": "Attacker"}]},
-		{"name": "Reactive Spark", "power": 30, "accuracy": 100, "type": "Physical", "description": "A quick, reactive strike.", "cooldown": 2}
+		{"name": "Electron Jettison", "power": 30, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": -100, "percent": true, "duration": 2, "target": "Attacker"}]},
+		{"name": "Volatile Strike", "power": 10, "accuracy": 100, "type": "Physical", "description": "A quick strike that raises the user's Attack and Speed by 10%.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 2, "target": "Attacker"}, {"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 2, "target": "Attacker"}]}
 	],
 	Group.ALKALINE_EARTH: [
 		{"name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense for 3 turns.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 50, "percent": true, "duration": 3, "target": "Self"}]},
@@ -174,7 +174,7 @@ const GROUP_MOVES = {
 	],
 	Group.NOBLE_GAS: [
 		{"name": "Full Octet", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Blocks the next instance of damage. Consumed on hit.", "cooldown": 3, "effects": [{"type": "status", "status": "guarded", "duration": 3}]},
-		{"name": "Neon Glow", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Raises Defense by 20%.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 2}]}
+		{"name": "Inert Strike", "power": 20, "accuracy": 100, "type": "Physical", "description": "A weak attack that raises the user's Defense by 15%.", "effects": [{"type": "stat_mod", "stat": "defense", "amount": 15, "percent": true, "duration": 2, "target": "Attacker"}]}
 	],
 	Group.ACTINIDE: [
 		{"name": "Supercritical Blast", "power": 80, "accuracy": 85, "type": "Special", "description": "Deals massive damage but reduces HP by 10% after use.", "cooldown": 3},
@@ -243,7 +243,7 @@ const GROUP_MOVES = {
 	],
 	Group.CHAOS_BRUTE: [
 		{"name": "Glitch Smash", "power": 45, "accuracy": 90, "type": "Physical", "description": "A heavy, glitchy smash."},
-		{"name": "Static Shield", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a shield and reflects damage.", "cooldown": 4, "effects": [{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.2}, {"type": "status", "status": "static_reflection", "damage_percent": 0.3, "duration": 2}]}
+		{"name": "Static Shield", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Grants a shield and reflects damage.", "cooldown": 4, "effects": [{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.3}, {"type": "status", "status": "static_reflection", "damage_percent": 0.3, "duration": 3, "message": "%s charges up a static field!"}]}
 	],
 	Group.CHAOS_COMMANDER: [
 		{"name": "Data Corruption", "power": 40, "accuracy": 100, "type": "Special", "description": "Corrupts the target."},
@@ -337,10 +337,10 @@ const UNIQUE_MOVES = {
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Doubles Defense and reflects 10% of incoming damage.",
+		"description": "Increases Defense and reflects 10% of incoming damage.",
 		"target_type": "Self",
 		"effects": [ 
-			{"type": "stat_mod", "stat": "defense", "amount": 100, "percent": true, "duration": 3},
+			{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3},
 			{"type": "status", "status": "static_reflection", "damage_percent": 0.1, "duration": 3}
 		],
 		"cooldown": 3
@@ -1600,15 +1600,21 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 	var stability_multiplier = 1.0 + (float(stability) / 200.0)
 	var stability_bonus = stability_multiplier - 1.0
 	
+	# Crit Chance grows at a higher rate: Base * 5 at 100 stability (+400%)
+	var crit_stability_multiplier = 1.0 + (float(stability) / 25.0)
+	var crit_stability_bonus = crit_stability_multiplier - 1.0
+
 	# 3. Mastery Buff: At 100% Stability, unlock Class Potential (+10% extra stats)
 	if stability >= 100:
 		stability_multiplier += 0.1
 		stability_bonus += 0.1
+		crit_stability_bonus += 0.1
 	
 	breakdown.hp.stability = stability_bonus
 	breakdown.atk.stability = stability_bonus
 	breakdown.def.stability = stability_bonus
 	breakdown.spd.stability = stability_bonus
+	breakdown.crit.stability = crit_stability_bonus
 	
 	var final_stats = {}
 	# Simplified Linear Scaling
@@ -1621,7 +1627,7 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 	final_stats["attack"] = int((base.atk * 2.0) * stability_multiplier * atk_mult)
 	final_stats["defense"] = int((base.def * 2.0) * stability_multiplier * def_mult)
 	final_stats["speed"] = int((base.spd * 2.0) * stability_multiplier * spd_mult)
-	final_stats["crit_chance"] = int(breakdown.crit.base + breakdown.crit.ship_upgrade) # Added ship upgrade flat crit bonus
+	final_stats["crit_chance"] = int(breakdown.crit.base * (1.0 + breakdown.crit.stability)) + int(breakdown.crit.ship_upgrade)
 	
 	return {"final_stats": final_stats, "breakdown": breakdown}
 

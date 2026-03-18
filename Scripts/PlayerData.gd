@@ -119,6 +119,23 @@ func add_capsule_to_chamber(chamber_index: int, z: int, p1_z: int, p2_z: int, fi
 	if chamber_index < 0 or chamber_index >= synthesis_chambers.size():
 		return {}
 		
+	# Guarantee stability is never lower than the highest owned or currently incubating instance
+	var highest_stability = 0
+	for m in owned_monsters:
+		if m.atomic_number == z and m.stability > highest_stability:
+			highest_stability = m.stability
+			
+	for chamber in synthesis_chambers:
+		if chamber.get("capsule") != null:
+			if chamber.capsule.get("z", 0) == z and chamber.capsule.get("stability", 0) > highest_stability:
+				highest_stability = chamber.capsule.get("stability", 0)
+				
+	# Guarantee progress: If they already own this element, always bump stability by at least 1-3%
+	if highest_stability > 0 and stability <= highest_stability:
+		stability = mini(100, highest_stability + randi_range(1, 3))
+	elif stability < highest_stability:
+		stability = highest_stability
+		
 	var capsule = {
 		"id": str(Time.get_unix_time_from_system()) + "_" + str(randi()),
 		"z": z,

@@ -19,7 +19,7 @@ region = Rect2(90.3047, 1382.9316, 359.50427, 425.62)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yqx8d"]
 content_margin_left = 50.0
-content_margin_right = 50.0
+content_margin_right = 100.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mste3"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)

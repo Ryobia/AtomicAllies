@@ -472,7 +472,7 @@ func start_turn():
 			var index = active_player_monsters.find(current_acting_unit)
 			hud_highlight_unit.emit(true, index)
 			if battle_hud:
-				battle_hud.show_swap_options(_get_swap_options(), true)
+				battle_hud.show_swap_options(_get_swap_options(), true, current_acting_unit.data.monster_name, index)
 			return
 		else:
 			end_turn()
@@ -506,8 +506,9 @@ func start_turn():
 		
 		if current_acting_unit.is_player and not available_replacements.is_empty():
 			log_event.emit("%s has fallen! Choose a replacement!" % current_acting_unit.data.monster_name)
+			var index = active_player_monsters.find(current_acting_unit)
 			if battle_hud:
-				battle_hud.show_swap_options(_get_swap_options(), true)
+				battle_hud.show_swap_options(_get_swap_options(), true, current_acting_unit.data.monster_name, index)
 			return
 		elif current_acting_unit.is_player:
 			_force_bench_dead_unit(current_acting_unit)
@@ -826,16 +827,37 @@ func _on_item_selected(item_id: String):
 	
 	var data = CombatManager.get_item_data(item_id)
 	var target_allies = (data.get("target", "Ally") == "Ally")
+	var is_revive = (data.get("effect") == "revive")
 	var valid_targets = []
+	var bench_info = {}
 	
-	# Items currently only target allies (healing/buffs)
 	if target_allies:
-		for i in range(active_player_monsters.size()):
-			if active_player_monsters[i] and not active_player_monsters[i].is_dead:
-				valid_targets.append(i)
+		if is_revive:
+			var valid_bench_indices = []
+			for i in range(benched_player_monsters.size()):
+				var m = benched_player_monsters[i]
+				var is_dead = false
+				if roster_hp_cache.has(m):
+					var state = roster_hp_cache[m]
+					var hp = state if typeof(state) == TYPE_INT else state.get("hp", 1)
+					if typeof(hp) != TYPE_INT and typeof(hp) != TYPE_FLOAT: hp = 0
+					if hp <= 0: is_dead = true
+				if is_dead: valid_bench_indices.append(i)
+			if not valid_bench_indices.is_empty():
+				bench_info = { "indices": valid_bench_indices, "data": benched_player_monsters }
+		else:
+			for i in range(active_player_monsters.size()):
+				if active_player_monsters[i] and not active_player_monsters[i].is_dead:
+					valid_targets.append(i)
+
+	if valid_targets.is_empty() and bench_info.is_empty():
+		log_event.emit("No valid targets for this item!")
+		current_state = BattleState.ACTION_SELECTION
+		selected_item_id = ""
+		return
 	
 	battle_hud.move_container.visible = false
-	battle_hud.set_targeting_mode(true, valid_targets, target_allies)
+	battle_hud.set_targeting_mode(true, valid_targets, target_allies, bench_info)
 	log_event.emit("Select target for %s..." % data.name)
 
 func _on_cancel_targeting():
@@ -875,6 +897,13 @@ func _on_target_selected(index: int):
 		var bench_idx = index - 10
 		battle_hud.set_targeting_mode(false)
 		if battle_hud.move_container: battle_hud.move_container.visible = false
+		
+		if selected_item_id != "":
+			var item_id = selected_item_id
+			selected_item_id = ""
+			_perform_item_on_bench(current_acting_unit, bench_idx, item_id)
+			return
+			
 		_perform_bench_swap_move(current_acting_unit, bench_idx, selected_move)
 		return
 	
@@ -1886,6 +1915,9 @@ func perform_item(user: BattleMonster, target: BattleMonster, item_id: String):
 	if data.get("effect") == "heal_percent":
 		var amount = int(target.max_hp * data.get("amount", 0))
 		_show_damage_number(target, amount, "heal")
+	elif data.get("effect") == "cleanse_debuffs":
+		log_event.emit("%s's debuffs were cleansed!" % target.data.monster_name)
+		_play_status_vfx(target, "shield")
 	
 	CombatManager.apply_item_effect(target, item_id)
 	PlayerData.consume_item(item_id, 1)
@@ -1893,6 +1925,38 @@ func perform_item(user: BattleMonster, target: BattleMonster, item_id: String):
 	
 	if data.get("effect") == "add_shield":
 		_play_status_vfx(target, "shield")
+	
+	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.EXPLAIN_TARGETING:
+		TutorialManager.advance_step() # To INSPECT_ENEMY
+		
+	await get_tree().create_timer(2.0).timeout
+	end_turn()
+
+func _perform_item_on_bench(user: BattleMonster, bench_index: int, item_id: String):
+	current_state = BattleState.EXECUTING
+	var data = CombatManager.get_item_data(item_id)
+	var m_data = benched_player_monsters[bench_index]
+	var item_name = data.get("name", "Item")
+	
+	log_event.emit("%s used %s on %s!" % [user.data.monster_name, item_name, m_data.monster_name])
+	await user.play_move()
+	
+	if data.get("effect") == "revive":
+		var max_hp = m_data.get_current_stats().max_hp
+		var heal_amt = int(max_hp * data.get("amount", 0.5))
+		
+		if roster_hp_cache.has(m_data):
+			var state = roster_hp_cache[m_data]
+			if typeof(state) == TYPE_INT:
+				roster_hp_cache[m_data] = heal_amt
+			elif typeof(state) == TYPE_DICTIONARY:
+				roster_hp_cache[m_data]["hp"] = heal_amt
+		else:
+			roster_hp_cache[m_data] = { "hp": heal_amt, "stats": {} }
+			
+		log_event.emit("%s was revived!" % m_data.monster_name)
+		
+	PlayerData.consume_item(item_id, 1)
 	
 	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.EXPLAIN_TARGETING:
 		TutorialManager.advance_step() # To INSPECT_ENEMY
@@ -2071,6 +2135,24 @@ func _on_monster_death(dead_unit: BattleMonster):
 	
 	# If player unit dies, handle replacement or removal
 	if dead_unit.is_player:
+		# Emphasize the loss with a screen shake and red flash
+		_shake_screen(0.5, 25.0)
+		
+		var flash = ColorRect.new()
+		flash.color = Color(1.0, 0.0, 0.0, 0.5)
+		flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+		flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		flash.z_index = 400 # High enough to cover UI
+		
+		if battle_hud:
+			battle_hud.add_child(flash)
+		else:
+			add_child(flash)
+			
+		var tween = create_tween()
+		tween.tween_property(flash, "color:a", 0.0, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.tween_callback(flash.queue_free)
+
 		# If dying during start-of-turn checks, let start_turn handle it to avoid crashes
 		if dead_unit == current_acting_unit and current_state == BattleState.ACTION_SELECTION:
 			pass

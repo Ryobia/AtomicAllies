@@ -148,6 +148,22 @@ const SHOP_ITEMS = [
 		"category": "Battle"
 	},
 	{
+		"id": "purifying_salt",
+		"name": "Purifying Salt",
+		"description": "Removes all negative status effects and stat drops.",
+		"cost": 150,
+		"currency": "neutron_dust",
+		"category": "Battle"
+	},
+	{
+		"id": "defibrillator",
+		"name": "Defibrillator",
+		"description": "Revives a fallen unit with 50% HP.",
+		"cost": 500,
+		"currency": "neutron_dust",
+		"category": "Battle"
+	},
+	{
 		"id": "gravimetric_sensor",
 		"name": "Gravimetric Sensor",
 		"description": "Increases Speed of all units by 5% per level.",
@@ -353,10 +369,104 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 
 func _on_buy_pressed(item: Dictionary, status_lbl: Label, btn: Button):
 	var currency_label = _get_currency_label(item.currency)
+	var cost = item.get("cost", 0)
 	
 	if item.get("is_upgrade", false):
 		var current_level = PlayerData.get_upgrade_level(item.id)
-		var cost = _get_upgrade_cost(item, current_level)
+		cost = _get_upgrade_cost(item, current_level)
+		
+	_show_purchase_confirmation(item, cost, currency_label, status_lbl, btn)
+
+func _show_purchase_confirmation(item: Dictionary, cost: int, currency_label: String, status_lbl: Label, btn: Button):
+	var popup = PanelContainer.new()
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.custom_minimum_size = Vector2(800, 400)
+	popup.z_index = 100
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color("#010813")
+	style.border_color = Color("#60fafc")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	popup.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 40)
+	margin.add_theme_constant_override("margin_right", 40)
+	margin.add_theme_constant_override("margin_top", 40)
+	margin.add_theme_constant_override("margin_bottom", 40)
+	popup.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 30)
+	margin.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "CONFIRM PURCHASE"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", Color("#ffd700"))
+	vbox.add_child(title)
+	
+	var desc = Label.new()
+	var action_word = "Upgrade" if item.get("is_upgrade", false) else "Buy"
+	desc.text = "%s %s for %d %s?" % [action_word, item.name, cost, currency_label]
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_font_size_override("font_size", 42)
+	vbox.add_child(desc)
+	
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 30)
+	vbox.add_child(hbox)
+	
+	var btn_style = StyleBoxFlat.new()
+	btn_style.bg_color = Color("#60fafc")
+	btn_style.set_corner_radius_all(8)
+	
+	var hover_style = btn_style.duplicate()
+	hover_style.bg_color = Color("#a0fcfd")
+	
+	var confirm_btn = Button.new()
+	confirm_btn.text = "Confirm"
+	confirm_btn.custom_minimum_size = Vector2(250, 90)
+	confirm_btn.add_theme_font_size_override("font_size", 42)
+	confirm_btn.add_theme_color_override("font_color", Color("#010813"))
+	confirm_btn.add_theme_stylebox_override("normal", btn_style)
+	confirm_btn.add_theme_stylebox_override("hover", hover_style)
+	confirm_btn.add_theme_stylebox_override("pressed", btn_style)
+	confirm_btn.pressed.connect(func():
+		_execute_purchase(item, cost, currency_label, status_lbl, btn)
+		popup.queue_free()
+	)
+	hbox.add_child(confirm_btn)
+	
+	var cancel_btn = Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.custom_minimum_size = Vector2(250, 90)
+	cancel_btn.add_theme_font_size_override("font_size", 42)
+	cancel_btn.add_theme_color_override("font_color", Color("#010813"))
+	cancel_btn.add_theme_stylebox_override("normal", btn_style)
+	cancel_btn.add_theme_stylebox_override("hover", hover_style)
+	cancel_btn.add_theme_stylebox_override("pressed", btn_style)
+	cancel_btn.pressed.connect(popup.queue_free)
+	hbox.add_child(cancel_btn)
+	
+	add_child(popup)
+	
+	# Animate in
+	popup.pivot_offset = Vector2(400, 200)
+	popup.scale = Vector2(0.9, 0.9)
+	popup.modulate.a = 0.0
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(popup, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(popup, "modulate:a", 1.0, 0.2)
+
+func _execute_purchase(item: Dictionary, cost: int, currency_label: String, status_lbl: Label, btn: Button):
+	if item.get("is_upgrade", false):
 		
 		if PlayerData.purchase_ship_upgrade(item.id, cost, item.currency):
 			var new_level = PlayerData.get_upgrade_level(item.id)
@@ -372,9 +482,10 @@ func _on_buy_pressed(item: Dictionary, status_lbl: Label, btn: Button):
 				var next_cost = _get_upgrade_cost(item, new_level)
 				btn.text = "Upgrade (%d %s)" % [next_cost, currency_label]
 		else:
+			var current_level = PlayerData.get_upgrade_level(item.id)
 			_show_not_enough_funds(status_lbl, "Level: %d / %d" % [current_level, item.max_level], currency_label)
 	else:
-		if PlayerData.spend_resource(item.currency, item.cost):
+		if PlayerData.spend_resource(item.currency, cost):
 			PlayerData.add_item(item.id, 1)
 			var new_count = PlayerData.get_item_count(item.id)
 			status_lbl.text = "Owned: %d" % new_count

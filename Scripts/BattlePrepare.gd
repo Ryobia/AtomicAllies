@@ -395,15 +395,21 @@ func _show_collection_selector():
 	# Footer Buttons
 	var footer_style = StyleBoxFlat.new()
 	footer_style.bg_color = Color("#010813")
+	footer_style.border_color = Color("#60fafc")
+	footer_style.set_border_width_all(2)
 	footer_style.set_corner_radius_all(8)
+	
+	var hover_style = footer_style.duplicate()
+	hover_style.bg_color = Color("#0a1a2a")
+	hover_style.border_color = Color("#ffd700")
 	
 	var cancel_btn = Button.new()
 	cancel_btn.text = "Cancel"
-	cancel_btn.custom_minimum_size = Vector2(0, 80)
-	cancel_btn.add_theme_font_size_override("font_size", 32)
+	cancel_btn.custom_minimum_size = Vector2(0, 100)
+	cancel_btn.add_theme_font_size_override("font_size", 40)
 	cancel_btn.add_theme_color_override("font_color", Color("#60fafc"))
 	cancel_btn.add_theme_stylebox_override("normal", footer_style)
-	cancel_btn.add_theme_stylebox_override("hover", footer_style)
+	cancel_btn.add_theme_stylebox_override("hover", hover_style)
 	cancel_btn.add_theme_stylebox_override("pressed", footer_style)
 	cancel_btn.pressed.connect(_collection_popup_node.queue_free)
 	main_vbox.add_child(cancel_btn)
@@ -412,12 +418,19 @@ func _show_collection_selector():
 	if _target_slot_index != -1 and PlayerData.active_team[_target_slot_index] != null:
 		var remove_btn = Button.new()
 		remove_btn.text = "Remove from Squad"
-		remove_btn.custom_minimum_size = Vector2(0, 80)
-		remove_btn.add_theme_font_size_override("font_size", 32)
-		remove_btn.add_theme_color_override("font_color", Color("#60fafc"))
-		remove_btn.add_theme_stylebox_override("normal", footer_style)
-		remove_btn.add_theme_stylebox_override("hover", footer_style)
-		remove_btn.add_theme_stylebox_override("pressed", footer_style)
+		remove_btn.custom_minimum_size = Vector2(0, 100)
+		remove_btn.add_theme_font_size_override("font_size", 40)
+		remove_btn.add_theme_color_override("font_color", Color("#ff4d4d"))
+		
+		var remove_style = footer_style.duplicate()
+		remove_style.border_color = Color("#ff4d4d")
+		
+		var remove_hover = hover_style.duplicate()
+		remove_hover.border_color = Color("#ff4d4d")
+		
+		remove_btn.add_theme_stylebox_override("normal", remove_style)
+		remove_btn.add_theme_stylebox_override("hover", remove_hover)
+		remove_btn.add_theme_stylebox_override("pressed", remove_style)
 		remove_btn.pressed.connect(func():
 			PlayerData.active_team[_target_slot_index] = null
 			_update_team_display()
