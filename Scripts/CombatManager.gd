@@ -98,6 +98,20 @@ func _create_move_from_dict(def: Dictionary) -> MoveData:
 	m.is_snipe = def.get("is_snipe", false)
 	m.effects = def.get("effects", []) # Load generic effects
 	m.cooldown = def.get("cooldown", 1)
+	
+	# FIX: Correct bad JSON data for Chain Reaction move
+	if m.name == "Chain Reaction":
+		var cleaned = []
+		var has_mark = false
+		for eff in m.effects:
+			if eff.get("effect") == "chain_reaction" or (eff.get("type") == "status" and str(eff.get("status")).to_lower() == "chain_reaction"):
+				continue
+			if eff.get("type") == "status" and str(eff.get("status")).to_lower() == "chain_reaction_mark":
+				has_mark = true
+			cleaned.append(eff)
+		if not has_mark:
+			cleaned.append({ "type": "status", "status": "chain_reaction_mark", "duration": 3, "target": "Defender", "message": "%s is marked for a chain reaction!" })
+		m.effects = cleaned
 	m.hit_count = def.get("hit_count", 1)
 	m.damage_scale = def.get("damage_scale", 1.0)
 	if def.has("ignore_def_percent"):
@@ -212,7 +226,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 				is_debuff = true
 			elif effect.get("type") == "status":
 				var s = str(effect.get("status", "")).to_lower()
-				if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload", "illuminated", "singularity_hazard"]:
+				if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload", "illuminated", "singularity_hazard", "chain_reaction_mark"]:
 					is_debuff = true
 			if is_debuff:
 				has_debuff = true
@@ -491,7 +505,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 				result.effects.append({ "target": defender, "effect": "remove_status", "status": "chain_reaction_mark" })
 				break # Only trigger once per hit
 
-	# Nonmetal: Apply Unstable on hit
+	# Nonmetal: Apply Volatile on hit
 	if attacker.data.group == AtomicConfig.Group.NONMETAL and result.hit and move.power > 0:
 		var count = PlayerData.class_resonance.get(AtomicConfig.Group.NONMETAL, 0)
 		var multiplier = 1.20 + (count * 0.05)
@@ -505,7 +519,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 		if count >= total_nm and total_nm > 0:
 			multiplier += 0.10
 			
-		result.effects.append({ "target": defender, "status": "unstable", "duration": 2, "damage_multiplier": multiplier, "type": "status" })
+		result.effects.append({ "target": defender, "status": "volatile", "duration": 2, "damage_multiplier": multiplier, "type": "status" })
 
 	# Metalloid: +5% Debuff Effectiveness (Increase stat drop amount)
 	if attacker.data.group == AtomicConfig.Group.METALLOID:
@@ -526,7 +540,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			if effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
 				effect.amount = int(effect.amount * multiplier)
 				is_debuff = true
-			elif effect.get("type") == "status" and effect.get("status") in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard"]:
+			elif effect.get("type") == "status" and effect.get("status") in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard", "chain_reaction_mark", "volatile"]:
 				is_debuff = true
 			elif effect.get("effect") == "swap_stats":
 				is_debuff = true
@@ -604,7 +618,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 					is_debuff = true
 				elif effect.get("type") == "status":
 					var s = str(effect.get("status", "")).to_lower()
-					if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload", "singularity_hazard"]:
+					if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "oxidized", "carbonized", "overload", "singularity_hazard", "chain_reaction_mark"]:
 						is_debuff = true
 				elif effect.get("effect") == "swap_stats":
 					is_debuff = true
@@ -668,10 +682,6 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			
 		"Gamma Ray":
 			result.messages.append("%s fires a precise gamma burst!" % attacker.data.monster_name)
-			
-		"Chain Reaction":
-			result.effects.append({ "effect": "chain_reaction", "amount": result.damage })
-			result.messages.append("%s starts a reaction!" % attacker.data.monster_name)
 			
 		"Neurotoxin":
 			result.effects.append({ "target": defender, "status": "poison", "damage_percent": 0.1, "duration": 3, "type": "status" })
@@ -753,7 +763,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			if target and is_instance_valid(target) and target.data.group == AtomicConfig.Group.NOBLE_GAS:
 				if effect.get("type") == "status":
 					var s = effect.get("status")
-					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard"]:
+					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard", "chain_reaction_mark", "volatile"]:
 						should_block = true
 				elif effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
 					should_block = true

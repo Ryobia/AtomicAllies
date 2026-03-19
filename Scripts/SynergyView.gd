@@ -261,7 +261,7 @@ func _get_synergy_text(group: int, count: int) -> String:
 			var mult = 1.20 + (count * 0.05)
 			if total > 0 and count >= total:
 				mult += 0.10
-			text = "[color=%s]Synergy:[/color] Attacks apply Unstable ([color=%s]%.2fx[/color] dmg taken).\n[color=%s]Passive:[/color] Multiplier +0.05x per element.\n[color=%s]%s:[/color] Multiplier +0.10x." % [c_lbl, c_val, mult, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Attacks apply [color=%s]Volatile[/color] ([color=%s]%.2fx[/color] dmg taken).\n[color=%s]Passive:[/color] Multiplier +0.05x per element.\n[color=%s]%s:[/color] Multiplier +0.10x." % [c_lbl, c_val, c_val, mult, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.METALLOID:
 			var val = count * 5
 			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Debuff Effect (5%%/elem).\n[color=%s]Passive:[/color] 10%% Chance to Stun on hit.\n[color=%s]%s:[/color] Debuffs last +1 turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]

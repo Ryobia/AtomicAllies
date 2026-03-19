@@ -129,7 +129,7 @@ scale = Vector2(1.4595922, 1.4821618)
 sprite_frames = ExtResource("4_26528")
 animation = &"core"
 autoplay = "core"
-frame_progress = 0.67791784
+frame_progress = 0.9896959
 centered = false
 
 [node name="FusionSign" type="AnimatedSprite2D" parent="Background" unique_id=1202715435]
@@ -138,7 +138,7 @@ scale = Vector2(1.5425925, 1.6835284)
 sprite_frames = ExtResource("5_hoak4")
 animation = &"sign"
 autoplay = "sign"
-frame_progress = 0.89331156
+frame_progress = 0.54749733
 
 [node name="SelectionPanel" type="Panel" parent="." unique_id=327284779]
 visible = false
@@ -171,9 +171,10 @@ grow_vertical = 2
 layout_mode = 2
 
 [node name="FusionContainer" type="VBoxContainer" parent="." unique_id=479629868]
+visible = false
 layout_mode = 1
 anchors_preset = -1
-anchor_top = 0.539
+anchor_top = 0.572
 anchor_right = 1.0
 anchor_bottom = 0.866
 offset_top = 0.95983887
@@ -236,6 +237,7 @@ size_flags_vertical = 3
 alignment = 1
 
 [node name="Parent1Button" type="Button" parent="FusionContainer/HBoxContainer" unique_id=823115648]
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
@@ -258,15 +260,17 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_7ece5")
 text = "Select Element 2"
 
 [node name="FissionContainer" type="VBoxContainer" parent="." unique_id=691920439]
+visible = false
 layout_mode = 1
 anchors_preset = -1
-anchor_top = 0.66200006
+anchor_top = 0.618
 anchor_right = 1.0
 anchor_bottom = 0.866
-offset_top = -151.04016
+offset_top = -175.04016
 offset_bottom = 2.2800293
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_constants/separation = 0
 alignment = 1
 
 [node name="FissionActionBtn" type="TextureButton" parent="FissionContainer" unique_id=867114902]
@@ -279,14 +283,17 @@ stretch_mode = 6
 
 [node name="FissionStatusLabel" type="Label" parent="FissionContainer" unique_id=1856906148]
 layout_mode = 2
+size_flags_vertical = 10
 theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
 theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_06dvn")
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="FissionParentButton" type="Button" parent="FissionContainer" unique_id=1538269318]
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 10
 theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 5
@@ -298,6 +305,7 @@ text = "Select Element"
 oversampling_override = 1.0
 
 [node name="FusionConfirmPopup" type="PanelContainer" parent="." unique_id=1747203823]
+visible = false
 z_index = 10
 custom_minimum_size = Vector2(800, 700)
 layout_mode = 1

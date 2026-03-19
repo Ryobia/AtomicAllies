@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://be1b71if15wq" path="res://Scripts/RestSite.gd" id="1_ya7uk"]
 [ext_resource type="Texture2D" uid="uid://cwwsh0aaj3yvn" path="res://Assets/ItemSheet2.png" id="2_ep4c3"]
 [ext_resource type="Texture2D" uid="uid://7c7kha1t73g7" path="res://Assets/ItemSheet.png" id="3_eufrv"]
+[ext_resource type="Texture2D" uid="uid://b2kh1qmltxbae" path="res://Assets/ItemSheet3.png" id="4_ulgok"]
 [ext_resource type="Texture2D" uid="uid://cgua1h5qbdain" path="res://Images/restsite.png" id="5_ulgok"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_eufrv"]
@@ -44,6 +45,14 @@ region = Rect2(477.1406, 1381.2811, 361.15714, 428.92578)
 [sub_resource type="AtlasTexture" id="AtlasTexture_au6ga"]
 atlas = ExtResource("3_eufrv")
 region = Rect2(474.44693, 135.45732, 364.46286, 429.7522)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a7l7x"]
+atlas = ExtResource("4_ulgok")
+region = Rect2(45.92298, 68.28139, 179.44641, 214.21803)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0t6fx"]
+atlas = ExtResource("4_ulgok")
+region = Rect2(237.10274, 68.35866, 181.30919, 214.83894)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bf1td"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.35686275)
@@ -95,10 +104,12 @@ icon_dust = SubResource("AtlasTexture_bf1td")
 item_icons = {
 "adrenaline_shot": SubResource("AtlasTexture_qian1"),
 "coolant_gel": SubResource("AtlasTexture_4okof"),
+"defibrillator": SubResource("AtlasTexture_a7l7x"),
 "emergency_shield": SubResource("AtlasTexture_au6ga"),
 "ion_battery": SubResource("AtlasTexture_wqf2j"),
 "plasma_injector": SubResource("AtlasTexture_20fcw"),
 "power_cell": SubResource("AtlasTexture_24cr6"),
+"purifying_salt": SubResource("AtlasTexture_0t6fx"),
 "repair_nanites": SubResource("AtlasTexture_swlla")
 }
 

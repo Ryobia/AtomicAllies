@@ -474,6 +474,7 @@ func _show_purchase_confirmation(item: Dictionary, cost: int, currency_label: St
 	hbox.add_child(cancel_btn)
 	
 	add_child(popup)
+	popup.position = (get_viewport_rect().size - popup.custom_minimum_size) / 2.0
 	
 	# Animate in
 	popup.pivot_offset = Vector2(400, 200)

@@ -723,17 +723,7 @@ func _on_action_selected(action_type):
 			battle_hud.show_swap_options(_get_swap_options())
 
 	elif action_type == "item":
-		var battle_items = {}
-		for item_id in PlayerData.inventory:
-			if CombatManager.get_item_data(item_id).has("target"): # Check if it's a battle item
-				battle_items[item_id] = PlayerData.inventory[item_id]
-		
-		if battle_items.is_empty():
-			log_event.emit("No battle items!")
-			return
-			
-		if battle_hud:
-			battle_hud.show_items(battle_items)
+		_show_item_menu()
 
 func _on_move_selected(move: MoveData):
 	if current_state != BattleState.ACTION_SELECTION: return
@@ -830,7 +820,6 @@ func _on_item_selected(item_id: String):
 	if target_allies:
 		if is_revive:
 			_temp_item_targets.clear()
-			var valid_bench_indices = []
 			for m in current_player_team:
 				var is_dead = false
 				if roster_hp_cache.has(m):
@@ -840,9 +829,18 @@ func _on_item_selected(item_id: String):
 					if hp <= 0: is_dead = true
 				if is_dead:
 					_temp_item_targets.append(m)
-					valid_bench_indices.append(_temp_item_targets.size() - 1)
-			if not _temp_item_targets.is_empty():
-				bench_info = { "indices": valid_bench_indices, "data": _temp_item_targets }
+			
+			if _temp_item_targets.is_empty():
+				log_event.emit("No valid targets for this item!")
+				current_state = BattleState.ACTION_SELECTION
+				selected_item_id = ""
+				_show_item_menu()
+				return
+				
+			battle_hud.move_container.visible = false
+			battle_hud.show_revive_options(_temp_item_targets)
+			log_event.emit("Select target for %s..." % data.name)
+			return
 		else:
 			for i in range(active_player_monsters.size()):
 				if active_player_monsters[i] and not active_player_monsters[i].is_dead:
@@ -852,6 +850,7 @@ func _on_item_selected(item_id: String):
 		log_event.emit("No valid targets for this item!")
 		current_state = BattleState.ACTION_SELECTION
 		selected_item_id = ""
+		_show_item_menu()
 		return
 	
 	battle_hud.move_container.visible = false
@@ -877,11 +876,7 @@ func _on_cancel_targeting():
 		var moves = CombatManager.get_active_moves(current_acting_unit.data)
 		battle_hud.show_moves(moves, current_acting_unit.move_cooldowns)
 	elif was_item:
-		var battle_items = {}
-		for item_id in PlayerData.inventory:
-			if CombatManager.get_item_data(item_id).has("target"):
-				battle_items[item_id] = PlayerData.inventory[item_id]
-		battle_hud.show_items(battle_items)
+		_show_item_menu()
 	else:
 		battle_hud.show_actions()
 		
@@ -995,6 +990,35 @@ func _on_inspect_unit(index: int, is_player: bool):
 
 	if TutorialManager and PlayerData.tutorial_step == TutorialManager.Step.INSPECT_ENEMY:
 		TutorialManager.advance_step() # To CLOSE_INSPECT_ENEMY
+
+func _show_item_menu():
+	var battle_items = {}
+	for item_id in PlayerData.inventory:
+		if CombatManager.get_item_data(item_id).has("target"):
+			battle_items[item_id] = PlayerData.inventory[item_id]
+			
+	if battle_items.is_empty():
+		log_event.emit("No battle items!")
+		current_state = BattleState.ACTION_SELECTION
+		if battle_hud: battle_hud.show_actions()
+		return
+		
+	var disabled_items = []
+	var has_dead_units = false
+	for m in current_player_team:
+		if m != null:
+			var is_dead = false
+			if roster_hp_cache.has(m):
+				var state = roster_hp_cache[m]
+				var hp = state if typeof(state) == TYPE_INT else state.get("hp", 1)
+				if typeof(hp) != TYPE_INT and typeof(hp) != TYPE_FLOAT: hp = 0
+				if hp <= 0: is_dead = true
+			if is_dead:
+				has_dead_units = true
+				break
+				
+	if not has_dead_units: disabled_items.append("defibrillator")
+	if battle_hud: battle_hud.call_deferred("show_items", battle_items, disabled_items)
 
 func perform_swap(active_unit: BattleMonster, new_data: MonsterData, bench_index: int):
 	current_state = BattleState.EXECUTING
@@ -1829,7 +1853,7 @@ func perform_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 				var is_harmful = false
 				if effect.get("type") == "status":
 					var s = effect.get("status")
-					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "insanity", "singularity_hazard"]:
+					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "insanity", "singularity_hazard", "chain_reaction_mark"]:
 						is_harmful = true
 				elif effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
 					is_harmful = true
@@ -1959,7 +1983,31 @@ func _perform_item_on_data(user: BattleMonster, m_data: MonsterData, item_id: St
 			
 		log_event.emit("%s was revived!" % m_data.monster_name)
 		
+		var empty_active_idx = -1
+		for i in range(3):
+			if i < active_player_monsters.size() and active_player_monsters[i] == null:
+				empty_active_idx = i
+				break
+				
 		var team_idx = current_player_team.find(m_data)
+		
+		# If unit is in the bench but there's an open active slot, swap it in
+		if team_idx >= 3 and empty_active_idx != -1:
+			var old_active_data = current_player_team[empty_active_idx]
+			current_player_team[empty_active_idx] = m_data
+			current_player_team[team_idx] = old_active_data
+			
+			var bench_idx = benched_player_monsters.find(m_data)
+			if bench_idx != -1:
+				if old_active_data != null:
+					benched_player_monsters[bench_idx] = old_active_data
+				else:
+					benched_player_monsters.remove_at(bench_idx)
+					
+			team_idx = empty_active_idx
+			_sync_roster_order()
+			log_event.emit("%s steps up to the front!" % m_data.monster_name)
+			
 		if team_idx != -1 and team_idx < 3:
 			if active_player_monsters[team_idx] == null:
 				var s_idx = SPAWN_MAP[team_idx] if SPAWN_MAP.size() > team_idx else team_idx
@@ -2673,7 +2721,7 @@ func _handle_cleanse(effect_data: Dictionary):
 		elif effect.has("status"):
 			var s = effect.get("status")
 			# Check for known debuff names or if it's a damage multiplier debuff
-			if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "radiation", "refracted", "insanity", "singularity_hazard", "reactive_vapor"]:
+			if effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "radiation", "refracted", "insanity", "singularity_hazard", "reactive_vapor", "chain_reaction_mark"]:
 				is_debuff = true
 		elif effect.get("type") == "swap_stats":
 			is_debuff = true
@@ -3170,7 +3218,7 @@ func _play_status_vfx(unit: Node2D, status: String):
 		tween.tween_callback(ring.queue_free)
 		
 	# 3. Erratic Sparks (Radiation, Unstable, Overload, Explosive)
-	elif s in ["radiation", "radiation_feedback", "unstable", "overload", "explosive", "death_bomb"]:
+	elif s in ["radiation", "radiation_feedback", "unstable", "volatile", "overload", "explosive", "death_bomb"]:
 		var particles = CPUParticles2D.new()
 		particles.amount = 30
 		particles.lifetime = 0.6
@@ -3191,7 +3239,7 @@ func _play_status_vfx(unit: Node2D, status: String):
 		particles.position = Vector2(0, -40)
 		get_tree().create_timer(1.0).timeout.connect(particles.queue_free)
 		
-		if s == "unstable":
+		if s == "unstable" or s == "volatile":
 			var tween = create_tween()
 			var base_pos = unit.position
 			for i in range(5):
@@ -3217,7 +3265,7 @@ func _play_status_vfx(unit: Node2D, status: String):
 			tween.parallel().tween_property(unit, "scale", base_scale, 0.05)
 
 	# 4. Mind/Senses (Stun, Insanity, Refracted, Taunt)
-	elif s in ["stun", "insanity", "refracted", "taunt", "marked_covalent"]:
+	elif s in ["stun", "insanity", "refracted", "taunt", "marked_covalent", "chain_reaction_mark"]:
 		var particles = CPUParticles2D.new()
 		particles.amount = 8
 		particles.lifetime = 0.8
@@ -3235,7 +3283,7 @@ func _play_status_vfx(unit: Node2D, status: String):
 		if s == "stun": particles.color = Color("#ffd700")
 		elif s == "insanity": particles.color = Color("#1a0033")
 		elif s == "refracted": particles.color = Color("#ffffff")
-		elif s in ["taunt", "marked_covalent"]: particles.color = Color("#ff4d4d")
+		elif s in ["taunt", "marked_covalent", "chain_reaction_mark"]: particles.color = Color("#ff4d4d")
 		
 		unit.add_child(particles)
 		particles.position = Vector2(0, -80) # Head level

@@ -575,7 +575,7 @@ func _get_class_description(group: int) -> String:
 		AtomicConfig.Group.METALLOID:
 			return "Role: Disrupter\nFast and utility-focused.\nGood at messing with enemy plans."
 		AtomicConfig.Group.NONMETAL:
-			return "Role: Combo Primer\nApplies powerful Unstable debuffs.\nSets up enemies for massive damage."
+			return "Role: Combo Primer\nApplies powerful Volatile debuffs.\nSets up enemies for massive damage."
 		AtomicConfig.Group.HALOGEN:
 			return "Role: Assailant\nHigh Speed and Status Effects.\nDeals corrosive damage over time."
 		AtomicConfig.Group.NOBLE_GAS:

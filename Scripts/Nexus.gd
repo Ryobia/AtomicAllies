@@ -85,7 +85,8 @@ func _ready():
 	
 	if mode_toggle_btn: mode_toggle_btn.pressed.connect(_on_mode_toggle_pressed)
 	if fission_parent_btn: fission_parent_btn.pressed.connect(func(): _open_selection(3))
-	if fission_action_btn: fission_action_btn.pressed.connect(_on_fission_action_pressed)
+	if fission_action_btn: 
+		fission_action_btn.pressed.connect(_on_fission_action_pressed)
 	
 	if fusion_container and fission_container:
 		fusion_container.visible = true
@@ -532,20 +533,32 @@ func check_breeding_status():
 	if TimeManager.get_time_left("breeding") > 0:
 		status_label.text = "Fusion in progress..."
 		breed_btn.disabled = true
+		_start_action_button_pulse(breed_btn, 1.5)
 	elif PlayerData.get_first_empty_chamber_index() == -1:
 		status_label.text = "No Synthesis Chambers available!"
 		breed_btn.disabled = true
+		_start_action_button_pulse(breed_btn, 1.5)
 	else:
-		status_label.text = "Select two Elements to Fuse."
 		breed_btn.disabled = false
+		if parent_1 and parent_2:
+			status_label.text = "Ready to Fuse!"
+			_start_action_button_pulse(breed_btn, 0.4)
+		else:
+			status_label.text = "Select two Elements to Fuse."
+			_start_action_button_pulse(breed_btn, 1.5)
 
 	if fission_status_label and fission_action_btn:
 		if PlayerData.get_first_empty_chamber_index() == -1:
 			fission_status_label.text = "No Synthesis Chambers available!"
 			fission_action_btn.disabled = true
+			_start_action_button_pulse(fission_action_btn, 1.5)
 		else:
-			fission_status_label.text = "Select an Element to Fission."
 			fission_action_btn.disabled = false
+			if fission_parent:
+				_start_action_button_pulse(fission_action_btn, 0.4)
+			else:
+				fission_status_label.text = "Select an Element to Fission."
+				_start_action_button_pulse(fission_action_btn, 1.5)
 
 # --- Selection Logic ---
 func _open_selection(slot: int):
@@ -814,6 +827,7 @@ func _on_monster_selected(monster: MonsterData):
 	
 	selection_panel.visible = false
 	_update_success_rate_preview()
+	check_breeding_status()
 
 # --- Fission Logic ---
 func _on_fission_action_pressed():
@@ -1823,3 +1837,22 @@ func _advance_tutorial():
 			PlayerData.save_game()
 			if TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
 				TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
+
+func _start_action_button_pulse(btn: Control, speed: float = 1.5):
+	if not is_instance_valid(btn): return
+	
+	# Avoid restarting the tween if the speed hasn't changed
+	if btn.has_meta("pulse_speed") and btn.get_meta("pulse_speed") == speed:
+		return
+	btn.set_meta("pulse_speed", speed)
+	
+	if btn.has_meta("pulse_tween"):
+		var t = btn.get_meta("pulse_tween")
+		if t and t.is_valid(): t.kill()
+		
+	var tween = btn.create_tween()
+	btn.set_meta("pulse_tween", tween)
+	tween.set_loops()
+	# Gently pulse to a brighter, slightly cyan tint
+	tween.tween_property(btn, "modulate", Color(1.2, 1.4, 1.4), speed).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(btn, "modulate", Color.WHITE, speed).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
