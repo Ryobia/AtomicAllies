@@ -129,6 +129,9 @@ func setup(unit: BattleMonster):
                 
                 var e_type = effect.get("type", "")
                 
+                var dur_str = "(%d turns)" % duration
+                if effect.get("is_perm", false) or duration > 50: dur_str = "(Permanent)"
+                
                 if e_type == "stat_mod":
                     style.bg_color = Color("#010813").lightened(0.1)
                     var stat = effect.get("stat", "stat")
@@ -142,8 +145,6 @@ func setup(unit: BattleMonster):
                     if pct_str.ends_with(".0"): pct_str = pct_str.trim_suffix(".0")
                     
                     var sign_str = "+" if pct >= 0 else ""
-                    var dur_str = "(%d turns)" % duration
-                    if effect.get("is_perm", false) or duration > 50: dur_str = "(Passive)"
                     
                     title_text = "%s%s%% %s %s" % [sign_str, pct_str, stat.capitalize(), dur_str]
                     title_lbl.add_theme_color_override("font_color", Color.GREEN if amount > 0 else Color.RED)
@@ -152,10 +153,12 @@ func setup(unit: BattleMonster):
                     style.bg_color = Color("#010813").lightened(0.1)
                     var s_name = effect.get("status", "Unknown")
                     var status_key = str(s_name).to_lower()
-                    title_text = "%s (%d turns)" % [s_name.capitalize(), duration]
+                    title_text = "%s %s" % [s_name.capitalize(), dur_str]
                     if effect.has("damage_multiplier"):
                         var mult = float(effect.get("damage_multiplier", 1.0))
                         desc_text = "Takes %.2fx damage from next attack." % mult
+                    elif status_key == "shield":
+                        desc_text = "Absorbs %d damage." % effect.get("amount", 0)
                     elif status_key == "static_reflection":
                         var pct = int(float(effect.get("damage_percent", 0.3)) * 100)
                         desc_text = "Reflects %d%% of incoming damage." % pct

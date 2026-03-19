@@ -408,12 +408,15 @@ func _create_status_icon(effect: Dictionary) -> Control:
 	var text = "??"
 	var tooltip_text = ""
 	
+	var dur_val = effect.get("duration", 0)
+	var dur_text = "Permanent" if dur_val > 90 else ("%d turns" % dur_val)
+	
 	if type == "stat_mod":
 		if effect.get("amount", 0) < 0:
 			bg_color = Color("#ff4d4d") # Red (Debuff)
 		text = effect.get("stat", "").substr(0, 3).to_upper()
 		var sign = "+" if effect.get("amount", 0) > 0 else ""
-		tooltip_text = "Stat: %s\nAmount: %s%d\nDuration: %d turns" % [effect.get("stat").capitalize(), sign, effect.get("amount"), effect.get("duration")]
+		tooltip_text = "Stat: %s\nAmount: %s%d\nDuration: %s" % [effect.get("stat").capitalize(), sign, effect.get("amount"), dur_text]
 	elif type == "status":
 		var s = str(effect.get("status", "")).to_lower()
 		if s == "": return null
@@ -426,32 +429,32 @@ func _create_status_icon(effect: Dictionary) -> Control:
 			tooltip_text = s.capitalize()
 			if effect.has("damage_multiplier"):
 				tooltip_text += "\nDamage Taken: x%.1f" % effect.get("damage_multiplier", 1.0)
-			tooltip_text += "\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text += "\nDuration: %s" % dur_text
 		# Known Buffs/Special
 		elif s == "invulnerable":
 			bg_color = Color("#ffd700") # Gold
-			tooltip_text = "Invulnerable\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Invulnerable\nDuration: %s" % dur_text
 		elif s == "taunt":
 			bg_color = Color("#ff9360") # Orange
-			tooltip_text = "Taunting\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Taunting\nDuration: %s" % dur_text
 		elif s == "static_reflection":
 			bg_color = Color("#60fafc") # Cyan
-			tooltip_text = "Reflecting Damage\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Reflecting Damage\nDuration: %s" % dur_text
 		elif s == "physical_resist":
 			bg_color = Color("#a0a0a0") # Silver/Grey
-			tooltip_text = "Physical Resist\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Physical Resist\nDuration: %s" % dur_text
 		elif s == "mirror_coat":
 			bg_color = Color("#e0e0e0") # Silver/White
-			tooltip_text = "Reflecting Next Hit\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Reflecting Next Hit\nDuration: %s" % dur_text
 		elif s == "toxic_feedback":
 			bg_color = Color("#6dc000") # Radioactive Green
-			tooltip_text = "Toxic Feedback\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Toxic Feedback\nDuration: %s" % dur_text
 		elif s == "radiation_feedback":
 			bg_color = Color("#6dc000") # Radioactive Green
-			tooltip_text = "Radiation Shield\nApplies radiation to attackers.\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Radiation Shield\nApplies radiation to attackers.\nDuration: %s" % dur_text
 		elif s == "inertia_feedback":
 			bg_color = Color("#a0a0a0") # Silver/Grey
-			tooltip_text = "Dense Inertia\nAttackers are slowed by 20%%.\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Dense Inertia\nAttackers are slowed by 20%%.\nDuration: %s" % dur_text
 		elif s == "reflective_shell":
 			bg_color = Color("#e0e0e0") # Silver/White
 			tooltip_text = "Reflective Shell\nReflects 30% of next hit."
@@ -461,19 +464,22 @@ func _create_status_icon(effect: Dictionary) -> Control:
 			tooltip_text = "Absorb Shield\nAbsorbs next hit, converting %d%% to HP." % pct
 		elif s == "special_resist":
 			bg_color = Color("#6495ed") # Cornflower Blue
-			tooltip_text = "Special Resist\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Special Resist\nDuration: %s" % dur_text
 		elif s == "regeneration":
 			bg_color = Color("#2ecc71") # Green
-			tooltip_text = "Regeneration\nHeals HP each turn.\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Regeneration\nHeals HP each turn.\nDuration: %s" % dur_text
 		elif s == "heal_block":
 			bg_color = Color("#8b0000") # Dark Red
-			tooltip_text = "Heal Block\nCannot be healed.\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Heal Block\nCannot be healed.\nDuration: %s" % dur_text
 		elif s == "death_bomb":
 			bg_color = Color("#ff4500") # Orange Red
-			tooltip_text = "Death Bomb\nExplodes on death for AoE damage.\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Death Bomb\nExplodes on death for AoE damage.\nDuration: %s" % dur_text
 		elif s == "singularity_hazard":
 			bg_color = Color("#4b0082") # Indigo
-			tooltip_text = "Singularity Hazard\nAttacking applies Poison and Slow.\nDuration: %d turns" % effect.get("duration", 0)
+			tooltip_text = "Singularity Hazard\nAttacking applies Poison and Slow.\nDuration: %s" % dur_text
+		elif s == "shield":
+			bg_color = Color("#60fafc") # Cyan
+			tooltip_text = "Shield\nAbsorbs %d damage." % effect.get("amount", 0)
 		
 		if s == "marked_covalent": text = "COV"
 		elif s == "unstable": text = "UNS"
@@ -504,12 +510,13 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "death_bomb": text = "BMB"
 		elif s == "singularity_hazard": text = "SNG"
 		elif s == "chain_reaction_mark": text = "CRK"
+		elif s == "shield": text = "SHD"
 		else: text = s.substr(0, 3).to_upper()
 
 	elif type == "swap_stats":
 		bg_color = Color("#ff4d4d")
 		text = "SWP"
-		tooltip_text = "Stats Swapped\nDuration: %d turns" % effect.get("duration", 0)
+		tooltip_text = "Stats Swapped\nDuration: %s" % dur_text
 	
 	if text == "": text = "??"
 		

@@ -399,7 +399,8 @@ func _on_buy_pressed(item: Dictionary, status_lbl: Label, btn: Button):
 func _show_purchase_confirmation(item: Dictionary, cost: int, currency_label: String, status_lbl: Label, btn: Button):
 	var popup = PanelContainer.new()
 	popup.set_anchors_preset(Control.PRESET_CENTER)
-	popup.custom_minimum_size = Vector2(800, 400)
+	popup.custom_minimum_size = Vector2(800, 600)
+	popup.size = Vector2(800, 600)
 	popup.z_index = 100
 	
 	var style = StyleBoxFlat.new()
@@ -434,6 +435,7 @@ func _show_purchase_confirmation(item: Dictionary, cost: int, currency_label: St
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.add_theme_font_size_override("font_size", 42)
+	desc.custom_minimum_size.x = 720
 	vbox.add_child(desc)
 	
 	var hbox = HBoxContainer.new()

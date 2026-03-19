@@ -291,11 +291,13 @@ func start_battle(enemy_data_list: Array[MonsterData]):
 			var unit = active_player_monsters[i]
 			if unit:
 				hud_update_hp.emit(true, i, unit.current_hp, unit.max_hp)
+				_check_shield_update(unit)
 				_refresh_unit_status(unit)
 			
 		for i in range(active_enemy_monsters.size()):
 			var unit = active_enemy_monsters[i]
 			hud_update_hp.emit(false, i, unit.current_hp, unit.max_hp)
+			_check_shield_update(unit)
 			_refresh_unit_status(unit)
 
 	# Tutorial Hook: Start Battle Tutorial
@@ -2299,11 +2301,29 @@ func _on_unit_hp_changed(unit: BattleMonster, new_hp: int, max_hp: int):
 			roster_hp_cache[unit.data]["hp"] = new_hp
 
 func _check_shield_update(unit: BattleMonster):
+	var shield = unit.get_meta("shield", 0)
+	
+	# Sync shield to status effect so it shows in UI
+	if "active_effects" in unit:
+		var found = false
+		for i in range(unit.active_effects.size() - 1, -1, -1):
+			var eff = unit.active_effects[i]
+			if eff.get("status") == "shield":
+				if shield <= 0:
+					unit.active_effects.remove_at(i)
+				else:
+					eff["amount"] = shield
+				found = true
+				break
+		
+		if not found and shield > 0:
+			unit.active_effects.append({ "status": "shield", "amount": shield, "type": "status", "duration": 99 })
+			
 	var index = active_player_monsters.find(unit) if unit.is_player else active_enemy_monsters.find(unit)
 	if index != -1:
-		var shield = unit.get_meta("shield", 0)
 		# We pass max_hp so the bar can scale correctly relative to health
 		hud_update_shield.emit(unit.is_player, index, shield, unit.max_hp)
+		hud_update_status.emit(unit.is_player, index, unit.active_effects)
 
 func _on_unit_effects_changed(unit: BattleMonster, effects: Array):
 	_refresh_unit_status(unit)
