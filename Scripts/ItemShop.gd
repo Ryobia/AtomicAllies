@@ -178,7 +178,7 @@ const SHOP_ITEMS = [
 		"id": "defibrillator",
 		"name": "Defibrillator",
 		"description": "Revives a fallen unit with 50% HP.",
-		"cost": 500,
+		"cost": 1000,
 		"currency": "neutron_dust",
 		"category": "Battle"
 	},
@@ -207,6 +207,7 @@ const SHOP_ITEMS = [
 ]
 
 var _tutorial_step: int = 0
+var daily_dust_ad_btn: Button
 
 func _ready():
 	if back_btn:
@@ -215,11 +216,41 @@ func _ready():
 	
 	if PlayerData and not PlayerData.has_seen_shop_tutorial:
 		get_tree().create_timer(0.5).timeout.connect(_start_shop_tutorial)
+		
+	if AdManager and not AdManager.reward_earned.is_connected(_on_ad_reward_earned):
+		AdManager.reward_earned.connect(_on_ad_reward_earned)
 
 func _exit_tree():
+	if AdManager and AdManager.reward_earned.is_connected(_on_ad_reward_earned):
+		AdManager.reward_earned.disconnect(_on_ad_reward_earned)
+		
 	if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
 		TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
 		TutorialManager.hide_tutorial()
+
+func _process(delta):
+	if is_instance_valid(daily_dust_ad_btn):
+		var last_time = int(PlayerData.settings.get("last_shop_ad_time", 0))
+		var current_time = int(Time.get_unix_time_from_system())
+		var time_passed = current_time - last_time
+		var cooldown = 86400 # 24 hours
+		
+		if time_passed < cooldown:
+			var time_left = int(cooldown - time_passed)
+			var hrs = time_left / 3600
+			var mins = (time_left % 3600) / 60
+			var secs = time_left % 60
+			
+			var time_str = "Wait (%02d:%02d:%02d)" % [hrs, mins, secs]
+			if "text" in daily_dust_ad_btn:
+				daily_dust_ad_btn.text = time_str
+			daily_dust_ad_btn.modulate = Color(0.5, 0.5, 0.5, 1.0)
+			daily_dust_ad_btn.set_meta("on_cooldown", true)
+		elif daily_dust_ad_btn.has_meta("on_cooldown") and daily_dust_ad_btn.get_meta("on_cooldown"):
+			if "text" in daily_dust_ad_btn:
+				daily_dust_ad_btn.text = "Watch Ad"
+			daily_dust_ad_btn.modulate = Color(1.0, 1.0, 1.0, 1.0)
+			daily_dust_ad_btn.set_meta("on_cooldown", false)
 
 func _populate_shop():
 	if not grid: return
@@ -227,14 +258,69 @@ func _populate_shop():
 	for child in grid.get_children():
 		child.queue_free()
 		
+	# Dynamic Premium Items
+	var max_z = 3
+	if PlayerData:
+		max_z = max(3, PlayerData.get_max_unlocked_z())
+	var energy_amount = AtomicConfig.calculate_fusion_cost(max_z)
+		
+	var premium_items = [
+		{
+			"id": "daily_dust_ad",
+			"name": "Free Dust Delivery",
+			"description": "Watch a short transmission to earn 500 Neutron Dust.",
+			"cost": 0,
+			"currency": "none",
+			"category": "Premium",
+			"is_ad": true,
+			"reward_type": "neutron_dust",
+			"reward_amount": 500
+		},
+		{
+			"id": "premium_gems",
+			"name": "Gem Cache",
+			"description": "Exchange 10 Luminous Cores for 1 Gem.",
+			"cost": 10,
+			"currency": "luminous_core",
+			"category": "Premium",
+			"is_resource": true,
+			"resource_id": "gems",
+			"resource_amount": 1
+		},
+		{
+			"id": "premium_dust",
+			"name": "Dust Cache",
+			"description": "Exchange 100 Luminous Cores for 1500 Neutron Dust.",
+			"cost": 100,
+			"currency": "luminous_core",
+			"category": "Premium",
+			"is_resource": true,
+			"resource_id": "neutron_dust",
+			"resource_amount": 1500
+		},
+		{
+			"id": "premium_energy",
+			"name": "Energy Cache",
+			"description": "Exchange 50 Luminous Cores for %d Binding Energy." % energy_amount,
+			"cost": 50,
+			"currency": "luminous_core",
+			"category": "Premium",
+			"is_resource": true,
+			"resource_id": "binding_energy",
+			"resource_amount": energy_amount
+		}
+	]
+	
+	var all_items = SHOP_ITEMS + premium_items
+	
 	var categories = {}
-	for item in SHOP_ITEMS:
+	for item in all_items:
 		var cat = item.get("category", "Other")
 		if not categories.has(cat):
 			categories[cat] = []
 		categories[cat].append(item)
 	
-	var order = ["Ship Upgrades", "Fusion", "Battle", "Other"]
+	var order = ["Premium", "Ship Upgrades", "Fusion", "Battle", "Other"]
 	for cat in order:
 		if categories.has(cat):
 			_create_category_section(cat, categories[cat])
@@ -346,6 +432,11 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 		is_maxed = current_level >= item.max_level
 		cost = _get_upgrade_cost(item, current_level)
 		status_lbl.text = "Level: %d / %d" % [current_level, item.max_level]
+	elif item.get("is_ad", false):
+		status_lbl.text = "Daily Reward"
+	elif item.get("is_resource", false):
+		var owned_count = PlayerData.resources.get(item.resource_id, 0)
+		status_lbl.text = "Owned: %d" % owned_count
 	else:
 		var owned_count = PlayerData.get_item_count(item.id)
 		status_lbl.text = "Owned: %d" % owned_count
@@ -365,6 +456,8 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 	else:
 		if item.get("is_upgrade", false):
 			btn.text = "Upgrade (%d %s)" % [cost, currency_label]
+		elif item.get("is_ad", false):
+			btn.text = "Watch Ad"
 		else:
 			btn.text = "Buy (%d %s)" % [cost, currency_label]
 			
@@ -381,7 +474,11 @@ func _create_item_card(item: Dictionary, parent_grid: Control):
 	btn_style.border_color = Color("#60fafc")
 	btn.add_theme_stylebox_override("normal", btn_style)
 	
-	btn.pressed.connect(func(): _on_buy_pressed(item, status_lbl, btn))
+	if item.get("is_ad", false):
+		btn.pressed.connect(func(): _on_daily_ad_pressed(item))
+		daily_dust_ad_btn = btn
+	else:
+		btn.pressed.connect(func(): _on_buy_pressed(item, status_lbl, btn))
 	main_vbox.add_child(btn)
 	
 	parent_grid.add_child(panel)
@@ -506,6 +603,16 @@ func _execute_purchase(item: Dictionary, cost: int, currency_label: String, stat
 		else:
 			var current_level = PlayerData.get_upgrade_level(item.id)
 			_show_not_enough_funds(status_lbl, "Level: %d / %d" % [current_level, item.max_level], currency_label)
+	elif item.get("is_resource", false):
+		if PlayerData.spend_resource(item.currency, cost):
+			PlayerData.add_resource(item.resource_id, item.resource_amount)
+			var new_count = PlayerData.resources.get(item.resource_id, 0)
+			status_lbl.text = "Owned: %d" % new_count
+			
+			# Visual feedback
+			_animate_purchase(status_lbl)
+		else:
+			_show_not_enough_funds(status_lbl, "Owned: %d" % PlayerData.resources.get(item.resource_id, 0), currency_label)
 	else:
 		if PlayerData.spend_resource(item.currency, cost):
 			PlayerData.add_item(item.id, 1)
@@ -524,6 +631,7 @@ func _get_currency_label(currency: String) -> String:
 	match currency:
 		"gems": return "Gems"
 		"binding_energy": return "Energy"
+		"luminous_core": return "Cores"
 		_: return "Dust"
 
 func _animate_purchase(lbl: Control):
@@ -540,6 +648,28 @@ func _show_not_enough_funds(lbl: Label, original_text: String, currency_label: S
 	lbl.text = "Not enough %s!" % currency_label
 	lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
 	
+func _on_daily_ad_pressed(item: Dictionary):
+	var last_time = int(PlayerData.settings.get("last_shop_ad_time", 0))
+	var current_time = int(Time.get_unix_time_from_system())
+	var time_passed = current_time - last_time
+	var cooldown = 86400 # 24 hours
+	
+	if time_passed < cooldown:
+		var time_left = int(cooldown - time_passed)
+		var hrs = time_left / 3600
+		var mins = (time_left % 3600) / 60
+		if AdManager and AdManager.has_method("show_toast"):
+			AdManager.show_toast("Reward not ready. Come back in %02d:%02d!" % [hrs, mins])
+	else:
+		if AdManager:
+			AdManager.show_rewarded_ad()
+
+func _on_ad_reward_earned(reward_type, amount):
+	# Apply the reward and save the timestamp
+	if PlayerData:
+		PlayerData.settings["last_shop_ad_time"] = int(Time.get_unix_time_from_system())
+		PlayerData.add_resource("neutron_dust", 500)
+		print("Item Shop: Awarded 500 Neutron Dust!")
 	var tween = create_tween()
 	lbl.set_meta("error_tween", tween)
 	

@@ -29,6 +29,7 @@ SynthesisManager="*uid://dhljhfpbqj4kk"
 NavBar="*uid://cftdsp5wnnexb"
 ResourceHeader="*uid://d04kd13gs4hae"
 AudioManager="*uid://cgfyef31ospb1"
+AdManager="*uid://dlae1441ao2l5"
 
 [display]
 
@@ -37,6 +38,10 @@ window/size/viewport_height=1920
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/admob/plugin.cfg")
 
 [gui]
 

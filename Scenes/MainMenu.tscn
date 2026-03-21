@@ -12,6 +12,8 @@
 [ext_resource type="Texture2D" uid="uid://0mei3erw14uq" path="res://Assets/menuassetsheet2.png" id="10_loo7a"]
 [ext_resource type="Texture2D" uid="uid://d12oglxndoyp2" path="res://Assets/swirlsecondary.png" id="10_rrcx7"]
 [ext_resource type="Shader" uid="uid://cau2cawesljrh" path="res://Scenes/core.gdshader" id="11_if7li"]
+[ext_resource type="Texture2D" uid="uid://7c7kha1t73g7" path="res://Assets/ItemSheet.png" id="13_fh7cp"]
+[ext_resource type="Texture2D" uid="uid://b2kh1qmltxbae" path="res://Assets/ItemSheet3.png" id="14_8e205"]
 
 [sub_resource type="Theme" id="Theme_8saeu"]
 
@@ -190,6 +192,39 @@ region = Rect2(45.000046, 545.6184, 193.97374, 187.81586)
 atlas = ExtResource("7_koqhg")
 region = Rect2(543.2176, 285.75424, 187.87518, 200.59818)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8e205"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7467j"]
+atlas = ExtResource("13_fh7cp")
+region = Rect2(854, 755, 376, 432)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2x1g0"]
+bg_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+border_blend = true
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_koqhg"]
 atlas = ExtResource("7_koqhg")
 region = Rect2(310.45483, 42.814735, 163.63635, 191.18463)
@@ -217,6 +252,10 @@ corner_radius_bottom_left = 12
 [sub_resource type="AtlasTexture" id="AtlasTexture_rrcx7"]
 atlas = ExtResource("10_loo7a")
 region = Rect2(294.24426, 41.78813, 190.83398, 187.82874)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2x1g0"]
+atlas = ExtResource("14_8e205")
+region = Rect2(453.89478, 120.27634, 135.47375, 111.355286)
 
 [node name="MainMenu" type="Control" unique_id=167432749]
 layout_mode = 3
@@ -364,6 +403,69 @@ offset_top = -293.5
 offset_right = 250.0
 offset_bottom = 293.5
 
+[node name="DailyAdPopup" type="PanelContainer" parent="." unique_id=1738378192]
+visible = false
+custom_minimum_size = Vector2(500, 500)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_8e205")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DailyAdPopup" unique_id=2015195381]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="DailyAdPopup/VBoxContainer" unique_id=1317634517]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_colors/font_color = Color(1, 0.84313726, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 0.84313726, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 44
+text = "Watch a short transmission to earn 5 Luminous Cores!"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="TextureRect" type="TextureRect" parent="DailyAdPopup/VBoxContainer" unique_id=792788364]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_vertical = 3
+texture = SubResource("AtlasTexture_7467j")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="DailyAdPopup/VBoxContainer" unique_id=1623156578]
+layout_mode = 2
+size_flags_vertical = 10
+
+[node name="CloseAdPopupButton" type="Button" parent="DailyAdPopup/VBoxContainer/HBoxContainer" unique_id=1849301752]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 44
+theme_override_styles/normal = SubResource("StyleBoxFlat_2x1g0")
+text = "Close"
+
+[node name="WatchAdButton" type="Button" parent="DailyAdPopup/VBoxContainer/HBoxContainer" unique_id=177332186]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_colors/font_outline_color = Color(0.003921569, 0.03137255, 0.07450981, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 44
+theme_override_styles/normal = SubResource("StyleBoxFlat_2x1g0")
+text = "Watch Ad"
+
 [node name="VBoxLeft" type="VBoxContainer" parent="." unique_id=1932156234]
 custom_minimum_size = Vector2(0, 800)
 layout_mode = 1
@@ -448,3 +550,8 @@ layout_mode = 2
 texture_normal = SubResource("AtlasTexture_rrcx7")
 ignore_texture_size = true
 stretch_mode = 0
+
+[node name="DailyAdButton" type="TextureButton" parent="VBoxRight" unique_id=1208906898]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 2
+texture_normal = SubResource("AtlasTexture_2x1g0")

@@ -46,7 +46,8 @@ var has_seen_nexus_tutorial: bool = false
 var resources = {
 	"neutron_dust": 200,
 	"gems": 10,
-	"binding_energy": 500
+	"binding_energy": 500,
+	"luminous_core": 0
 }
 
 # --- Helper Functions ---
@@ -350,7 +351,8 @@ func reset_save():
 	resources = {
 		"neutron_dust": 200,
 		"gems": 10,
-		"binding_energy": 500
+		"binding_energy": 500,
+		"luminous_core": 0
 	}
 	
 	# 2. Delete Save Files

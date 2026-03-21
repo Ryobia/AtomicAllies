@@ -28,6 +28,7 @@ var class_bonus_label
 var fatigue_label
 var fatigue_container
 var coolant_btn
+var ad_btn
 var view_toggle
 var prev_button
 var next_button
@@ -61,6 +62,7 @@ func _ready():
 	fatigue_label = find_child("FatigueLabel", true, false)
 	fatigue_container = find_child("FatigueContainer", true, false)
 	coolant_btn = find_child("CoolantButton", true, false)
+	ad_btn = find_child("AdButton", true, false)
 	view_toggle = find_child("ViewToggle", true, false)
 	prev_button = find_child("PrevButton", true, false)
 	next_button = find_child("NextButton", true, false)
@@ -112,6 +114,9 @@ func _ready():
 			back_btn.pressed.disconnect(c["callable"])
 		back_btn.pressed.connect(_on_back_pressed)
 
+	if ad_btn and not ad_btn.pressed.is_connected(_on_ad_button_pressed):
+		ad_btn.pressed.connect(_on_ad_button_pressed)
+
 	if class_help_icon:
 		class_help_icon.theme = GlobalManager.tooltip_theme
 		# Mobile support: Make icon clickable to show tooltip
@@ -129,33 +134,53 @@ func _ready():
 		if not stats_label.gui_input.is_connected(_on_stats_label_input):
 			stats_label.gui_input.connect(_on_stats_label_input)
 
-	if not fatigue_label and name_label:
-		# Create dynamically if not found in scene
-		fatigue_container = HBoxContainer.new()
-		fatigue_container.name = "FatigueContainer"
-		fatigue_container.alignment = BoxContainer.ALIGNMENT_CENTER
-		fatigue_container.add_theme_constant_override("separation", 20)
-		name_label.get_parent().add_child(fatigue_container)
-		name_label.get_parent().move_child(fatigue_container, name_label.get_index() + 1)
+	if not fatigue_label:
+		if not fatigue_container and name_label:
+			# Create dynamically as an HBoxContainer if not found in scene
+			fatigue_container = HBoxContainer.new()
+			fatigue_container.name = "FatigueContainer"
+			fatigue_container.alignment = BoxContainer.ALIGNMENT_CENTER
+			fatigue_container.add_theme_constant_override("separation", 20)
+			name_label.get_parent().add_child(fatigue_container)
+			# Move directly above the NameLabel
+			name_label.get_parent().move_child(fatigue_container, name_label.get_index())
 
-		fatigue_label = Label.new()
-		fatigue_label.name = "FatigueLabel"
-		fatigue_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		fatigue_label.add_theme_color_override("font_color", Color("#ff4d4d"))
-		fatigue_label.add_theme_font_size_override("font_size", 48)
-		fatigue_container.add_child(fatigue_label)
-		
-		coolant_btn = Button.new()
-		coolant_btn.name = "CoolantButton"
-		coolant_btn.add_theme_font_size_override("font_size", 24)
-		coolant_btn.custom_minimum_size = Vector2(200, 60)
-		var btn_style = StyleBoxFlat.new()
-		btn_style.bg_color = Color("#60fafc")
-		btn_style.bg_color.a = 0.2
-		btn_style.set_corner_radius_all(8)
-		coolant_btn.add_theme_stylebox_override("normal", btn_style)
-		coolant_btn.pressed.connect(_on_coolant_pressed)
-		fatigue_container.add_child(coolant_btn)
+		if fatigue_container:
+			fatigue_label = Label.new()
+			fatigue_label.name = "FatigueLabel"
+			fatigue_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			fatigue_label.add_theme_color_override("font_color", Color("#ff4d4d"))
+			fatigue_label.add_theme_font_size_override("font_size", 36) # Shrunk slightly to fit on 1 line
+			fatigue_container.add_child(fatigue_label)
+			
+			coolant_btn = Button.new()
+			coolant_btn.name = "CoolantButton"
+			coolant_btn.add_theme_font_size_override("font_size", 24)
+			coolant_btn.custom_minimum_size = Vector2(200, 60)
+			var btn_style = StyleBoxFlat.new()
+			btn_style.bg_color = Color("#60fafc")
+			btn_style.bg_color.a = 0.2
+			btn_style.set_corner_radius_all(8)
+			coolant_btn.add_theme_stylebox_override("normal", btn_style)
+			coolant_btn.pressed.connect(_on_coolant_pressed)
+			fatigue_container.add_child(coolant_btn)
+			
+			# Add a Watch Ad button
+			ad_btn = Button.new()
+			ad_btn.name = "AdButton"
+			ad_btn.text = "Watch Ad (-10m)"
+			ad_btn.add_theme_font_size_override("font_size", 24)
+			ad_btn.custom_minimum_size = Vector2(220, 60) # Shrunk slightly to fit on 1 line
+			var ad_style = btn_style.duplicate()
+			ad_style.bg_color = Color("#ffd700") # Gold for ads
+			ad_style.bg_color.a = 0.2
+			ad_btn.add_theme_stylebox_override("normal", ad_style)
+			ad_btn.pressed.connect(_on_ad_button_pressed)
+			fatigue_container.add_child(ad_btn)
+
+	# Listen for the reward signal from the AdManager
+	if AdManager and not AdManager.reward_earned.is_connected(_on_ad_reward_earned):
+		AdManager.reward_earned.connect(_on_ad_reward_earned)
 
 	if stability_bar:
 		stability_bar.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -177,6 +202,9 @@ func _ready():
 		get_tree().create_timer(0.5).timeout.connect(_start_detail_tutorial)
 
 func _exit_tree():
+	if AdManager and AdManager.reward_earned.is_connected(_on_ad_reward_earned):
+		AdManager.reward_earned.disconnect(_on_ad_reward_earned)
+		
 	if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):
 		TutorialManager.story_button.pressed.disconnect(_on_tutorial_next)
 		TutorialManager.hide_tutorial()
@@ -189,11 +217,12 @@ func _process(_delta):
 		if fatigue_container:
 			fatigue_container.visible = is_fatigued
 			if is_fatigued: _update_fatigue_text()
-		elif fatigue_label and fatigue_label.visible:
-			if is_fatigued:
-				_update_fatigue_text()
-			else:
-				fatigue_label.visible = false
+		elif fatigue_label:
+			fatigue_label.visible = is_fatigued
+			if is_fatigued: _update_fatigue_text()
+			
+		if is_instance_valid(ad_btn) and ad_btn.get_parent() != fatigue_container:
+			ad_btn.visible = is_fatigued
 	
 func _input(event):
 	if event is InputEventScreenTouch:
@@ -292,6 +321,9 @@ func update_ui():
 		if fatigue_container: fatigue_container.visible = is_fatigued
 		elif fatigue_label: fatigue_label.visible = is_fatigued
 		
+		if is_instance_valid(ad_btn) and ad_btn.get_parent() != fatigue_container:
+			ad_btn.visible = is_fatigued
+			
 		if is_fatigued:
 			_update_fatigue_text()
 			_update_coolant_btn()
@@ -1004,6 +1036,20 @@ func _update_coolant_btn():
 func _on_coolant_pressed():
 	if PlayerData.consume_item("coolant_gel", 1):
 		current_monster.fatigue_expiry = 0
+		PlayerData.save_game()
+		update_ui()
+
+func _on_ad_button_pressed():
+	AdManager.show_rewarded_ad()
+
+func _on_ad_reward_earned(reward_type, amount):
+	if current_monster:
+		var current_time = int(Time.get_unix_time_from_system())
+		var new_expiry = current_monster.fatigue_expiry - 600 # 10 minutes = 600 seconds
+		if new_expiry <= current_time:
+			current_monster.fatigue_expiry = 0
+		else:
+			current_monster.fatigue_expiry = new_expiry
 		PlayerData.save_game()
 		update_ui()
 
