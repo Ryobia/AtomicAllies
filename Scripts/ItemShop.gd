@@ -648,6 +648,15 @@ func _show_not_enough_funds(lbl: Label, original_text: String, currency_label: S
 	lbl.text = "Not enough %s!" % currency_label
 	lbl.add_theme_color_override("font_color", Color("#ff4d4d"))
 	
+	var tween = create_tween()
+	lbl.set_meta("error_tween", tween)
+	
+	tween.tween_interval(1.0)
+	tween.tween_callback(func():
+		lbl.text = original_text
+		lbl.add_theme_color_override("font_color", Color("#ffd700"))
+	)
+	
 func _on_daily_ad_pressed(item: Dictionary):
 	var last_time = int(PlayerData.settings.get("last_shop_ad_time", 0))
 	var current_time = int(Time.get_unix_time_from_system())
@@ -670,14 +679,6 @@ func _on_ad_reward_earned(reward_type, amount):
 		PlayerData.settings["last_shop_ad_time"] = int(Time.get_unix_time_from_system())
 		PlayerData.add_resource("neutron_dust", 500)
 		print("Item Shop: Awarded 500 Neutron Dust!")
-	var tween = create_tween()
-	lbl.set_meta("error_tween", tween)
-	
-	tween.tween_interval(1.0)
-	tween.tween_callback(func():
-		lbl.text = original_text
-		lbl.add_theme_color_override("font_color", Color("#ffd700"))
-	)
 
 func _on_back_pressed():
 	if TutorialManager and is_instance_valid(TutorialManager.story_button) and TutorialManager.story_button.pressed.is_connected(_on_tutorial_next):

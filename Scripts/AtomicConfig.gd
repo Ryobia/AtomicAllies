@@ -122,12 +122,12 @@ const BASELINES = {
 const MASTERY_BONUSES = {
 	Group.ALKALI_METAL: "Mastery: Critical strikes deal 1.75x damage instead of 1.5x.",
 	Group.ALKALINE_EARTH: "Mastery: Begin combat with a shield equal to 25% of Max HP.",
-	Group.TRANSITION_METAL: "Mastery: The second hit from a double-attack deals full damage.",
+	Group.TRANSITION_METAL: "Mastery: Catalysis causes debuffs to tick an additional time.",
 	Group.POST_TRANSITION: "Mastery: Healing an ally also deals that much damage to a random enemy.",
 	Group.METALLOID: "Mastery: Increases the chance to stun on-hit to 25%.",
 	Group.NONMETAL: "Mastery: Gain a free turn at the start of combat.",
 	Group.HALOGEN: "Mastery: At the start of combat, poisons a random enemy.",
-	Group.NOBLE_GAS: "Mastery: Doubles passive HP regeneration to 10% per turn.",
+	Group.NOBLE_GAS: "Mastery: Restores 5% Max HP at the start of every turn.",
 	Group.ACTINIDE: "Mastery: Reduces passive HP decay from 10% to 5%.",
 	Group.LANTHANIDE: "Mastery: Can now absorb stats from fallen allies as well as enemies."
 }
@@ -135,16 +135,16 @@ const MASTERY_BONUSES = {
 # Default Movesets based on Group
 const GROUP_MOVES = {
 	Group.ALKALI_METAL: [
-		{"name": "Electron Jettison", "power": 30, "accuracy": 90, "type": "Physical", "description": "High-speed dash. Deals massive damage but reduces Defense to zero for one turn.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": -100, "percent": true, "duration": 2, "target": "Attacker"}]},
-		{"name": "Volatile Strike", "power": 10, "accuracy": 100, "type": "Physical", "description": "A quick strike that raises the user's Attack and Speed by 10%.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 2, "target": "Attacker"}, {"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 2, "target": "Attacker"}]}
+		{"name": "Valence Jettison", "power": 40, "accuracy": 90, "type": "Physical", "description": "A reckless high-speed dash that transfers mass electron density. Applies 4 Reduced [R] stacks but reduces the user's Defense by 100% for 2 turns.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": -100, "percent": true, "duration": 2, "target": "Attacker"}, {"effect": "add_status_stacks", "status": "reduced", "amount": 3, "duration": 3, "target": "Defender"}]},
+		{"name": "Ionic Surge", "power": 15, "accuracy": 100, "type": "Physical", "description": "A rhythmic strike that excites the user's atomic shell. Applies 1 Reduced [R] stack and increases the user's Speed and Attack by 10% (Stacks up to 50%).", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 99, "target": "Attacker"}, {"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 99, "target": "Attacker"}]}
 	],
 	Group.ALKALINE_EARTH: [
-		{"name": "Oxidation Layer", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Defense for 3 turns.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 50, "percent": true, "duration": 3, "target": "Self"}]},
-		{"name": "Magnesium Flash", "power": 25, "accuracy": 95, "type": "Physical", "description": "Shield bash. Stuns the enemy if unit is currently shielded.", "cooldown": 2}
+		{"name": "Anodic Barrier", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Develops a protective oxide skin. Increases Defense by 50% for 3 turns. While active, any enemy that hits the user is applied with 1 Reduced [R] stack.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 50, "percent": true, "duration": 3, "target": "Self"}, {"type": "status", "status": "anodic_barrier", "duration": 3}]},
+		{"name": "Photonic Bash", "power": 30, "accuracy": 95, "type": "Physical", "description": "A blinding shield strike. Applies 1 Reduced [R] stack. If the user has Anodic Barrier active, the target is Stunned for 1 turn.", "cooldown": 2}
 	],
 	Group.TRANSITION_METAL: [
-		{"name": "Metallic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Raises attack of self and target ally by 20 Percent for 1 turn", "cooldown": 3},
-		{"name": "Heavy Impact", "power": 30, "accuracy": 90, "type": "Physical", "description": "Reliable, high-damage physical strike that scales with current HP.", "cooldown": 2}
+		{"name": "Catalytic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Lowers the activation energy of the squad. Reduces the target ally's cooldowns by 1 and increases their Action Gauge by 20%.", "cooldown": 3, "effects": [{"effect": "reduce_cooldowns", "amount": 1}, {"effect": "add_atb", "amount": 20.0}]},
+		{"name": "Resonance Strike", "power": 35, "accuracy": 90, "type": "Physical", "description": "A dense strike that vibrates the target's atomic structure. Applies 1 Reduced [R] stack and refreshes the duration of all existing [R] stacks on the enemy.", "cooldown": 2}
 	],
 	Group.POST_TRANSITION: [
 		{"name": "Thermal Conduction", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Cleanses 1 debuff from target ally.", "cooldown": 3, "effects": [{"effect": "cleanse", "target": "Ally", "amount": 1}]},
@@ -390,11 +390,11 @@ const UNIQUE_MOVES = {
 		"power": 20,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals damage and applies a strong corrosive poison.",
+		"description": "Deals damage and applies corrosion (5% Max HP damage and -10% Defense).",
 		"target_type": "Enemy",
 		"effects": [ 
-			{"type": "status", "status": "poison", "damage_percent": 0.1, "duration": 3, "message": "%s is corroding!"},
-			{"effect": "damage_percent", "amount": 0.1, "color": "#802680"}
+			{"type": "status", "status": "corrosion", "damage_percent": 0.05, "duration": 3, "message": "%s is corroding!"},
+			{"type": "stat_mod", "stat": "defense", "amount": -10, "percent": true, "duration": 3}
 		],
 		"cooldown": 2
 	},
@@ -1536,7 +1536,7 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 	var base = BASELINES.get(group, BASELINES[Group.UNKNOWN])
 	
 	var breakdown = {
-		"hp": {"base": base.hp * 10.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
+		"hp": {"base": base.hp * 20.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
 		"atk": {"base": base.atk * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
 		"def": {"base": base.def * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
 		"spd": {"base": base.spd * 2.0, "stability": 0.0, "resonance": 0.0, "ship_upgrade": 0.0, "lanthanide_set": 0.0},
@@ -1566,21 +1566,6 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 		atk_mult += breakdown.atk.ship_upgrade
 		def_mult += breakdown.def.ship_upgrade
 		spd_mult += breakdown.spd.ship_upgrade
-	
-	match group:
-		Group.ALKALINE_EARTH:
-			breakdown.def.resonance = (resonance_count * 0.05) # +5% Def per element
-			def_mult += breakdown.def.resonance
-		Group.NOBLE_GAS:
-			breakdown.hp.resonance = (resonance_count * 0.05) # +5% HP per element
-			hp_mult += breakdown.hp.resonance
-		Group.ACTINIDE:
-			breakdown.spd.resonance = (resonance_count * 0.01) # +1% Speed per element
-			spd_mult += breakdown.spd.resonance
-		Group.LANTHANIDE:
-			var bonus = resonance_count * 0.01 # +1% All Stats per element
-			breakdown.hp.resonance = bonus; breakdown.atk.resonance = bonus; breakdown.def.resonance = bonus; breakdown.spd.resonance = bonus
-			hp_mult += bonus; atk_mult += bonus; def_mult += bonus; spd_mult += bonus
 	
 	# Lanthanide Full Set Bonus: +10% All Stats to ALL elements
 	if PlayerData:
@@ -1621,6 +1606,8 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 	# HP: Base (1-10)
 	# Example: Base 5 -> 50 HP
 	final_stats["max_hp"] = int((base.hp * 10.0) * stability_multiplier * hp_mult)
+	# Example: Base 5 -> 100 HP
+	final_stats["max_hp"] = int((base.hp * 20.0) * stability_multiplier * hp_mult)
 	
 	# Stats: Base (1-10)
 	# Example: Base 5 -> 10 Stat

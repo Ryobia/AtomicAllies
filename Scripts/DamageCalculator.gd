@@ -25,7 +25,7 @@ static func calculate_damage(attacker: BattleMonster, defender: BattleMonster, m
 	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
 		var alkali_count = 0
 		if PlayerData:
-			alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
+			alkali_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.ALKALI_METAL)
 		var penetration = alkali_count * 0.05
 		def = int(def * (1.0 - penetration))
 	

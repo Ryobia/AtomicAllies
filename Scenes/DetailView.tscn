@@ -95,6 +95,7 @@ theme_override_constants/separation = 20
 
 [node name="FatigueContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=1281839369]
 layout_mode = 2
+alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=1047247148]
 layout_mode = 2

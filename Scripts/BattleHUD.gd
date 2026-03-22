@@ -81,7 +81,7 @@ func _ready():
 	_connect_btn("AttackButton", "attack")
 	_connect_btn("SwapButton", "swap")
 	_connect_btn("ItemButton", "item")
-	
+
 	if back_btn:
 		if not back_btn.pressed.is_connected(_on_back_pressed):
 			back_btn.pressed.connect(_on_back_pressed)
@@ -480,6 +480,12 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "shield":
 			bg_color = Color("#60fafc") # Cyan
 			tooltip_text = "Shield\nAbsorbs %d damage." % effect.get("amount", 0)
+		elif s == "reduced":
+			bg_color = Color("#1e90ff") # Blue
+			tooltip_text = "Reduced\nPrimed for an Oxidation Burst.\nDuration: %s" % dur_text
+		elif s == "anodic_barrier":
+			bg_color = Color("#ff9360") # Orange
+			tooltip_text = "Anodic Barrier\nIncreases Defense and applies [R] to attackers.\nDuration: %s" % dur_text
 		
 		if s == "marked_covalent": text = "COV"
 		elif s == "unstable": text = "UNS"
@@ -511,6 +517,8 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "singularity_hazard": text = "SNG"
 		elif s == "chain_reaction_mark": text = "CRK"
 		elif s == "shield": text = "SHD"
+		elif s == "anodic_barrier": text = "ANO"
+		elif s == "reduced": text = "[R]"
 		else: text = s.substr(0, 3).to_upper()
 
 	elif type == "swap_stats":
@@ -519,6 +527,9 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		tooltip_text = "Stats Swapped\nDuration: %s" % dur_text
 	
 	if text == "": text = "??"
+		
+	if effect.has("stacks") and effect.get("stacks", 1) > 1:
+		text += str(effect.get("stacks"))
 		
 	style.bg_color = bg_color
 	lbl.text = text

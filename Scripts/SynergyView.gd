@@ -240,37 +240,37 @@ func _get_synergy_text(group: int, count: int) -> String:
 	
 	match group:
 		AtomicConfig.Group.ALKALI_METAL:
-			var val = count * 5
-			text = "[color=%s]Synergy:[/color] Ignore [color=%s]%d%%[/color] Defense (5%%/elem).\n[color=%s]Passive:[/color] High Defense Penetration.\n[color=%s]%s:[/color] Guaranteed Critical Strike on first attack." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			var val = count * 20
+			text = "[color=%s]Synergy:[/color] Enthalpy Burst deals [color=%s]+%d%%[/color] damage (20%%/elem).\n[color=%s]Passive:[/color] Hitting Vapor/Corrosion triggers an AoE Enthalpy Burst.\n[color=%s]%s:[/color] Guaranteed Critical Strike on first attack." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.ALKALINE_EARTH:
-			var val = count * 5
-			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Base Defense (5%%/elem).\n[color=%s]Passive:[/color] Gain +5%% Defense every turn.\n[color=%s]%s:[/color] Immune to first instance of damage." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			var val = count * 1
+			text = "[color=%s]Synergy:[/color] Incoming damage reduced by [color=%s]%d%%[/color] per [R] stack on attacker (1%%/elem).\n[color=%s]Passive:[/color] Taking damage has a 25%% chance to apply [R] to the attacker.\n[color=%s]%s:[/color] Immune to first instance of damage." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.TRANSITION_METAL:
 			var val = count * 2
-			text = "[color=%s]Synergy:[/color] [color=%s]%d%%[/color] Double Hit Chance (2%%/elem).\n[color=%s]Passive:[/color] Consecutive attacks deal +5%% Damage.\n[color=%s]%s:[/color] +15%% Double Hit Chance." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Catalysis deals [color=%s]+%d%%[/color] damage per tick (2%%/elem).\n[color=%s]Passive:[/color] Attacks force enemy debuffs to tick instantly.\n[color=%s]%s:[/color] Catalysis ticks twice." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.HALOGEN:
 			var val = count * 1
 			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Poison Damage (1%%/elem).\n[color=%s]Passive:[/color] Attacks apply Poison (10%% HP/turn).\n[color=%s]%s:[/color] Poison lasts +1 turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.NOBLE_GAS:
-			var val = count * 5
-			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Base HP (5%%/elem).\n[color=%s]Passive:[/color] Restore 5%% HP every turn.\n[color=%s]%s:[/color] Immune to all debuffs." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			var val = count * 15
+			text = "[color=%s]Synergy:[/color] Team takes [color=%s]-%d%%[/color] damage from DoTs and Hazards (15%%/elem).\n[color=%s]Passive:[/color] Inert Barrier (Immune to all debuffs).\n[color=%s]%s:[/color] Entire team restores 5%% HP every turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.LANTHANIDE:
 			var val = count * 1
-			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] All Stats (1%%/elem).\n[color=%s]Passive:[/color] Absorb 10%% of fallen enemy stats.\n[color=%s]%s:[/color] +10%% All Stats to ALL elements." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Pulled debuffs last [color=%s]+%d[/color] turn(s) (1/elem).\n[color=%s]Passive:[/color] Magnetic Pull (Attacks condense all enemy debuffs onto the target).\n[color=%s]%s:[/color] +10%% All Stats to ALL elements." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.NONMETAL:
 			var mult = 1.20 + (count * 0.05)
 			if total > 0 and count >= total:
 				mult += 0.10
 			text = "[color=%s]Synergy:[/color] Attacks apply [color=%s]Volatile[/color] ([color=%s]%.2fx[/color] dmg taken).\n[color=%s]Passive:[/color] Multiplier +0.05x per element.\n[color=%s]%s:[/color] Multiplier +0.10x." % [c_lbl, c_val, c_val, mult, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.METALLOID:
-			var val = count * 5
-			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Debuff Effect (5%%/elem).\n[color=%s]Passive:[/color] 10%% Chance to Stun on hit.\n[color=%s]%s:[/color] Debuffs last +1 turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			var val = count
+			text = "[color=%s]Synergy:[/color] Adds [color=%s]+%d[/color] Resonance to Vanguard's Class (1/elem).\n[color=%s]Passive:[/color] Semiconductor (Links to Vanguard's Class).\n[color=%s]%s:[/color] Vanguard gains +25%% Attack and Defense." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.POST_TRANSITION:
-			var val = count * 5
-			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Buff Effect (5%%/elem).\n[color=%s]Passive:[/color] Gain +1%% All Stats every turn.\n[color=%s]%s:[/color] Buffs last +1 turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			var val = count * 10
+			text = "[color=%s]Synergy:[/color] Buffs are [color=%s]+%d%%[/color] stronger (10%%/elem).\n[color=%s]Passive:[/color] Signal Amplification (Single-target buffs splash to the whole team).\n[color=%s]%s:[/color] Buffs last +1 turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.ACTINIDE:
 			var val = count * 1
-			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Base Speed (1%%/elem).\n[color=%s]Passive:[/color] Lose 10%% HP to deal +10%% Max HP Dmg.\n[color=%s]%s:[/color] Gain +3%% Speed every turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Radiation base damage +[color=%s]%d%%[/color] Max HP (1%%/elem).\n[color=%s]Passive:[/color] Critical Mass (Reactions double Radiation damage).\n[color=%s]%s:[/color] Gain +3%% Speed every turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		_:
 			text = "Unknown Synergy."
 			

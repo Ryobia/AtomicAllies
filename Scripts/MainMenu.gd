@@ -54,6 +54,27 @@ func _ready():
 	
 	if settings_btn and settings_popup:
 		settings_btn.pressed.connect(func(): settings_popup.visible = true)
+		
+		# Dynamically inject a God Mode button into the Settings Popup
+		var god_mode_btn = find_child("GodModeButton", true, false)
+		if not god_mode_btn:
+			for child in settings_popup.find_children("*", "VBoxContainer", true, false):
+				god_mode_btn = Button.new()
+				god_mode_btn.name = "GodModeButton"
+				god_mode_btn.text = "God Mode (Unlock All)"
+				god_mode_btn.add_theme_font_size_override("font_size", 36)
+				god_mode_btn.add_theme_color_override("font_color", Color("#ffd700"))
+				var style = StyleBoxFlat.new()
+				style.bg_color = Color("#010813")
+				style.border_color = Color("#ffd700")
+				style.set_border_width_all(2)
+				style.set_corner_radius_all(8)
+				god_mode_btn.add_theme_stylebox_override("normal", style)
+				child.add_child(god_mode_btn)
+				break # Only add to the first one found
+				
+		if god_mode_btn and not god_mode_btn.pressed.is_connected(_on_god_mode_pressed):
+			god_mode_btn.pressed.connect(_on_god_mode_pressed)
 
 	# Help Button
 	var help_btn = find_child("HelpButton", true, false)
@@ -176,3 +197,9 @@ func _on_ad_reward_earned(reward_type, amount):
 		PlayerData.settings["last_free_core_time"] = int(Time.get_unix_time_from_system())
 		PlayerData.add_resource("luminous_core", 5)
 		print("Main Menu: Awarded 5 Luminous Cores!")
+
+func _on_god_mode_pressed():
+	if PlayerData:
+		PlayerData.unlock_all_elements()
+		if AdManager and AdManager.has_method("show_toast"):
+			AdManager.show_toast("God Mode Activated! All elements unlocked.")

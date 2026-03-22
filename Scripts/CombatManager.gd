@@ -171,6 +171,9 @@ func execute_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	# 4. Apply Unique Effects defined by name (Legacy/Complex Logic)
 	_apply_unique_effects(attacker, defender, move, result)
 
+	if result.is_reaction:
+		result.effects.insert(0, { "effect": "critical_mass_boost" })
+
 	return result
 
 func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: MoveData, result: Dictionary):
@@ -178,36 +181,21 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	var effective_attack = attacker.stats.attack
 	var effective_defense = defender.stats.defense
 
-	# Class Buff: Alkali Metals ignore 5% defense per element owned
-	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
-		var alkali_count = 0
-		if PlayerData:
-			alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
-		var penetration = alkali_count * 0.05
-		effective_defense = int(effective_defense * (1.0 - penetration))
-
 	# Move-specific defense ignore
+
 	var ignore_def = move.get_meta("ignore_def_percent", 0.0)
+		
 	if ignore_def > 0.0:
 		effective_defense = int(effective_defense * (1.0 - (ignore_def / 100.0)))
-
-	# Transition Metal Passive: Consecutive attacks deal 5% more damage
-	if attacker.data.group == AtomicConfig.Group.TRANSITION_METAL:
-		var consec = attacker.get_meta("consecutive_attacks", 0)
-		if consec > 0:
-			effective_attack = int(effective_attack * (1.0 + (consec * 0.05)))
-		attacker.set_meta("consecutive_attacks", consec + 1)
-	else:
-		attacker.set_meta("consecutive_attacks", 0)
 
 	# Formula: ((Base Attack * Scale) + Move Power) * Mitigation
 	# Mitigation: 100 / (100 + Defense) -> Standard diminishing returns
 	var raw_power = (effective_attack * move.damage_scale) + move.power
 	
-	if move.name == "Heavy Impact":
+	if move.name == "Resonance Strike":
 		var hp_bonus = attacker.current_hp * 0.2
 		raw_power += hp_bonus
-		result.messages.append("Impact scaled by HP! (+%d)" % int(hp_bonus))
+		result.messages.append("Resonance scaled by HP! (+%d)" % int(hp_bonus))
 		
 	if move.name == "Red-Shift Dash":
 		effective_defense = int(effective_defense * 0.25) # Ignore 75% Defense
@@ -261,7 +249,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
 		var alkali_count = 0
 		if PlayerData:
-			alkali_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALI_METAL, 0)
+			alkali_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.ALKALI_METAL)
 		var total_alkali = 0
 		if MonsterManifest:
 			for m in MonsterManifest.all_monsters:
@@ -279,12 +267,6 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 				else:
 					result.messages.append("Full Set Critical!")
 				attacker.set_meta("full_set_crit_used", true)
-	
-	# Actinide Passive: Deal bonus 10% max health damage
-	if attacker.data.group == AtomicConfig.Group.ACTINIDE:
-		var bonus = attacker.max_hp * 0.1
-		final_damage += bonus
-		result.messages.append("Actinide Nuke! (+%d Dmg)" % int(bonus))
 	
 	# Check for physical resistance
 	if move.type == "Physical":
@@ -327,6 +309,50 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 					result.messages.append("%s Bonus! (+%d Dmg)" % [reaction_name, int(bonus_dmg)])
 					result.effects.append({ "target": defender, "effect": "remove_status", "status": effect.get("status") })
 					result.is_reaction = true
+
+	# Tier 1 V.I.E. Passive: Oxidation Burst (Nonmetals)
+	if is_nonmetal(attacker.data.group) and move.power > 0:
+		var reduced_stacks = 0
+		for eff in defender.active_effects:
+			if eff.get("type") == "status" and eff.get("status") == "reduced":
+				reduced_stacks = eff.get("stacks", 1)
+				break
+		
+		if reduced_stacks > 0:
+			var nonmetal_count = 0
+			if PlayerData:
+				for group in [AtomicConfig.Group.NONMETAL, AtomicConfig.Group.HALOGEN, AtomicConfig.Group.NOBLE_GAS, AtomicConfig.Group.METALLOID]:
+					nonmetal_count += PlayerData.class_resonance.get(group, 0)
+					
+			var delta_x = 0.2 + (nonmetal_count * 0.05)
+			var burst_multiplier = 1.0 + (delta_x * reduced_stacks)
+			
+			var bonus_dmg = (final_damage * burst_multiplier) - final_damage
+			final_damage *= burst_multiplier
+			
+			result.messages.append("OXIDATION BURST! %.2fx Damage! (+%d)" % [burst_multiplier, int(bonus_dmg)])
+			result.effects.append({ "target": defender, "effect": "remove_status", "status": "reduced" })
+			result.is_reaction = true
+			
+	# Alkaline Earth Synergy: Crystalline Lattice
+	if defender.data.group == AtomicConfig.Group.ALKALINE_EARTH:
+		var ae_count = 0
+		if PlayerData:
+			ae_count = PlayerData.get_combat_resonance(defender.is_player, AtomicConfig.Group.ALKALINE_EARTH)
+		
+		if ae_count > 0:
+			var reduced_stacks = 0
+			for eff in attacker.active_effects:
+				if eff.get("type") == "status" and eff.get("status") == "reduced":
+					reduced_stacks = eff.get("stacks", 1)
+					break
+			
+			if reduced_stacks > 0:
+				var reduction_pct = min(0.9, (ae_count * 0.01) * reduced_stacks) # Cap at 90% reduction
+				var reduced_amt = final_damage * reduction_pct
+				final_damage -= reduced_amt
+				if reduced_amt > 0:
+					result.messages.append("Crystalline Lattice! (-%d Dmg)" % int(reduced_amt))
 	
 	# Message for generic crits (if not handled by Full Set message)
 	if result.is_crit and not "Full Set Critical!" in result.messages:
@@ -337,7 +363,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	
 	# Alkaline Earth Full Set Bonus: Immune to first instance of damage
 	if defender.data.group == AtomicConfig.Group.ALKALINE_EARTH:
-		var ae_count = PlayerData.class_resonance.get(AtomicConfig.Group.ALKALINE_EARTH, 0)
+		var ae_count = PlayerData.get_combat_resonance(defender.is_player, AtomicConfig.Group.ALKALINE_EARTH)
 		var total_ae = 0
 		if MonsterManifest:
 			for m in MonsterManifest.all_monsters:
@@ -442,7 +468,9 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 	
 	# Halogen: Poison
 	if attacker.data.group == AtomicConfig.Group.HALOGEN:
-		var count = PlayerData.class_resonance.get(AtomicConfig.Group.HALOGEN, 0)
+		var count = 0
+		if PlayerData:
+			count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.HALOGEN)
 		var bonus_pct = 1.0 + (count * 0.01) # +1% effectiveness per element
 		var duration = 3
 		
@@ -469,33 +497,66 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 		if randf() < chance:
 			result.effects.append({ "target": defender, "status": "stun", "duration": 1, "type": "status" })
 			
-	# Transition Metal: Double Hit
-	if attacker.data.group == AtomicConfig.Group.TRANSITION_METAL:
-		var count = PlayerData.class_resonance.get(AtomicConfig.Group.TRANSITION_METAL, 0)
-		var chance = 0.02 * count # +2% chance per element
-		
-		# Full Set Bonus: +15% chance to attack twice
-		var total_tm = 0
-		if MonsterManifest:
-			for m in MonsterManifest.all_monsters:
-				if m.group == AtomicConfig.Group.TRANSITION_METAL:
-					total_tm += 1
-		
-		if count >= total_tm and total_tm > 0:
-			chance += 0.15
-		
-		if randf() < chance:
-			var multiplier = 1.5
-			var msg = "Double Hit!"
+	# Tier 1 V.I.E. Passive: Enthalpy Burst (Alkali Metals)
+	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL and result.hit and move.power > 0:
+		var has_vapor = false
+		for eff in defender.active_effects:
+			if eff.get("type") == "status" and eff.get("status") in ["reactive_vapor", "corrosion", "poison"]:
+				has_vapor = true
+				break
+				
+		if has_vapor:
+			var alkali_count = 0
+			if PlayerData:
+				alkali_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.ALKALI_METAL)
 			
-			# Mastery: Transition Metals (100% Stability) -> Second hit deals full damage
+			var burst_mult = 1.0 + (alkali_count * 0.20)
+			var burst_dmg = int(result.damage * burst_mult)
+			
+			result.effects.append({
+				"effect": "enthalpy_burst",
+				"target": defender,
+				"amount": burst_dmg
+			})
+			result.is_reaction = true
+			
+	# Tier 1 V.I.E. Passive: Catalysis (Transition Metals)
+	if attacker.data.group == AtomicConfig.Group.TRANSITION_METAL and result.hit and move.power > 0:
+		var has_dots = false
+		for eff in defender.active_effects:
+			if eff.get("type") == "status":
+				var s = eff.get("status", "")
+				if s in ["poison", "radiation", "corrosion"]:
+					has_dots = true
+					break
+		
+		if has_dots:
+			var tm_count = 0
+			if PlayerData:
+				tm_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.TRANSITION_METAL)
+			var total_tm = 0
+			if MonsterManifest:
+				for m in MonsterManifest.all_monsters:
+					if m.group == AtomicConfig.Group.TRANSITION_METAL:
+						total_tm += 1
+			
+			var ticks = 1
+			if total_tm > 0 and tm_count >= total_tm:
+				ticks = 2
+				
 			if attacker.data.stability >= 100:
-				multiplier = 2.0
-				msg = "Perfect Double Hit!"
-			
-			var bonus_dmg = (result.damage * multiplier) - result.damage
-			result.damage = int(result.damage * multiplier)
-			result.messages.append("%s (+%d Dmg)" % [msg, int(bonus_dmg)])
+				ticks += 1
+				
+			var dmg_mult = 1.0 + (tm_count * 0.02)
+				
+			result.effects.append({
+				"effect": "catalyst_tick",
+				"target": defender,
+				"ticks": ticks,
+				"multiplier": dmg_mult
+			})
+			result.messages.append("%s catalyzed the reactions!" % attacker.data.monster_name)
+			result.is_reaction = true
 			
 	# Trigger chain reaction mark
 	if result.hit and move.power > 0:
@@ -503,68 +564,50 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			if effect.get("status") == "chain_reaction_mark":
 				result.effects.append({ "effect": "chain_reaction", "amount": result.damage })
 				result.effects.append({ "target": defender, "effect": "remove_status", "status": "chain_reaction_mark" })
+				result.is_reaction = true
 				break # Only trigger once per hit
-
-	# Nonmetal: Apply Volatile on hit
-	if attacker.data.group == AtomicConfig.Group.NONMETAL and result.hit and move.power > 0:
-		var count = PlayerData.class_resonance.get(AtomicConfig.Group.NONMETAL, 0)
-		var multiplier = 1.20 + (count * 0.05)
-		
-		var total_nm = 0
-		if MonsterManifest:
-			for m in MonsterManifest.all_monsters:
-				if m.group == AtomicConfig.Group.NONMETAL:
-					total_nm += 1
-		
-		if count >= total_nm and total_nm > 0:
-			multiplier += 0.10
-			
-		result.effects.append({ "target": defender, "status": "volatile", "duration": 2, "damage_multiplier": multiplier, "type": "status" })
-
-	# Metalloid: +5% Debuff Effectiveness (Increase stat drop amount)
-	if attacker.data.group == AtomicConfig.Group.METALLOID:
-		var count = PlayerData.class_resonance.get(AtomicConfig.Group.METALLOID, 0)
-		var multiplier = 1.0 + (count * 0.05)
-		
-		# Full Set Bonus: Debuffs last an additional turn
-		var total_metalloid = 0
-		if MonsterManifest:
-			for m in MonsterManifest.all_monsters:
-				if m.group == AtomicConfig.Group.METALLOID:
-					total_metalloid += 1
-		
-		var extend_duration = (count >= total_metalloid and total_metalloid > 0)
-		
-		for effect in result.effects:
-			var is_debuff = false
-			if effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
-				effect.amount = int(effect.amount * multiplier)
-				is_debuff = true
-			elif effect.get("type") == "status" and effect.get("status") in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard", "chain_reaction_mark", "volatile"]:
-				is_debuff = true
-			elif effect.get("effect") == "swap_stats":
-				is_debuff = true
 				
-			if extend_duration and is_debuff and effect.has("duration"):
-				effect.duration += 1
+	# Tier 1 V.I.E. Passive: Electron Donor (Metals)
+	if is_metal(attacker.data.group) and result.hit and move.power > 0:
+		result.effects.append({
+			"target": defender,
+			"effect": "add_status_stacks",
+			"status": "reduced",
+			"amount": 1,
+			"duration": 3
+		})
+		result.messages.append("%s primed the target! (+1 [R])" % attacker.data.monster_name)
+
+	# Tier 2 V.I.E. Passive: Reaction Buffer (Alkaline Earth)
+	if defender.data.group == AtomicConfig.Group.ALKALINE_EARTH and result.hit and move.power > 0:
+		var chance = 0.25
+		if randf() < chance:
+			result.effects.append({
+				"target": attacker,
+				"effect": "add_status_stacks",
+				"status": "reduced",
+				"amount": 1,
+				"duration": 3
+			})
+			result.messages.append("%s's buffer primed the attacker! (+1 [R])" % defender.data.monster_name)
+
+	# Tier 2 V.I.E. Passive: Magnetic Pull (Lanthanides)
+	if attacker.data.group == AtomicConfig.Group.LANTHANIDE and result.hit and move.power > 0:
+		var lanth_count = 0
+		if PlayerData:
+			lanth_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.LANTHANIDE)
+			
+		result.effects.append({
+			"effect": "magnetic_pull",
+			"target": defender,
+			"lanth_count": lanth_count
+		})
 
 	# Mastery Effects (100% Stability)
 	if attacker.data.stability >= 100:
 		_apply_mastery_on_hit(attacker, defender, move, result)
 
 	match move.name:
-		"Metallic Bond":
-			# Buffs attack of the target (ally)
-			var amount = int(defender.stats.attack * 0.2)
-			var duration = 2 if attacker == defender else 1
-			result.effects.append({ "target": defender, "stat": "attack", "amount": amount, "duration": duration, "type": "stat_mod" })
-			result.messages.append("%s shares its strength!" % attacker.data.monster_name)
-			
-			# Also buffs self if targeting a different ally
-			if attacker != defender:
-				var self_amount = int(attacker.stats.attack * 0.2)
-				result.effects.append({ "target": attacker, "stat": "attack", "amount": self_amount, "duration": 2, "type": "stat_mod" })
-			
 		"Alloy Reinforce":
 			# Heals the target
 			var heal_amount = int(attacker.stats.attack * 1.5)
@@ -575,9 +618,8 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			result.effects.append({ "target": defender, "status": "vulnerable", "duration": 2, "type": "status" })
 			result.messages.append("%s is magnetized!" % defender.data.monster_name)
 			
-		"Magnesium Flash":
-			# Only stun if shielded (Flash relies on reflective shielding)
-			if attacker.get_meta("shield", 0) > 0:
+		"Photonic Bash":
+			if attacker.has_status("anodic_barrier"):
 				result.effects.append({ "target": defender, "status": "stun", "duration": 1, "type": "status" })
 				result.messages.append("%s was blinded!" % defender.data.monster_name)
 			
@@ -718,66 +760,106 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 		"Shadow Strike":
 			result.messages.append("%s strikes from the shadows!" % attacker.data.monster_name)
 
-	# Post-Transition: +5% Buff Effectiveness (Increase stat buff amount)
+	# Tier 2 V.I.E. Passive: Signal Amplification (Post-Transition Metals)
 	if attacker.data.group == AtomicConfig.Group.POST_TRANSITION:
-		var count = PlayerData.class_resonance.get(AtomicConfig.Group.POST_TRANSITION, 0)
-		var multiplier = 1.0 + (count * 0.05)
+		var pt_count = 0
+		if PlayerData:
+			pt_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.POST_TRANSITION)
+		var multiplier = 1.0 + (pt_count * 0.10)
 		
-		# Full Set Bonus: Buffs last an additional turn
 		var total_pt = 0
 		if MonsterManifest:
 			for m in MonsterManifest.all_monsters:
 				if m.group == AtomicConfig.Group.POST_TRANSITION:
 					total_pt += 1
 		
-		var extend_duration = (count >= total_pt and total_pt > 0)
+		var extend_duration = (pt_count >= total_pt and total_pt > 0)
+		var amplified_any = false
 		
 		for effect in result.effects:
 			var is_buff = false
-			if (effect.get("type") == "stat_mod" and effect.get("amount", 0) > 0):
-				effect.amount = int(effect.amount * multiplier)
+			
+			if effect.get("type") == "stat_mod" and effect.get("amount", 0) > 0:
+				effect["amount"] = int(effect.get("amount", 0) * multiplier)
+				effect["effect"] = "aoe_stat_mod"
+				effect["target_team"] = "ally"
+				is_buff = true
+			elif effect.get("effect") == "aoe_stat_mod" and effect.get("amount", 0) > 0 and effect.get("target_team") == "ally":
+				effect["amount"] = int(effect.get("amount", 0) * multiplier)
+				is_buff = true
+			elif effect.get("effect") == "add_shield":
+				effect["amount"] = int(effect.get("amount", 0) * multiplier)
+				effect["effect"] = "add_team_shield"
+				is_buff = true
+			elif effect.get("effect") == "add_team_shield":
+				effect["amount"] = int(effect.get("amount", 0) * multiplier)
 				is_buff = true
 			elif effect.get("effect") in ["heal", "heal_overflow_shield"]:
-				effect.amount = int(effect.amount * multiplier)
-			elif effect.get("type") == "status" and effect.get("status") in ["invulnerable", "taunt"]:
+				if effect.has("amount"): effect["amount"] = int(effect.get("amount", 0) * multiplier)
+				if effect.get("effect") == "heal": effect["effect"] = "team_heal"
+				elif effect.get("effect") == "heal_overflow_shield": effect["effect"] = "team_heal_overflow_shield"
+				is_buff = true
+			elif effect.get("effect") == "team_heal" or effect.get("effect") == "team_heal_overflow_shield":
+				if effect.has("amount"): effect["amount"] = int(effect.get("amount", 0) * multiplier)
+				is_buff = true
+			elif effect.get("type") == "status" and effect.get("status") in ["invulnerable", "taunt", "physical_resist", "special_resist", "mirror_coat", "reflective_shell", "absorb_shield", "regeneration"]:
+				effect["effect"] = "team_status"
+				effect["target_team"] = "ally"
+				is_buff = true
+			elif effect.get("effect") == "team_status" and effect.get("target_team") == "ally":
 				is_buff = true
 				
-			if extend_duration and is_buff and effect.has("duration"):
-				effect.duration += 1
+			if is_buff:
+				amplified_any = true
+				if extend_duration and effect.has("duration"):
+					effect["duration"] += 1
+					
+		if amplified_any:
+			result.messages.append("Signal Amplification!")
 
-	# Noble Gas Full Set Bonus: Immune to debuffs
-	# Check if we need to filter effects based on collection status
-	var ng_count = PlayerData.class_resonance.get(AtomicConfig.Group.NOBLE_GAS, 0)
-	var total_ng = 0
-	if MonsterManifest:
-		for m in MonsterManifest.all_monsters:
-			if m.group == AtomicConfig.Group.NOBLE_GAS:
-				total_ng += 1
-	
-	if ng_count >= total_ng and total_ng > 0:
-		var new_effects = []
-		for effect in result.effects:
-			var target = effect.get("target")
-			var should_block = false
-			
-			if target and is_instance_valid(target) and target.data.group == AtomicConfig.Group.NOBLE_GAS:
-				if effect.get("type") == "status":
-					var s = effect.get("status")
-					if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard", "chain_reaction_mark", "volatile"]:
-						should_block = true
-				elif effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
+	# Tier 2 V.I.E. Passive: Inert Barrier (Noble Gases)
+	# Noble Gases are completely immune to debuffs and negative stat mods.
+	var new_effects = []
+	for effect in result.effects:
+		var target = effect.get("target")
+		var should_block = false
+		
+		if target and is_instance_valid(target) and target.data.group == AtomicConfig.Group.NOBLE_GAS:
+			if effect.get("type") == "status":
+				var s = effect.get("status")
+				if s in ["poison", "stun", "silence_special", "marked_covalent", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard", "chain_reaction_mark", "volatile", "reduced"]:
 					should_block = true
-				elif effect.get("effect") == "swap_stats":
-					should_block = true
-			
-			if should_block:
-				result.messages.append("Noble Gas Immunity!")
-			else:
-				new_effects.append(effect)
-		result.effects = new_effects
+			elif effect.get("type") == "stat_mod" and effect.get("amount", 0) < 0:
+				should_block = true
+			elif effect.get("effect") == "swap_stats":
+				should_block = true
+		
+		if should_block:
+			result.messages.append("Inert Barrier!")
+		else:
+			new_effects.append(effect)
+	result.effects = new_effects
 
 func _apply_mastery_on_hit(attacker: BattleMonster, defender: BattleMonster, move: MoveData, result: Dictionary):
 	# Framework for 100% Stability Bonuses (On Hit/Action)
 	match attacker.data.group:
 		# Add other groups as needed...
 		_: pass
+
+func is_metal(group: int) -> bool:
+	return group in [
+		AtomicConfig.Group.ALKALI_METAL,
+		AtomicConfig.Group.ALKALINE_EARTH,
+		AtomicConfig.Group.TRANSITION_METAL,
+		AtomicConfig.Group.POST_TRANSITION,
+		AtomicConfig.Group.ACTINIDE,
+		AtomicConfig.Group.LANTHANIDE
+	]
+
+func is_nonmetal(group: int) -> bool:
+	return group in [
+		AtomicConfig.Group.NONMETAL,
+		AtomicConfig.Group.HALOGEN,
+		AtomicConfig.Group.NOBLE_GAS,
+		AtomicConfig.Group.METALLOID
+	]

@@ -385,10 +385,6 @@ func on_turn_start():
 			moves_off_cooldown.append(move_name)
 	for move_name in moves_off_cooldown:
 		move_cooldowns.erase(move_name)
-		
-	for effect in active_effects:
-		if effect.type == "status" and effect.get("status") == "corrosion":
-			take_damage(effect.damage)
 
 func on_turn_end():
 	var remaining_effects = []

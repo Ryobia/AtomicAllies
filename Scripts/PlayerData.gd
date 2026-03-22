@@ -185,6 +185,23 @@ func recalculate_class_resonance():
 			class_resonance[m.group] = 0
 		class_resonance[m.group] += 1
 
+func get_combat_resonance(is_player: bool, group: int) -> int:
+	var count = class_resonance.get(group, 0)
+	
+	if is_player and not active_team.is_empty():
+		var vanguard = active_team[0]
+		if vanguard and vanguard.group == group and group != AtomicConfig.Group.METALLOID:
+			var has_metalloid = false
+			for i in range(active_team.size()):
+				var m = active_team[i]
+				if m and m.group == AtomicConfig.Group.METALLOID and m != vanguard:
+					has_metalloid = true
+					break
+			if has_metalloid:
+				count += class_resonance.get(AtomicConfig.Group.METALLOID, 0)
+				
+	return count
+
 # --- Save & Load System ---
 
 func save_game():
@@ -415,3 +432,39 @@ func is_quest_claimable() -> bool:
 			return is_monster_owned(monster.monster_name)
 			
 	return false
+
+func unlock_all_elements():
+	print("PlayerData: God Mode Activated. Unlocking all elements...")
+	
+	if MonsterManifest.all_monsters.is_empty():
+		if MonsterManifest.has_method("_scan_monsters"):
+			MonsterManifest._scan_monsters()
+			
+	owned_monsters.clear()
+	unlocked_blueprints.clear()
+	active_team.clear()
+	
+	for m in MonsterManifest.all_monsters:
+		if m.atomic_number >= 1 and m.atomic_number <= 118 and m.group < AtomicConfig.Group.UNKNOWN:
+			var new_m = m.duplicate()
+			new_m.stability = 100 # Max stability for testing Masteries
+			owned_monsters.append(new_m)
+			if not unlocked_blueprints.has(m.atomic_number):
+				unlocked_blueprints.append(m.atomic_number)
+				
+	recalculate_class_resonance()
+	
+	# Max out resources
+	resources["neutron_dust"] += 999999
+	resources["binding_energy"] += 999999
+	resources["gems"] += 9999
+	resources["luminous_core"] += 9999
+	for key in resources:
+		resource_updated.emit(key, resources[key])
+	
+	# Max out Ship Upgrades
+	var upgrades = ["fusion_speed", "resource_extractor", "dust_efficiency", "scanner_range", "combat_hull", "combat_optics", "combat_shielding", "gravimetric_sensor", "cybernetic_implant"]
+	for u in upgrades:
+		ship_upgrades[u] = 10
+		
+	save_game()
