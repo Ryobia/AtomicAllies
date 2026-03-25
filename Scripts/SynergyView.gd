@@ -249,8 +249,7 @@ func _get_synergy_text(group: int, count: int) -> String:
 			var val = count * 2
 			text = "[color=%s]Synergy:[/color] Catalysis deals [color=%s]+%d%%[/color] damage per tick (2%%/elem).\n[color=%s]Passive:[/color] Attacks force enemy debuffs to tick instantly.\n[color=%s]%s:[/color] Catalysis ticks twice." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.HALOGEN:
-			var val = count * 1
-			text = "[color=%s]Synergy:[/color] [color=%s]+%d%%[/color] Poison Damage (1%%/elem).\n[color=%s]Passive:[/color] Attacks apply Poison (10%% HP/turn).\n[color=%s]%s:[/color] Poison lasts +1 turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Halogen Hunger grants Action Gauge on Bursts.\n[color=%s]Passive:[/color] Reactive Detonator (High-speed Burst triggers).\n[color=%s]%s:[/color] Starts combat poisoning a random enemy." % [c_lbl, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.NOBLE_GAS:
 			var val = count * 15
 			text = "[color=%s]Synergy:[/color] Team takes [color=%s]-%d%%[/color] damage from DoTs and Hazards (15%%/elem).\n[color=%s]Passive:[/color] Inert Barrier (Immune to all debuffs).\n[color=%s]%s:[/color] Entire team restores 5%% HP every turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
@@ -258,13 +257,12 @@ func _get_synergy_text(group: int, count: int) -> String:
 			var val = count * 1
 			text = "[color=%s]Synergy:[/color] Pulled debuffs last [color=%s]+%d[/color] turn(s) (1/elem).\n[color=%s]Passive:[/color] Magnetic Pull (Attacks condense all enemy debuffs onto the target).\n[color=%s]%s:[/color] +10%% All Stats to ALL elements." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.NONMETAL:
-			var mult = 1.20 + (count * 0.05)
+			var mult = 0.20 + (count * 0.05)
 			if total > 0 and count >= total:
-				mult += 0.10
-			text = "[color=%s]Synergy:[/color] Attacks apply [color=%s]Volatile[/color] ([color=%s]%.2fx[/color] dmg taken).\n[color=%s]Passive:[/color] Multiplier +0.05x per element.\n[color=%s]%s:[/color] Multiplier +0.10x." % [c_lbl, c_val, c_val, mult, c_lbl, c_fs, fs_lbl_txt]
+				mult += 0.20
+			text = "[color=%s]Synergy:[/color] Burst multiplier adds [color=%s]+%.2fx[/color] per stack (0.05x/elem).\n[color=%s]Passive:[/color] Oxidation (Consumes [R] stacks for explosive damage).\n[color=%s]%s:[/color] Base multiplier +0.20x." % [c_lbl, c_val, mult, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.METALLOID:
-			var val = count
-			text = "[color=%s]Synergy:[/color] Adds [color=%s]+%d[/color] Resonance to Vanguard's Class (1/elem).\n[color=%s]Passive:[/color] Semiconductor (Links to Vanguard's Class).\n[color=%s]%s:[/color] Vanguard gains +25%% Attack and Defense." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Converts [R] stacks into Processing Loops.\n[color=%s]Passive:[/color] Semiconductor (Amplify and manipulate Burst logic).\n[color=%s]%s:[/color] Increases the chance to stun on-hit to 25%%." % [c_lbl, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.POST_TRANSITION:
 			var val = count * 10
 			text = "[color=%s]Synergy:[/color] Buffs are [color=%s]+%d%%[/color] stronger (10%%/elem).\n[color=%s]Passive:[/color] Signal Amplification (Single-target buffs splash to the whole team).\n[color=%s]%s:[/color] Buffs last +1 turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]

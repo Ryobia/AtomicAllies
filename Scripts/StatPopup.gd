@@ -5,7 +5,6 @@ const STATUS_DESCRIPTIONS = {
 	"taunt": "Forced to attack the taunter.",
 	"stun": "Cannot act this turn.",
 	"silence_special": "Cannot use Special moves.",
-	"marked_covalent": "Next cross-element hit deals 1.2x damage.",
 	"guarded": "Blocks the next instance of damage.",
 	"unstable": "Takes 1.2x damage from next attack.",
 	"poison": "Taking damage over time based on Max HP.",
@@ -21,10 +20,47 @@ const STATUS_DESCRIPTIONS = {
 	"physical_resist": "Reduces incoming Physical damage.",
 	"mirror_coat": "Reflects the next incoming attack.",
 	"toxic_feedback": "Reduces attacker's ATK when hit.",
+	"radiation_feedback": "Applies Radiation to attackers.",
 	"reflective_shell": "Negates next hit and reflects 30% damage.",
 	"absorb_shield": "Absorbs next hit, healing for 30% of damage.",
 	"special_resist": "Reduces incoming Special damage.",
-	"regeneration": "Restores HP at the start of each turn."
+	"regeneration": "Restores HP at the start of each turn.",
+	"reduced": "Primed for an Oxidation Burst.",
+	"anodic_barrier": "Increases Defense and applies [R] to attackers.",
+	"processing_loop": "Increases next Oxidation Burst multiplier by 0.1 per stack.",
+	"halogen_hunger": "Triggering an Oxidation Burst grants 20% Action Gauge.",
+	"half_life_cascade": "[R] stacks double at the start of each turn.",
+	"luminescent": "Increases next Oxidation Burst damage by 50%.",
+	"burn": "Taking burn damage each turn.",
+	"proton_charge": "Increases damage of the next incoming attack by 10% per charge.",
+	"spontaneous_fumes": "Will trigger an Oxidation Burst at the start of the turn.",
+	"excited": "Ignores resistances and defense.",
+	"toxic_lattice": "Reflects 2 [R] stacks on hit and reduces damage by 30%.",
+	"incendiary_flash": "Next Oxidation Burst against this target is doubled.",
+	"entropy_shield": "Prevents global Entropy increases.",
+	"crimson_resonance": "50% chance to counter-attack when hit.",
+	"contrast_shadow": "[R] stacks on this target add +0.05 to V.I.E. multipliers.",
+	"radiant_nucleus": "Heals 10% HP per turn, but generates 5 Entropy.",
+	"bio_poison": "Poison damage increases each turn.",
+	"entropy_dampener": "Reduces next global Entropy gain.",
+	"radiation_immunity": "Immune to radiation damage.",
+	"entropy_reflect": "Reflects gained Entropy as damage.",
+	"decay_catalyst": "[R] stacks multiply each turn.",
+	"entropy_halver": "Halves the next global Entropy gain.",
+	"vanguard_circuit": "Shares Vanguard properties.",
+	"entropy_reflect_100": "Reflects 100% of gained Entropy as damage.",
+	"irradiated_lock": "[R] stacks cannot be removed.",
+	"smoke_detector": "Increases next Oxidation Burst multiplier by 0.5.",
+	"synthetic_boost": "Reduces next recoil by 50%.",
+	"neutron_trap": "Applies [R] to attackers hitting the shield.",
+	"law_of_octets": "Next Oxidation Burst is doubled.",
+	"hidden_potential": "Increases next Oxidation Burst multiplier by 0.3.",
+	"mri_trace": "[R] stacks count as 1.5x for Bursts.",
+	"buff_lock": "Cannot gain positive status effects.",
+	"focused": "Accuracy increased by 20%.",
+	"suppressed": "Cannot generate Global Entropy.",
+	"inhibited": "Cannot use Unique moves.",
+	"dot_block": "Blocks the next Damage-over-Time effect."
 }
 
 func setup(unit: BattleMonster):
@@ -178,6 +214,8 @@ func setup(unit: BattleMonster):
                         var pct = abs(int(effect.get("debuff_amount", 40)))
                         var stat = effect.get("debuff_stat", "attack").capitalize()
                         desc_text = "Reduces attacker's %s by %d%% when hit." % [stat, pct]
+                    elif status_key == "guarded" and effect.has("stacks") and effect.get("stacks", 1) > 1:
+                        desc_text = "Blocks the next %d instances of damage." % effect.get("stacks")
                     elif STATUS_DESCRIPTIONS.has(status_key): desc_text = STATUS_DESCRIPTIONS[status_key]
                     title_lbl.add_theme_color_override("font_color", Color.YELLOW if status_key in ["invulnerable", "taunt"] else Color.ORANGE_RED)
                 

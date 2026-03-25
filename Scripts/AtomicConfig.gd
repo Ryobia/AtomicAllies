@@ -98,7 +98,7 @@ const BASELINES = {
 	
 	# Chaos: High Variance/Speed
 	Group.CHAOS_GRUNT: {"hp": 2, "atk": 6, "def": 2, "spd": 7, "crit": 10},
- 	Group.CHAOS_ASSASSIN: {"hp": 3, "atk": 8, "def": 1, "spd": 9, "crit": 20},
+	Group.CHAOS_ASSASSIN: {"hp": 3, "atk": 8, "def": 1, "spd": 9, "crit": 20},
 	Group.CHAOS_BRUTE: {"hp": 8, "atk": 6, "def": 5, "spd": 4, "crit": 5},
 	Group.CHAOS_COMMANDER: {"hp": 6, "atk": 8, "def": 4, "spd": 8, "crit": 10},
 	Group.CHAOS_KING: {"hp": 9, "atk": 10, "def": 5, "spd": 10, "crit": 15},
@@ -151,38 +151,28 @@ const GROUP_MOVES = {
 		{"name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Heals target ally, scales with attack. Excess healing becomes a shield.", "cooldown": 2}
 	],
 	Group.METALLOID: [
-		{"name": "Thermal Transistor", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Reduces enemy Attack and Defense by 20%.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "attack", "amount": -20, "percent": true, "duration": 2}, {"type": "stat_mod", "stat": "defense", "amount": -20, "percent": true, "duration": 2}]},
-		{"name": "Signal Scramble", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
+		{"name": "Valence Flip", "power": 20, "accuracy": 100, "type": "Special", "description": "Toggles the unit's atomic polarity. Applies 1 Reduced [R] stack AND checks the target for an Oxidation Burst. If a burst is triggered, it deals +20% damage.", "cooldown": 2},
+		{"name": "Logic Gate", "power": 25, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Calculates the enemy's defensive pathing. Slows the target by 20% and converts all active [R] stacks into Processing Loops, increasing the multiplier of the next Oxidation Burst by 0.1 per stack.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
 	],
 	Group.NONMETAL: [
-		{
-			"name": "Chain Reaction",
-			"power": 15,
-			"accuracy": 100,
-			"type": "Special",
-			"description": "A weak attack that marks the enemy. The next attack against them will trigger a chain reaction.",
-			"effects": [ {
-				"type": "status", "status": "chain_reaction_mark", "duration": 3, "message": "%s is primed for a chain reaction!"
-			}],
-			"cooldown": 2
-		},
-		{"name": "Electronegativity", "power": 20, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Slows enemy by 20% for 2 turns.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
+		{"name": "Oxidation Chain", "power": 25, "accuracy": 100, "type": "Special", "description": "Triggers an Oxidation Burst on the target. If a burst is triggered, the reaction jumps to all adjacent enemies with Reduced [R] stacks.", "cooldown": 2},
+		{"name": "Valence Siphon", "power": 35, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "A precise strike that rips away valence electrons. Triggers an Oxidation Burst. For every [R] stack consumed, the target's Speed is reduced by 10% for 2 turns.", "cooldown": 2}
 	],
 	Group.HALOGEN: [
-		{"name": "Fluorine Acid", "power": 10, "accuracy": 90, "type": "Special", "is_snipe": true, "description": "Corrosive blast that triggers Halogen poison.", "cooldown": 2},
-		{"name": "Reactivity", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Increases Speed for 3 turns.", "effects": [{"type": "stat_mod", "stat": "speed", "amount": 25, "percent": true, "duration": 3}], "cooldown": 3}
+		{"name": "Hydrofluoric Stream", "power": 30, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "A high-pressure stream of corrosive acid. Triggers an Oxidation Burst. This move gains a +0.5 bonus to the Electronegativity Delta multiplier.", "cooldown": 2},
+		{"name": "Halogen Hunger", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "The unit enters a highly reactive state. Increases Speed by 25%. For the next 3 turns, triggering an Oxidation Burst grants the user 20% Action Gauge.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "speed", "amount": 25, "percent": true, "duration": 3}, {"type": "status", "status": "halogen_hunger", "duration": 3}]}
 	],
 	Group.NOBLE_GAS: [
-		{"name": "Full Octet", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Blocks the next instance of damage. Consumed on hit.", "cooldown": 3, "effects": [{"type": "status", "status": "guarded", "duration": 3}]},
-		{"name": "Inert Strike", "power": 20, "accuracy": 100, "type": "Physical", "description": "A weak attack that raises the user's Defense by 15%.", "effects": [{"type": "stat_mod", "stat": "defense", "amount": 15, "percent": true, "duration": 2, "target": "Attacker"}]}
+		{"name": "Perfect Configuration", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Achieves a state of perfect atomic balance. Grants Guarded (blocks the next instance of damage) and reduces Global Entropy by 20.", "cooldown": 3, "effects": [{"type": "status", "status": "guarded", "duration": 3}, {"effect": "add_global_entropy", "amount": -20}]},
+		{"name": "Stabilizing Pulse", "power": 25, "accuracy": 100, "type": "Physical", "description": "A non-reactive strike that absorbs excess kinetic energy. Increases the user's Defense by 15% and reduces the global Entropy by 10%. (Bonus: 20% reduction if in the Vanguard slot).", "effects": [{"type": "stat_mod", "stat": "defense", "amount": 15, "percent": true, "duration": 2, "target": "Attacker"}]}
 	],
 	Group.ACTINIDE: [
-		{"name": "Supercritical Blast", "power": 80, "accuracy": 85, "type": "Special", "description": "Deals massive damage but reduces HP by 10% after use.", "cooldown": 3},
-		{"name": "Radioactive Decay", "power": 0, "accuracy": 100, "type": "Status_Hostile", "is_snipe": true, "description": "Irradiates a specific target.", "effects": [{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}], "cooldown": 2}
+		{"name": "Fission Burst", "power": 100, "accuracy": 85, "type": "Special", "description": "Triggers a violent Oxidation Burst. For every [R] stack consumed, deal an additional 20% damage but increase the global Entropy by 10. Damage is doubled if Entropy is already above 50%.", "cooldown": 3},
+		{"name": "Half-Life Cascade", "power": 0, "accuracy": 100, "type": "Status_Hostile", "is_snipe": true, "description": "Irradiates the target’s atomic structure. For 3 turns, the target takes 5% Max HP damage and their current Reduced [R] stacks double at the start of their turn (up to a cap of 10).", "effects": [{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}, {"type": "status", "status": "half_life_cascade", "duration": 3}], "cooldown": 2}
 	],
 	Group.LANTHANIDE: [
-		{"name": "Optical Refraction", "power": 0, "accuracy": 100, "type": "Status_Hostile", "description": "Reduces enemy accuracy by 20% for 2 turns.", "cooldown": 2, "effects": [{"type": "status", "status": "refracted", "duration": 2}]},
-		{"name": "Rare Resonance", "power": 10, "accuracy": 100, "type": "Special", "description": "Deals damage multiplied by the number of different element groups on the team.", "cooldown": 2}
+		{"name": "Ferromagnetic Surge", "power": 30, "accuracy": 100, "type": "Physical", "description": "A heavy strike that generates an intense magnetic field. Applies 1 Reduced [R] stack. Pulls all active [R] stacks from all other enemies onto the primary target.", "cooldown": 2},
+		{"name": "Phosphor Flare", "power": 20, "accuracy": 100, "type": "Special", "description": "A blinding emission of rare-earth light. Applies 1 Reduced [R] stack and the Luminescent status. The next Oxidation Burst against this target deals +50% damage.", "cooldown": 3, "effects": [{"type": "status", "status": "luminescent", "duration": 2}]}
 	],
 	Group.UNKNOWN: [],
 	
@@ -207,7 +197,7 @@ const GROUP_MOVES = {
 	],
 	Group.VOID_KING: [
 		{"name": "Royal Strike", "power": 50, "accuracy": 100, "type": "Physical", "description": "A commanding physical blow."},
-		{"name": "Entropy", "power": 100, "accuracy": 100, "type": "Special", "description": "Deals massive damage to a single target.", "cooldown": 4}
+		{"name": "Entropy", "power": 100, "accuracy": 100, "type": "Special", "description": "Deals massive damage to a single target and increases Global Entropy by 15.", "cooldown": 4}
 	],
 	
 	# Eldritch
@@ -303,225 +293,243 @@ const GROUP_MOVES = {
 # This allows every element to have a signature move without manual resource creation.
 const UNIQUE_MOVES = {
 	1: { # Hydrogen
-		"name": "Proton Pulse",
-		"power": 25,
+		"name": "Protanation Drive",
+		"power": 30,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "A burst of raw energy. The target becomes unstable, taking 20% more damage from the next attack.",
-		"effects": [ {"type": "status", "status": "unstable", "duration": 2, "damage_multiplier": 1.2, "message": "%s becomes unstable!"}],
-		"cooldown": 2
-	},
-	2: { # Helium
-		"name": "Atmospheric Veil",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"target_type": "Ally",
-		"description": "Grants a shield equal to User's Defense to an ally.",
-		"effects": [ {"effect": "add_shield", "scale_stat": "defense", "scale_factor": 1.0}],
-		"cooldown": 2
-	},
-	3: { # Lithium
-		"name": "Alkali Burst",
-		"power": 15,
-		"accuracy": 100,
-		"type": "Physical",
-		"description": "A quick double strike.",
-		"target_type": "Enemy",
-		"hit_count": 2,
+		"description": "Triggers an Oxidation Burst. Converts consumed [R] stacks into Proton Charges. The next attack against this target deals +10% damage per charge.",
 		"effects": [],
 		"cooldown": 2
 	},
-	4: { # Beryllium
-		"name": "Emerald Fortify",
+	2: { # Helium
+		"name": "Solar Vent",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Increases Defense and reflects 10% of incoming damage.",
 		"target_type": "Self",
-		"effects": [ 
-			{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3},
-			{"type": "status", "status": "static_reflection", "damage_percent": 0.1, "duration": 3}
+		"description": "Small Team Heal. Reduces Global Entropy by 15.",
+		"effects": [
+			{"effect": "team_heal", "scale_stat": "max_hp", "scale_factor": 0.15},
+			{"effect": "add_global_entropy", "amount": -15}
+		],
+		"cooldown": 3
+	},
+	3: { # Lithium
+		"name": "Ion Battery",
+		"power": 25,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Applies 2 [R] stacks. If the user is at 100% Stability, grants the team 15% Action Gauge.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "add_status_stacks", "status": "reduced", "amount": 2, "duration": 3, "target": "Defender"} ],
+		"cooldown": 2
+	},
+	4: { # Beryllium
+		"name": "Toxic Lattice",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Reflective Priming. Lowers damage taken by 30%. Every hit taken reflects 2 [R] stacks back onto the attacker.",
+		"target_type": "Self",
+		"effects": [
+			{"type": "status", "status": "toxic_lattice", "duration": 3}
 		],
 		"cooldown": 3
 	},
 	5: { # Boron
-		"name": "Boron Blast",
-		"power": 30,
+		"name": "Control Array",
+		"power": 0,
 		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals damage and reduces Defense by 20%.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": -20, "percent": true, "duration": 2}],
-		"cooldown": 2
+		"type": "Status_Friendly",
+		"description": "Blocks 1 hit and halves the next 2 instances of Global Entropy generation.",
+		"target_type": "Self",
+		"effects": [
+			{"type": "status", "status": "guarded", "duration": 3},
+			{"type": "status", "status": "entropy_halver", "stacks": 2, "duration": 99}
+		],
+		"cooldown": 3
 	},
 	6: { # Carbon
-		"name": "Carbonize",
-		"power": 30,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals damage and makes the target unstable, taking 25% more damage.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "carbonized", "duration": 2, "damage_multiplier": 1.25, "message": "%s becomes carbonized!"}],
-		"cooldown": 2
-	},
-	7: { # Nitrogen
-		"name": "Nitrogen Nudge",
-		"power": 30,
-		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Reduces enemy Attack for 2 turns.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": - 10, "percent": true, "duration": 2}],
-		"cooldown": 2
-	},
-	8: { # Oxygen
-		"name": "Oxidation Trap",
-		"power": 30,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Increases next instance of damage taken by target by 25%",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "oxidized", "duration": 2, "damage_multiplier": 1.25, "message": "%s becomes oxidized!"}],
-		"cooldown": 2
-	},
-	9: { # Fluorine
-		"name": "Reactive Corrosive",
-		"power": 20,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals damage and applies corrosion (5% Max HP damage and -10% Defense).",
-		"target_type": "Enemy",
-		"effects": [ 
-			{"type": "status", "status": "corrosion", "damage_percent": 0.05, "duration": 3, "message": "%s is corroding!"},
-			{"type": "stat_mod", "stat": "defense", "amount": -10, "percent": true, "duration": 3}
-		],
-		"cooldown": 2
-	},
-	10: { # Neon
-		"name": "Neon Distraction",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Taunts all enemies and increases Defense by 10%.",
-		"target_type": "Self",
-		"effects": [
-			{"type": "status", "status": "taunt", "duration": 2},
-			{"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 2}
-		],
-		"cooldown": 3
-	},
-	11: { # Sodium
-		"name": "Saline Surge",
+		"name": "Catenation Chain",
 		"power": 35,
 		"accuracy": 100,
-		"type": "Physical",
-		"description": "Deals damage and increases Speed by 10%.",
-		"target_type": "Enemy",
-		"effects": [
-			{"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 2, "target": "Attacker"}
-		],
-		"cooldown": 2
-	},
-	12: { # Magnesium
-		"name": "Magnesium Flare",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Grants a shield equal to 30% of Max HP.",
-		"target_type": "Self",
-		"effects": [ {"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.3}],
-		"cooldown": 3
-	},
-	13: { # Aluminum
-		"name": "Alloy Coating",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Cleanses 1 debuff and grants 20% physical resistance for 3 turns.",
-		"target_type": "Ally",
-		"effects": [
-			{"effect": "cleanse", "amount": 1},
-			{"type": "status", "status": "physical_resist", "reduction_amount": 0.2, "duration": 3}
-		],
-		"cooldown": 3
-	},
-	14: { # Silicon
-		"name": "Silicon Spike",
-		"power": 40,
-		"accuracy": 100,
-		"type": "Physical",
-		"description": "Deals damage and reduces enemy Attack by 20%.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": -20, "percent": true, "duration": 2}],
-		"cooldown": 2
-	},
-	15: { # Phosphorus
-		"name": "White Phosphorus",
-		"power": 40,
-		"accuracy": 100,
 		"type": "Special",
-		"description": "Marks enemy for explosion. Next attack against them deals 30% bonus damage.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "explosive", "duration": 2, "damage_multiplier": 1.3, "message": "%s becomes explosive!"}],
-		"cooldown": 2
-	},
-	16: { # Sulfur
-		"name": "Sulfur Spray",
-		"power": 40,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "A noxious spray that reduces enemy defense.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": - 20, "percent": true, "duration": 2}],
-		"cooldown": 2
-	},
-	17: { # Chlorine
-		"name": "Bleach Cloud",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Creates a hazardous cloud. Enemies take damage when attacking.",
-		"target_type": "Enemy",
-		"effects": [ {"effect": "team_status", "status": "reactive_vapor", "duration": 3, "message": "The air turns toxic!"}],
-		"cooldown": 3
-	},
-	18: { # Argon
-		"name": "Inert Gas Barrier",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Grants a shield to all allies.",
-		"target_type": "Self",
-		"effects": [ {"effect": "add_team_shield", "scale_stat": "max_hp", "scale_factor": 0.2}],
-		"cooldown": 3
-	},
-	19: { # Potassium
-		"name": "Violet Flare",
-		"power": 15,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals extra damage for every debuff on the enemy.",
+		"description": "Triggers an Oxidation Burst. If the target has 3 or more [R] stacks, the burst multiplier is doubled.",
 		"target_type": "Enemy",
 		"effects": [],
 		"cooldown": 2
 	},
-	20: { # Calcium
-		"name": "Calcium Carapace",
+	7: { # Nitrogen
+		"name": "Cryogenic Lock",
+		"power": 30,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Triggers an Oxidation Burst. Has a 20% base chance to Stun the target, increased by 10% for each [R] stack consumed.",
+		"target_type": "Enemy",
+		"effects": [],
+		"cooldown": 2
+	},
+	8: { # Oxygen
+		"name": "Rapid Combustion",
+		"power": 30,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Triggers an Oxidation Burst. For every [R] stack consumed, applies a stack of Burn that deals damage based on the Electronegativity Delta.",
+		"target_type": "Enemy",
+		"effects": [],
+		"cooldown": 2
+	},
+	9: { # Fluorine
+		"name": "Hydrofluoric Etch",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Special",
+		"is_snipe": true,
+		"description": "Corrosion: Triggers an Oxidation Burst. Reduces target Defense by 10% per [R] stack consumed (Permanent).",
+		"target_type": "Enemy",
+		"effects": [],
+		"cooldown": 3
+	},
+	10: { # Neon
+		"name": "Neon Beacon",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Grants a shield equal to 35% of Max HP.",
+		"description": "Forced Taunt. Allies gain 20% Action Gauge (Guiding Light).",
 		"target_type": "Self",
-		"effects": [ {"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.35}],
+		"effects": [
+			{"type": "status", "status": "taunt", "duration": 2},
+			{"effect": "team_add_atb", "amount": 20.0}
+		],
+		"cooldown": 3
+	},
+	11: { # Sodium
+		"name": "Solvation Burst",
+		"power": 30,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Applies 2 [R] stacks. Deals double damage and adds +2 stacks if the target is covered in Reactive Vapor.",
+		"target_type": "Enemy",
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 2, "duration": 3, "target": "Defender"}
+		],
 		"cooldown": 2
+	},
+	12: { # Magnesium
+		"name": "Incendiary Flash",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Light Emission. Deals moderate damage. If used from the Vanguard slot, the next Oxidation Burst against the target triggers twice.",
+		"target_type": "Enemy",
+		"effects": [],
+		"cooldown": 2
+	},
+	13: { # Aluminum
+		"name": "Anodized Plate",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and increases Defense by 15%. Reduces the global Entropy generated by the next 2 moves by 5.",
+		"target_type": "Enemy",
+		"effects": [
+			{"type": "stat_mod", "stat": "defense", "amount": 15, "percent": true, "duration": 3, "target": "Attacker"},
+			{"type": "status", "status": "entropy_dampener", "amount": 5, "stacks": 2, "duration": 99, "target": "Attacker"}
+		],
+		"cooldown": 3
+	},
+	14: { # Silicon
+		"name": "Integrated Circuit",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Deals damage and slows the target. Copies the Vanguard's passive and applies 'Vanguard Circuit' to the team for 2 turns.",
+		"target_type": "Enemy",
+		"effects": [
+			{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2},
+			{"effect": "apply_vanguard_circuit", "duration": 2}
+		],
+		"cooldown": 3
+	},
+	15: { # Phosphorus
+		"name": "Spontaneous Fumes",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Hostile",
+		"description": "Marks the enemy. At the start of their next turn, triggers an Oxidation Burst using all current [R] stacks for +30% bonus damage.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "status", "status": "spontaneous_fumes", "duration": 2, "message": "%s is covered in volatile fumes!"}],
+		"cooldown": 2
+	},
+	16: { # Sulfur
+		"name": "Vulcanization",
+		"power": 35,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Triggers an Oxidation Burst. Permanently reduces the target's Defense by 5% per [R] stack consumed (Max 50%).",
+		"target_type": "Enemy",
+		"effects": [],
+		"cooldown": 2
+	},
+	17: { # Chlorine
+		"name": "Oxidizing Bleach",
+		"power": 30,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Disinfect: Triggers an Oxidation Burst to all enemies. Applies Poison per [R] stack consumed. Poison damage doubled if already poisoned.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "aoe_power_attack", "power": 30, "move_name": "Oxidizing Bleach"} ],
+		"cooldown": 3
+	},
+	18: { # Argon
+		"name": "Atmospheric Shield",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Grants a 50% Damage Reduction shield to all allies. Prevents all Entropy generation for the team for 2 turns.",
+		"target_type": "Self",
+		"effects": [
+			{"effect": "team_status", "status": "physical_resist", "reduction_amount": 0.5, "duration": 2, "target_team": "ally"},
+			{"effect": "team_status", "status": "special_resist", "reduction_amount": 0.5, "duration": 2, "target_team": "ally"},
+			{"effect": "team_status", "status": "entropy_shield", "stacks": 99, "duration": 2, "target_team": "ally"}
+		],
+		"cooldown": 3
+	},
+	19: { # Potassium
+		"name": "Enthalpy Leap",
+		"power": 35,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Applies 3 [R] stacks. Increases global Entropy by 5, but reduces all ally cooldowns by 1.",
+		"target_type": "Enemy",
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 3, "duration": 3, "target": "Defender"},
+			{"effect": "add_global_entropy", "amount": 5},
+			{"effect": "team_reduce_cooldowns", "amount": 1}
+		],
+		"cooldown": 3
+	},
+	20: { # Calcium
+		"name": "Bone Structure",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Stability Buff. Increases Attack, Defense, and Speed of all allies by 20% and prevents the next 2 instances of global Entropy.",
+		"target_type": "Self",
+		"effects": [
+			{"effect": "aoe_stat_mod", "stat": "attack", "amount": 20, "percent": true, "duration": 3, "target_team": "ally"},
+			{"effect": "aoe_stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3, "target_team": "ally"},
+			{"effect": "aoe_stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 3, "target_team": "ally"},
+			{"effect": "add_status_stacks", "status": "entropy_shield", "amount": 2, "duration": 99, "target": "Attacker"}
+		],
+		"cooldown": 3
 	},
 	21: { # Scandium
 		"name": "Light-Alloy Strike",
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and raises Defense by 10%.",
+		"description": "Deals damage and raises Defense by 10%. Catalysis: Gain +15% Defense for 2 turns.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}],
 		"cooldown": 2
@@ -531,170 +539,183 @@ const UNIQUE_MOVES = {
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and raises Defense by 10%.",
+		"description": "Deals damage and raises Defense by 10%. Catalysis: Gain +15% Defense for 2 turns.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}]
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}],
+		"cooldown": 2
 	},
 	23: { # Vanadium
 		"name": "Refined Edge",
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and raises Attack by 10%.",
+		"description": "Deals damage and raises Attack by 10%. Catalysis: Gain +20% Accuracy for 2 turns.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}]
+		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}],
+		"cooldown": 2
 	},
 	24: { # Chromium
-		"name": "Mirror Finish",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Reflects the next incoming attack.",
-		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "mirror_coat", "duration": 3}],
-		"cooldown": 3
-	},
-	25: { # Manganese
-		"name": "Ferro-Impact",
+		"name": "Mirror Luster",
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and raises Attack by 10%.",
+		"description": "Deals damage and applies 1 [R] stack. Catalysis: Reflect 10% damage as a Vanguard Shield.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}]
+		"effects": [ {"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}],
+		"cooldown": 3
+	},
+	25: { # Manganese
+		"name": "Magnetic Slam",
+		"power": 30,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage and applies 1 [R] stack. Catalysis: Apply an additional [R] stack.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}],
+		"cooldown": 3
 	},
 	26: { # Iron
 		"name": "Magnetic Slam",
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and grants a shield (25% of damage dealt).",
+		"description": "Deals damage and applies 1 [R] stack. Catalysis: Apply an additional [R] stack.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "add_shield", "scale_stat": "damage_dealt", "scale_factor": 0.25, "target": "Attacker"}]
+		"effects": [ {"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}],
+		"cooldown": 2
 	},
 	27: { # Cobalt
 		"name": "Blue-Steel Guard",
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and grants a shield (25% of damage dealt).",
+		"description": "Deals damage and applies 1 [R] stack. Catalysis: Grant Shield (25% damage dealt).",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "add_shield", "scale_stat": "damage_dealt", "scale_factor": 0.25, "target": "Attacker"}]
+		"effects": [ {"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}],
+		"cooldown": 2
 	},
 	28: { # Nickel
-		"name": "Plated Guard",
+		"name": "Plated Impact",
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and lowers enemy Defense by 10%.",
+		"description": "Deals damage and applies 1 [R] stack. Catalysis: -10% Enemy Speed.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": -10, "percent": true, "duration": 1}]
+		"effects": [ {"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}],
+		"cooldown": 2
 	},
 	29: { # Copper
 		"name": "Conductive Whip",
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and raises Speed by 10%.",
+		"description": "Deals damage and applies 1 [R] stack. Catalysis: +15% Action Gauge to self.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 1, "target": "Attacker"}]
+		"effects": [ {"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}],
+		"cooldown": 2
 	},
 	30: { # Zinc
-		"name": "Galvanized Shield",
-		"power": 0,
+		"name": "Galvanized Bash",
+		"power": 30,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Reflects the next incoming attack.",
-		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "mirror_coat", "duration": 3}],
-		"cooldown": 3
+		"type": "Physical",
+		"description": "Deals damage and applies 1 [R] stack. Catalysis: +10% Action Gauge to all allies.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}],
+		"cooldown": 2
 	},
 	31: { # Gallium
-		"name": "Liquid Metal Shift",
-		"power": 0,
+		"name": "Liquid Melting",
+		"power": 40,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Swaps position with an ally and increases their Speed.",
-		"target_type": "Ally",
+		"type": "Special",
+		"description": "Deals damage and reduces enemy Speed by 20%. If Global Entropy is above 30, heals the user for 10% Max HP.",
+		"target_type": "Enemy",
 		"effects": [
-			{"effect": "swap_position"},
-			{"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 2}
+			{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}
 		],
 		"cooldown": 2
 	},
 	32: { # Germanium
-		"name": "Semiconductor Flip",
-		"power": 0,
+		"name": "Transistor Gate",
+		"power": 40,
 		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Swaps the target's Attack and Defense for 2 turns.",
+		"type": "Special",
+		"is_snipe": true,
+		"description": "Deals damage (Snipe). Swaps the Action Gauge of the user with the Vanguard.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "swap_stats", "stats": ["attack", "defense"], "duration": 2}],
+		"effects": [ {"effect": "swap_atb_vanguard"} ],
 		"cooldown": 2
 	},
 	33: { # Arsenic
-		"name": "Toxic Feedback",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "For 3 turns, any enemy that attacks this unit has their Attack reduced by 40%.",
-		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "toxic_feedback", "duration": 3, "debuff_stat": "attack", "debuff_amount": -40, "debuff_percent": true, "debuff_duration": 2}],
-		"cooldown": 3
-	},
-	34: { # Selenium
-		"name": "Photonic Overload",
-		"power": 40,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Overloads the target's senses, making them unstable and take 40% more damage from the next attack.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "overload", "duration": 2, "damage_multiplier": 1.4, "message": "%s senses were overloaded!"}],
-		"cooldown": 2
-	},
-	35: { # Bromine
-		"name": "Sedative Vapor",
+		"name": "Doped Lattice",
 		"power": 30,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals damage. 30% chance to Stun if target is Poisoned.",
+		"description": "Deals damage and applies Poison. Increases the damage of all active DoTs by 5% per [R] stack currently on the enemy.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "stun", "duration": 1, "chance": 0.3, "condition_status": "poison"}],
-		"cooldown": 2
-	},
-	36: { # Krypton
-		"name": "Laser Refraction",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Grants a 25% HP shield and reflects 40% damage for 1 turn.",
-		"target_type": "Self",
 		"effects": [
-			{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.25},
-			{"type": "status", "status": "static_reflection", "damage_percent": 0.4, "duration": 1}
+			{"type": "status", "status": "poison", "damage_percent": 0.05, "duration": 3},
+			{"effect": "amplify_dots_by_r"}
 		],
 		"cooldown": 3
 	},
-	37: { # Rubidium
-		"name": "Red-Shift Dash",
+	34: { # Selenium
+		"name": "Selenium Semiconductor",
 		"power": 40,
 		"accuracy": 100,
-		"type": "Physical",
-		"description": "Deals 40 damage with high armor penetration.",
+		"type": "Special",
+		"description": "Triggers an Oxidation Burst. If this move defeats the target, the user enters an Excited State for 1 turn (Ignores Defense).",
 		"target_type": "Enemy",
 		"effects": [],
 		"cooldown": 2
 	},
-	38: { # Strontium
-		"name": "Crimson Lockdown",
+	35: { # Bromine
+		"name": "Halon Extinguisher",
 		"power": 40,
 		"accuracy": 100,
-		"type": "Physical",
-		"description": "Deals damage and reduces Speed of all enemies.",
+		"type": "Special",
+		"description": "Fire Suppressant: Triggers an Oxidation Burst. Slows target by 20%. Consumes [R] stacks to reset target's Action Gauge to 0.",
 		"target_type": "Enemy",
 		"effects": [
-			{"effect": "aoe_stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2, "message": "The enemy team is slowed!"}
+			{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}
 		],
+		"cooldown": 3
+	},
+	36: { # Krypton
+		"name": "Fluorescent Pulse",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Cleanses 2 debuffs from the user and restores 25% Stability (Reduces Global Entropy by 25).",
+		"target_type": "Self",
+		"effects": [
+			{"effect": "cleanse", "amount": 2, "target": "Attacker"},
+			{"effect": "add_global_entropy", "amount": -25}
+		],
+		"cooldown": 3
+	},
+	37: { # Rubidium
+		"name": "Infrared Glow",
+		"power": 25,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Applies 2 [R] stacks. The target is Illuminated (cannot evade) for 3 turns, and their [R] stacks cannot be cleansed.",
+		"target_type": "Enemy",
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 2, "duration": 3, "target": "Defender"},
+			{"type": "status", "status": "illuminated", "duration": 3, "target": "Defender"}
+		],
+		"cooldown": 2
+	},
+	38: { # Strontium
+		"name": "Crimson Resonance",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Counter-Frequency. When hit, has a 50% chance to immediately use a Base Move as a free counter-attack.",
+		"target_type": "Self",
+		"effects": [ {"type": "status", "status": "crimson_resonance", "duration": 3} ],
 		"cooldown": 3
 	},
 	39: { # Yttrium
@@ -702,7 +723,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and increases Crit Chance by 15%.",
+		"description": "Deals damage and increases Crit Chance by 15%. Catalysis: Spread 1 [R] stack to adjacent enemies.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "crit_chance", "amount": 15, "duration": 2, "target": "Attacker"}],
 		"cooldown": 2
@@ -712,7 +733,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and raises Defense by 15% for 1 turn.",
+		"description": "Deals damage and raises Defense by 15% for 1 turn. Catalysis: Restores 10% Stability (Reduces Global Entropy by 10).",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 15, "percent": true, "duration": 1, "target": "Attacker"}],
 		"cooldown": 2
@@ -722,7 +743,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and raises Speed by 15% for 1 turn.",
+		"description": "Deals damage and raises Speed by 15% for 1 turn. Catalysis: Reduces the user's move cooldowns by 1.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 15, "percent": true, "duration": 1, "target": "Attacker"}],
 		"cooldown": 2
@@ -732,7 +753,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and lowers enemy Defense by 15%.",
+		"description": "Deals damage and lowers enemy Defense by 15%. Catalysis: Reduces Global Entropy by 5.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": -15, "percent": true, "duration": 2}],
 		"cooldown": 2
@@ -742,7 +763,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and increases Crit Chance by 15%.",
+		"description": "Deals damage and increases Crit Chance by 15%. Catalysis: Doubles the damage of the consumed DoT.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "crit_chance", "amount": 15, "duration": 2, "target": "Attacker"}],
 		"cooldown": 2
@@ -752,29 +773,29 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and lowers enemy Defense by 15%.",
+		"description": "Deals damage and lowers enemy Defense by 15%. Catalysis: Apply 1 [R] stack after consumption.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": -15, "percent": true, "duration": 2}],
 		"cooldown": 2
 	},
 	45: { # Rhodium
 		"name": "Reflective Shell",
-		"power": 0,
+		"power": 40,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Negates next hit and reflects 30% damage.",
-		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "reflective_shell", "duration": 3}],
+		"type": "Physical",
+		"description": "Deals damage and grants a Reflective Shell (reflects 30% of next hit). Catalysis: Double the reflection damage.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "status", "status": "reflective_shell", "duration": 3, "target": "Attacker"}],
 		"cooldown": 3
 	},
 	46: { # Palladium
 		"name": "H-Absorb Shield",
-		"power": 0,
+		"power": 40,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Absorbs next hit, healing for 30% of damage.",
-		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "absorb_shield", "duration": 3}],
+		"type": "Physical",
+		"description": "Deals damage and grants an Absorb Shield (heals 30% of next hit). Catalysis: The shield is applied to the entire party.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "status", "status": "absorb_shield", "duration": 3, "target": "Attacker"}],
 		"cooldown": 3
 	},
 	47: { # Silver
@@ -782,7 +803,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and raises Speed by 15% for 1 turn.",
+		"description": "Deals damage and raises Speed by 15% for 1 turn. Catalysis: +20% Action Gauge immediately.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 15, "percent": true, "duration": 1, "target": "Attacker"}],
 		"cooldown": 2
@@ -792,246 +813,277 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage and reduces enemy Attack by 15%.",
+		"description": "Deals damage and reduces enemy Attack by 15%. Catalysis: Target is Suppressed (cannot generate Entropy) for 2 turns.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": -15, "percent": true, "duration": 2}],
 		"cooldown": 2
 	},
 	49: { # Indium Post-Transition Metal
-		"name": "Soft-Metal Pulse",
+		"name": "Soft-Solder",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Increases Speed of all allies by 10% for 1 turn.",
-		"target_type": "Self",
+		"description": "Repair: Increases an ally's Defense by 20%, cleanses 1 debuff, and reduces Global Entropy by 5.",
+		"target_type": "Ally",
 		"effects": [
-			{"effect": "aoe_stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 1, "target_team": "ally", "message": "Allies accelerate!"}
+			{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3},
+			{"effect": "cleanse", "amount": 1},
+			{"effect": "add_global_entropy", "amount": -5}
 		],
-		"cooldown": 2
+		"cooldown": 3
 	},
 	50: { # Tin Post-Transition Metal
-		"name": "Casing Reinforce",
+		"name": "Crystalline Cry",
 		"power": 0,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Grants a 30% HP shield that deals damage when broken.",
-		"target_type": "Self",
-		"effects": [ {"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.3, "explode_on_break": true}],
+		"type": "Special",
+		"description": "Deals AOE damage to all enemies. Damage is increased by 20% against targets with [R] stacks.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "aoe_power_attack", "power": 30, "move_name": "Crystalline Cry"}],
 		"cooldown": 3
 	},
 	51: { # Antimony Metalloid
-		"name": "Inhibitor Wave",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Reduces Attack of all enemies by 20%.",
-		"target_type": "Enemy",
-		"effects": [ {"effect": "aoe_stat_mod", "stat": "attack", "amount": -20, "percent": true, "duration": 2, "message": "Enemy Attack weakened!"}],
-		"cooldown": 2
-	},
-	52: { # Tellurium Metalloid
-		"name": "Solar Flare",
-		"power": 40,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals damage and blinds the enemy.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "refracted", "duration": 2}],
-		"cooldown": 2
-	},
-	53: { # Iodine Halogen
-		"name": "Antiseptic Burn",
+		"name": "Thermal Barrier",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Heals an ally for 10% Max HP every turn for 3 turns.",
+		"description": "Increases an ally's Defense by 30%. While active, reflects 100% of gained Global Entropy back at enemies as damage.",
 		"target_type": "Ally",
-		"effects": [ {"type": "status", "status": "regeneration", "heal_percent": 0.1, "duration": 3}],
+		"effects": [
+			{"type": "stat_mod", "stat": "defense", "amount": 30, "percent": true, "duration": 3},
+			{"type": "status", "status": "entropy_reflect_100", "duration": 3}
+		],
+		"cooldown": 3
+	},
+	52: { # Tellurium Metalloid
+		"name": "P-N Junction",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Deals damage. Converts 50% of the current Global Entropy into a Shield for the party.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "entropy_to_shield"} ],
+		"cooldown": 3
+	},
+	53: { # Iodine Halogen
+		"name": "Sublimation Burst",
+		"power": 60,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Purple Vapor: Triggers an Oxidation Burst. Ignores 10% of Enemy Defense for every [R] stack consumed.",
+		"target_type": "Enemy",
+		"effects": [],
 		"cooldown": 3
 	},
 	54: { # Xenon Noble Gas
-		"name": "Stasis Flash",
+		"name": "Anaesthetic Cloud",
 		"power": 0,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Absorbs the next hit, converting 60% of damage to Health.",
-		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "absorb_shield", "duration": 3, "absorb_percent": 0.6}],
+		"type": "Status_Hostile",
+		"description": "AOE Stun (1 turn). Team heals for 1% HP per Entropy stack currently active.",
+		"target_type": "Enemy",
+		"effects": [ {"effect": "anaesthetic_cloud"} ],
 		"cooldown": 3
 	},
 	55: { # Cesium Alkali Metal
-		"name": "Atomic Clock",
-		"power": 50,
-		"accuracy": 90,
-		"type": "Physical",
-		"description": "A quick attack that increases the users's speed",
+		"name": "Atomic Clockwork",
+		"power": 25,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Applies 1 [R] stack. The lowest electronegativity makes it a perfect primer. Resets the user's move cooldowns.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 15, "percent": true, "duration": 1, "target": "Attacker"}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"},
+			{"effect": "reset_cooldowns", "target": "Attacker"}
+		],
 		"cooldown": 3
 	},
 	56: { # Barium Alkaline Earth Metal
-		"name": "Barium Bulwark",
-		"power": 50,
+		"name": "Contrast Shadow",
+		"power": 0,
 		"accuracy": 100,
-		"type": "Physical",
-		"description": "Bashes enemy and grants the user a 25% HP shield.",
+		"type": "Status_Hostile",
+		"description": "Detection. Marks the target. All [R] stacks on this target are worth 0.05 more in the V.I.E. multiplier calculation.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.25, "target": "Attacker"}],
-		"cooldown": 3
+		"effects": [ {"type": "status", "status": "contrast_shadow", "duration": 3} ],
+		"cooldown": 2
 	},
 	57: { # Lanthanum Lanthanide
-		"name": "Lanth-Lens",
+		"name": "Lurking Strike",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Next attack on target cannot miss.",
+		"description": "Hidden Potential: Deals damage and applies 1 [R] stack. Increases the next Oxidation Burst's Δχ multiplier by 0.3.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "illuminated", "duration": 2}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"},
+			{"type": "status", "status": "hidden_potential", "duration": 99, "target": "Attacker"}
+		],
 		"cooldown": 3
 	},
 	58: { # Cerium
-		"name": "Cerous Spark",
+		"name": "Self-Clean Bash",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "+5% team Crit chance permanent.",
+		"description": "Catalytic Purge: Deals damage. Heals the user for 5% Max HP for every debuff pulled this turn.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "aoe_stat_mod", "stat": "crit_chance", "amount": 5, "duration": 99, "target_team": "ally", "message": "Team Crit Chance increased!"}],
+		"effects": [],
 		"cooldown": 3
 	},
 	59: { # Praseodymium
-		"name": "Didymium Flash",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Physical",
-		"description": "40 power AoE damage.",
-		"target_type": "Enemy", # Targets one to cast, hits all via effect
-		"effects": [ {"effect": "aoe_power_attack", "power": 40}],
-		"cooldown": 3
-	},
-	60: { # Neodymium
-		"name": "Magnetic Pull",
+		"name": "Twin-Green Pulse",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "A precise snipe attack.",
-		"is_snipe": true,
+		"description": "Praseo-Mirror: Deals damage and applies 1 [R] stack. Copies 1 random buff from an ally to the user.",
+		"target_type": "Enemy",
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"},
+			{"effect": "praseo_mirror", "target": "Attacker"}
+		],
+		"cooldown": 3
+	},
+	60: { # Neodymium
+		"name": "Hyper-Mag Crush",
+		"power": 60,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Permanent Magnet: Massive damage. Damage increases by 25% for every [R] stack on the target.",
 		"target_type": "Enemy",
 		"effects": [],
 		"cooldown": 3
 	},
 	61: { # Promethium
-		"name": "Lume-Decay",
+		"name": "Beta Radiance",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Lowers target Evasion.",
+		"description": "Unstable Glow: Deals damage and applies Radiation. Radiation damage is doubled if the target has 5+ [R] stacks.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "illuminated", "duration": 2, "message": "%s is illuminated!"}],
+		"effects": [],
 		"cooldown": 3
 	},
 	62: { # Samarium
-		"name": "Samar-Shield",
-		"power": 50,
+		"name": "Cobalt-Sam Siphon",
+		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Increases team defense by 10%.",
+		"description": "Energy Draw: Deals damage and applies 1 [R] stack. Steals 5% Action Gauge for every [R] stack on the target.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "aoe_stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 3, "target_team": "ally"}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}
+		],
 		"cooldown": 3
 	},
 	63: { # Europium
-		"name": "Fluorescent Ray",
-		"power": 50,
+		"name": "Phosphor Flare",
+		"power": 30,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "+30% damage vs debuffed targets.",
+		"description": "Luminescent Mark: Blinds the target for 1 turn. The next Oxidation Burst against this target deals +50% damage.",
 		"target_type": "Enemy",
-		"effects": [],
-		"bonus_damage_condition": "debuffed",
-		"damage_multiplier": 1.3,
+		"effects": [
+			{"type": "status", "status": "refracted", "duration": 1},
+			{"type": "status", "status": "luminescent", "duration": 3}
+		],
 		"cooldown": 3
 	},
 	64: { # Gadolinium
-		"name": "Neutron Sponge",
-		"power": 50,
+		"name": "Contrast Spike",
+		"power": 40,
 		"accuracy": 100,
-		"type": "Physical",
-		"description": "Absorbs 20% of next hit.",
+		"type": "Special",
+		"is_snipe": true,
+		"description": "MRI Trace: Deals damage (Snipe). Every [R] stack on the target counts as 1.5 stacks for 2 turns.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "absorb_shield", "duration": 2, "absorb_percent": 0.2, "target": "Attacker"}],
+		"effects": [
+			{"type": "status", "status": "mri_trace", "duration": 2}
+		],
 		"cooldown": 3
 	},
 	65: { # Terbium
-		"name": "Green-Shift",
-		"power": 50,
+		"name": "Green Beam",
+		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "+15% team Speed.",
+		"description": "Solid-State Lock: Deals damage and applies 1 [R] stack. The target cannot gain buffs for 2 turns.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "aoe_stat_mod", "stat": "speed", "amount": 15, "percent": true, "duration": 3, "target_team": "ally"}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"},
+			{"type": "status", "status": "buff_lock", "duration": 2}
+		],
 		"cooldown": 3
 	},
 	66: { # Dysprosium
-		"name": "Hard-Magnet Slam",
-		"power": 50,
+		"name": "Hard-to-Get Bash",
+		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "40% Stun chance.",
+		"description": "Magnetic Flux: Deals damage and increases user Defense by 30%. User gains Guarded if the target has 3+ [R] stacks.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "stun", "duration": 1, "chance": 0.4}],
+		"effects": [
+			{"type": "stat_mod", "stat": "defense", "amount": 30, "percent": true, "duration": 3, "target": "Attacker"}
+		],
 		"cooldown": 3
 	},
 	67: { # Holmium
-		"name": "Holm-Flux",
-		"power": 60,
+		"name": "Vortex Slam",
+		"power": 0,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Steals 10% target DEF.",
+		"description": "High-Flux: Deals AOE damage. Immediately triggers the 'Pull' passive again on all enemies hit.",
 		"target_type": "Enemy",
-		"effects": [ 
-			{"type": "stat_mod", "stat": "defense", "amount": -10, "percent": true, "duration": 3},
-			{"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 3, "target": "Attacker"}
+		"effects": [
+			{"effect": "aoe_power_attack", "power": 30, "move_name": "Vortex Slam"}
 		],
 		"cooldown": 3
 	},
 	68: { # Erbium
-		"name": "Amplifier Beam",
-		"power": 60,
+		"name": "Optical Pulse",
+		"power": 0,
 		"accuracy": 100,
-		"type": "Special",
-		"description": "Extends debuffs on target by 1 turn.",
-		"target_type": "Enemy",
-		"effects": [ {"effect": "extend_debuffs", "amount": 1}],
+		"type": "Status_Friendly",
+		"description": "Fiber-Optic Reset: Increases an ally's Speed by 30%. Resets the cooldowns of the ally with the lowest Action Gauge.",
+		"target_type": "Ally",
+		"effects": [
+			{"type": "stat_mod", "stat": "speed", "amount": 30, "percent": true, "duration": 3},
+			{"effect": "fiber_optic_reset"}
+		],
 		"cooldown": 3
 	},
 	69: { # Thulium
-		"name": "Thul-Thumper",
-		"power": 65,
+		"name": "Portable X-Ray",
+		"power": 40,
 		"accuracy": 100,
-		"type": "Physical",
-		"description": "Ignores 20% Defense.",
+		"type": "Special",
+		"description": "Scintillation: Deals damage and applies 1 [R] stack. Deals 20% True Damage to enemy shields.",
 		"target_type": "Enemy",
-		"effects": [],
-		"ignore_def_percent": 20.0,
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"},
+			{"effect": "scintillation_shield_damage", "target": "Defender"}
+		],
 		"cooldown": 3
 	},
 	70: { # Ytterbium
-		"name": "Resonance Wave",
-		"power": 30,
+		"name": "Isotope Anchor",
+		"power": 40,
 		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals 50% splash damage to other enemies.",
+		"type": "Physical",
+		"description": "Singularity Lock: Deals damage and applies 1 [R] stack. [R] stacks on this target cannot be cleansed or expire.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "splash_damage", "percent": 0.5}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"},
+			{"type": "status", "status": "irradiated_lock", "duration": 2}
+		],
 		"cooldown": 3
 	},
 	71: { # Lutetium
-		"name": "Apex Rare-Earth",
-		"power": 70,
+		"name": "Dense Decay",
+		"power": 60,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "A powerful finishing strike.",
+		"description": "Final Shell: Deals heavy damage. Damage is tripled if the target is the only enemy remaining.",
 		"target_type": "Enemy",
 		"effects": [],
 		"cooldown": 3
@@ -1041,7 +1093,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage and reduces target ATK by 20%.",
+		"description": "Deals damage and reduces target ATK by 20%. Catalysis: Target is Inhibited (cannot use Unique moves) for 2 turns.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": -20, "percent": true, "duration": 2}],
 		"cooldown": 3
@@ -1051,9 +1103,9 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage and increases user SPD by 20% for 1 turn.",
+		"description": "Deals damage and increases user SPD by 20% for 2 turns. Catalysis: +15% Action Gauge immediately.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 1, "target": "Attacker"}],
+		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 20, "percent": true, "duration": 2, "target": "Attacker"}],
 		"cooldown": 3
 	},
 	74: { # Tungsten
@@ -1061,19 +1113,19 @@ const UNIQUE_MOVES = {
 		"power": 30,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 30 damage and stuns the target for 1 turn.",
+		"description": "Deals damage and stuns the target for 1 turn. Catalysis: Deals 10% Max HP True Damage.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "status", "status": "stun", "duration": 1}],
 		"cooldown": 3
 	},
 	75: { # Rhenium
-		"name": "Alloy Reinforce",
+		"name": "Super-Alloy Reinforce",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage and increases user DEF by 20% for 1 turn.",
+		"description": "Deals damage and increases user DEF by 20% for 2 turns. Catalysis: Apply Defense buff to the Vanguard.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 1, "target": "Attacker"}],
+		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 2, "target": "Attacker"}],
 		"cooldown": 3
 	},
 	76: { # Osmium
@@ -1081,19 +1133,19 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage and reduces target SPD by 20%.",
+		"description": "Deals damage and reduces target SPD by 20%. Catalysis: Apply 2 additional [R] stacks.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}],
 		"cooldown": 3
 	},
 	77: { # Iridium
 		"name": "Iridescent Guard",
-		"power": 0,
+		"power": 40,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Reflects 60% of incoming damage for 2 turns.",
-		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "static_reflection", "damage_percent": 0.6, "duration": 2}],
+		"type": "Physical",
+		"description": "Deals damage and reflects 60% of incoming damage for 2 turns. Catalysis: Reflection damage increased to 100%.",
+		"target_type": "Enemy",
+		"effects": [ {"type": "status", "status": "static_reflection", "damage_percent": 0.6, "duration": 2, "target": "Attacker"}],
 		"cooldown": 3
 	},
 	78: { # Platinum
@@ -1101,7 +1153,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage and increases user Crit Chance by 25%.",
+		"description": "Deals damage and increases user Crit Chance by 25%. Catalysis: Reduce all ally move cooldowns by 1.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "crit_chance", "amount": 25, "duration": 2, "target": "Attacker"}],
 		"cooldown": 3
@@ -1111,7 +1163,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals 40 damage and heals team for 10% of damage dealt.",
+		"description": "Deals damage and heals team for 10% of damage dealt. Catalysis: Healing is doubled and reduces Global Entropy by 5.",
 		"target_type": "Enemy",
 		"effects": [ {"effect": "team_heal", "scale_stat": "damage_dealt", "scale_factor": 0.1}],
 		"cooldown": 3
@@ -1121,192 +1173,212 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage and applies a potent poison to the target.",
+		"description": "Deals damage and applies a potent poison to the target. Catalysis: Spread a copy of the consumed DoT to a random enemy.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "status", "status": "poison", "damage_percent": 0.1, "duration": 3}],
 		"cooldown": 3
 	},
 	81: { # Thallium
-		"name": "Prism Strike",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals damage equal to 20% of the target's Max HP.",
-		"target_type": "Enemy",
-		"effects": [ {"effect": "percent_damage", "percent": 0.2}],
-		"cooldown": 3
-	},
-	82: { # Lead
-		"name": "Isotope Shielding",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Applies a permanent 10% defense buff to all allies.",
-		"target_type": "Self",
-		"effects": [ {"effect": "aoe_stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 99, "target_team": "ally", "message": "Ally defenses increased!"}],
-		"cooldown": 3
-	},
-	83: { # Bismuth
-		"name": "Spiral Structure",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Swaps position with an ally, increasing their Attack and Defense by 10% for 3 turns.",
-		"target_type": "Ally",
-		"effects": [
-			{"effect": "swap_position"},
-			{"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 3},
-			{"type": "stat_mod", "stat": "defense", "amount": 10, "percent": true, "duration": 3}
-		],
-		"cooldown": 2
-	},
-	84: { # Polonium
-		"name": "Alpha Decay Burst",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals 20 AoE damage and slows all enemies by 10%.",
-		"target_type": "Enemy",
-		"effects": [ 
-			{"effect": "aoe_power_attack", "power": 20},
-			{"effect": "aoe_stat_mod", "stat": "speed", "amount": -10, "percent": true, "duration": 2, "target_team": "enemy"}
-		]
-	},
-	85: { # Astatine
-		"name": "Isotope Decay",
+		"name": "Toxic Heavy",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals 40 damage and applies radiation.",
+		"description": "Bio-Accumulation: Deals damage and applies a deadly poison that increases in damage the longer it stays active.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}]
+		"effects": [ {"type": "status", "status": "bio_poison", "damage_percent": 0.05, "duration": 4}],
+		"cooldown": 3
 	},
-	86: { # Radon
-		"name": "Radioactive Shell",
+	82: { # Lead
+		"name": "Density Barrier",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Grants self a 30% Max HP shield and applies radiation to attacking enemies for 3 turns.",
+		"description": "Radiation Shielding: Grants the user a massive shield (40% Max HP). The entire team becomes immune to Radiation damage for 2 turns.",
+		"target_type": "Self",
+		"effects": [ 
+			{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.4},
+			{"effect": "team_status", "status": "radiation_immunity", "duration": 2, "target_team": "ally", "message": "The team is shielded from radiation!"}
+		],
+		"cooldown": 3
+	},
+	83: { # Bismuth
+		"name": "Spiral Crystal",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Physical",
+		"description": "Deals damage. Reflects 50% of any incoming Entropy back at the enemy as physical damage.",
+		"target_type": "Enemy",
+		"effects": [
+			{"type": "status", "status": "entropy_reflect", "duration": 3, "target": "Attacker"}
+		],
+		"cooldown": 3
+	},
+	84: { # Polonium
+		"name": "Alpha Fission",
+		"power": 60,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Deals heavy damage. Applies 2 [R] stacks and Radiation to the target.",
+		"target_type": "Enemy",
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 2, "duration": 3, "target": "Defender"},
+			{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}
+		],
+		"cooldown": 3
+	},
+	85: { # Astatine
+		"name": "Short-Lived Decay",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Unstable Halide: Triggers an Oxidation Burst. If any [R] stacks are consumed, applies Radiation and Poison.",
+		"target_type": "Enemy",
+		"effects": [],
+		"cooldown": 3
+	},
+	86: { # Radon
+		"name": "Alpha Dispersion",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Grants a shield that reflects 40% of damage. Applies Radiation to the attacker.",
 		"target_type": "Self",
 		"effects": [
-			{"effect": "add_shield", "scale_stat": "max_hp", "scale_factor": 0.3},
+			{"type": "status", "status": "static_reflection", "damage_percent": 0.4, "duration": 3},
 			{"type": "status", "status": "radiation_feedback", "duration": 3}
 		],
 		"cooldown": 3
 	},
 	87: { # Francium
-		"name": "Unstable Overload",
-		"power": 70,
-		"accuracy": 85,
-		"type": "Physical",
-		"description": "An extremely powerful strike, deals 10% recoil damage to self.",
-		"target_type": "Enemy",
-		"effects": [ {"effect": "recoil", "scale_stat": "damage_dealt", "scale_factor": 0.1, "target": "Attacker"} ],
-		"cooldown": 3
-	},
-	88: { # Radium
-		"name": "Irradiated Bastion",
-		"power": 0,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Steals 10% of enemy Max HP and heals all allies for the same amount.",
-		"target_type": "Enemy",
-		"effects": [ {"effect": "steal_hp_team", "percent": 0.1} ],
-		"cooldown": 3
-	},
-	89: { # Actinium
-		"name": "Glow Strike",
-		"power": 40,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals damage and applies radiation.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}],
-		"cooldown": 3
-	},
-	90: { # Thorium
-		"name": "Breeder Pulse",
-		"power": 20,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals damage and permanently increases user's Attack by 5%.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": 5, "percent": true, "duration": 99, "target": "Attacker"}],
-		"cooldown": 2
-	},
-	91: { # Protactinium
-		"name": "Fission Spike",
+		"name": "Isotope Overload",
 		"power": 50,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals high damage, ignoring 50% of the enemy's defense.",
+		"description": "The Heavy Primer. Applies 5 [R] stacks and Radiation to the target. Increases Global Entropy by 20.",
 		"target_type": "Enemy",
-		"effects": [],
-		"ignore_def_percent": 50.0,
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 5, "duration": 3, "target": "Defender"},
+			{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3, "target": "Defender"},
+			{"effect": "add_global_entropy", "amount": 20}
+		],
 		"cooldown": 3
 	},
-	92: { # Uranium
-		"name": "Enriched Blast",
-		"power": 30,
+	88: { # Radium
+		"name": "Radiant Nucleus",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "The Heavy Tank. Heals 10% HP per turn, but increases global Entropy by 5 every time the user takes a turn.",
+		"target_type": "Self",
+		"effects": [ {"type": "status", "status": "radiant_nucleus", "duration": 99} ],
+		"cooldown": 3
+	},
+		89: { # Actinium
+		"name": "Cherenkov Pulse",
+		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals damage and 50% splash damage to all other enemies.",
+		"description": "Deals damage and applies 1 [R] stack. Target is Irradiated. Their [R] stacks cannot be removed for 2 turns.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "splash_damage", "percent": 0.5}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"},
+			{"type": "status", "status": "irradiated_lock", "duration": 2}
+		],
+		"cooldown": 3
+	},
+	90: { # Thorium
+		"name": "Breeder Reactor",
+		"power": 0,
+		"accuracy": 100,
+		"type": "Status_Friendly",
+		"description": "Increases an ally's Attack and Defense by 20%. Reduces the Entropy generated by the next 3 ally moves by 10.",
+		"target_type": "Ally",
+		"effects": [
+			{"type": "stat_mod", "stat": "attack", "amount": 20, "percent": true, "duration": 3},
+			{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3},
+			{"type": "status", "status": "entropy_dampener", "amount": 10, "stacks": 3, "duration": 99}
+		],
+		"cooldown": 3
+	},
+	91: { # Protactinium
+		"name": "Precursor Strike",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Deals damage and applies 1 [R] stack. If the target has Radiation, apply 2 additional [R] stacks.",
+		"target_type": "Enemy",
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}
+		],
+		"cooldown": 2
+	},
+	92: { # Uranium
+		"name": "Critical Detonation",
+		"power": 60,
+		"accuracy": 90,
+		"type": "Special",
+		"description": "Fission: Triggers an Oxidation Burst. Leaves a Radiation DoT equal to 50% of the damage dealt.",
+		"target_type": "Enemy",
+		"effects": [],
 		"cooldown": 3
 	},
 	93: { # Neptunium
-		"name": "Transuranic Hit",
-		"power": 20,
+		"name": "Tidal Decay",
+		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals damage, applying poison and radiation.",
+		"description": "Transuranic Bridge: Deals damage and applies Radiation and 1 [R] stack. If the target already has Radiation, user gains 15% Action Gauge.",
 		"target_type": "Enemy",
 		"effects": [
-			{"type": "status", "status": "poison", "damage_percent": 0.1, "duration": 3},
-			{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}
+			{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3},
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}
 		],
 		"cooldown": 3
 	},
 	94: { # Plutonium
-		"name": "Critical Mass",
-		"power": 40,
+		"name": "Transuranic Decay",
+		"power": 50,
 		"accuracy": 100,
-		"type": "Physical",
-		"description": "Deals moderate damage with a heavily increased chance to critical strike.",
+		"type": "Special",
+		"description": "Consumes all [R] stacks on the field to deal 100% Splash Damage to all enemies.",
 		"target_type": "Enemy",
 		"effects": [],
-		"crit_bonus": 50.0,
-		"cooldown": 3
+		"cooldown": 4
 	},
 	95: { # Americium
 		"name": "Ionization Beam",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals moderate damage and removes all buffs from the enemy.",
+		"is_snipe": true,
+		"description": "Smoke Detector: Deals damage (Snipe). Reveals enemy weaknesses, increasing the Δχ multiplier of the next hit against them by 0.5.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "cleanse_buffs", "target": "Enemy"}],
+		"effects": [
+			{"type": "status", "status": "smoke_detector", "duration": 2}
+		],
 		"cooldown": 3
 	},
 	96: { # Curium
-		"name": "Curie-Blast",
-		"power": 50,
+		"name": "Alpha Glow",
+		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals high damage. Takes 10% recoil damage.",
+		"description": "Thermal Decay: Deals damage and applies Burn. Burn damage scales with the number of [R] stacks on the target.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "recoil", "scale_stat": "damage_dealt", "scale_factor": 0.1, "target": "Attacker"}],
+		"effects": [],
 		"cooldown": 3
 	},
 	97: { # Berkelium
-		"name": "Alpha-Wave",
-		"power": 35,
+		"name": "Berkeley Resonance",
+		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals moderate damage with a 50% chance to stun.",
+		"description": "Synthetic Boost: Deals damage and applies 1 [R] stack. Reduces the HP cost or self-damage of the next ally move by 50%.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "stun", "duration": 1, "chance": 0.5}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"},
+			{"effect": "team_status", "status": "synthetic_boost", "duration": 99, "target_team": "ally"}
+		],
 		"cooldown": 3
 	},
 	98: { # Californium
@@ -1314,60 +1386,66 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals moderate damage and executes the target if their HP is below 15%.",
+		"description": "Chain Reaction: Deals damage and applies 1 [R] stack. Immediately doubles the number of [R] stacks on the target.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "execute", "threshold": 0.15}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}
+		],
 		"cooldown": 3
 	},
 	99: { # Einsteinium
-		"name": "Relativistic Slam",
-		"power": 30,
+		"name": "Relativistic Impact",
+		"power": 50,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals damage. Deals more damage the faster the user is than the target.",
+		"description": "E=mc2: Damage increases by 1% for every point of current Global Entropy.",
 		"target_type": "Enemy",
 		"effects": [],
-		"speed_scaling": true,
 		"cooldown": 3
 	},
 	100: { # Fermium
-		"name": "Sub-Atomic Void",
-		"power": 40,
+		"name": "Pile Zero",
+		"power": 0,
 		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals moderate damage and prevents the target from healing for 3 turns.",
-		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "heal_block", "duration": 3}],
+		"type": "Status_Friendly",
+		"description": "Neutron Trap: Grants the Vanguard a shield (30% Max HP). When the shield is hit, apply 1 [R] stack to the attacker.",
+		"target_type": "Self",
+		"effects": [
+			{"effect": "add_shield_vanguard", "amount": 0.3},
+			{"effect": "status_vanguard", "status": "neutron_trap", "duration": 3}
+		],
 		"cooldown": 3
 	},
 	101: { # Mendelevium
-		"name": "Creator's Wrath",
-		"power": 20,
-		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals damage to the target, and hits 2 random enemies.",
-		"target_type": "Enemy",
-		"effects": [ {"effect": "random_multi_hit", "hits": 2, "power": 20}],
-		"cooldown": 3
-	},
-	102: { # Nobelium
-		"name": "Dynamite Decay",
+		"name": "Periodic Pulse",
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals moderate damage. Applies Death Bomb: target explodes for 20% Max HP AoE damage to their team on death.",
+		"description": "Law of Octets: Deals damage and applies 1 [R] stack. If the target has exactly 8 [R] stacks, the next detonation deals Double Damage.",
 		"target_type": "Enemy",
-		"effects": [ {"type": "status", "status": "death_bomb", "duration": 3, "damage_percent": 0.2}],
+		"effects": [
+			{"effect": "add_status_stacks", "status": "reduced", "amount": 1, "duration": 3, "target": "Defender"}
+		],
+		"cooldown": 3
+	},
+	102: { # Nobelium
+		"name": "Peacekeeper Burst",
+		"power": 40,
+		"accuracy": 100,
+		"type": "Special",
+		"description": "Inert Explosion: Triggers an Oxidation Burst, but does not consume the Radiation DoT on the target.",
+		"target_type": "Enemy",
+		"effects": [],
 		"cooldown": 3
 	},
 	103: { # Lawrencium
-		"name": "Cyclotron Nuke",
-		"power": 0,
-		"accuracy": 100,
+		"name": "Final Chain",
+		"power": 80,
+		"accuracy": 90,
 		"type": "Special",
-		"description": "Deals damage to all enemies.",
+		"description": "Consumes all [R] stacks and Entropy. Damage increases by 2% for every point of Entropy consumed.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "aoe_power_attack", "power": 30}],
+		"effects": [],
 		"cooldown": 4
 	},
 	104: { # Rutherfordium
@@ -1375,7 +1453,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage with an increased chance to critical strike.",
+		"description": "Deals damage with +50% Crit Chance. Catalysis: Guaranteed Critical Hit with +50% Crit Damage.",
 		"target_type": "Enemy",
 		"effects": [],
 		"crit_bonus": 50.0,
@@ -1386,7 +1464,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage and stuns the target for 1 turn.",
+		"description": "Deals damage and stuns the target for 1 turn. Catalysis: Resets Global Entropy to 0.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "status", "status": "stun", "duration": 1}],
 		"cooldown": 3
@@ -1396,7 +1474,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage and increases Defense by 30% for 2 turns.",
+		"description": "Deals damage and increases Defense by 30% for 2 turns. Catalysis: Grants Team Radiation Shield (blocks next DoT).",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 30, "percent": true, "duration": 2, "target": "Attacker"}],
 		"cooldown": 3
@@ -1406,7 +1484,7 @@ const UNIQUE_MOVES = {
 		"power": 35,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 35 damage and increases Speed by 30% for 2 turns.",
+		"description": "Deals damage and increases Speed by 30% for 2 turns. Catalysis: +15% Action Gauge for all allies.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "speed", "amount": 30, "percent": true, "duration": 2, "target": "Attacker"}],
 		"cooldown": 3
@@ -1416,7 +1494,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals 40 damage and reduces target's Attack by 30%.",
+		"description": "Deals damage and reduces target's Attack by 30%. Catalysis: Target is Inhibited (Cannot use Unique moves).",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "attack", "amount": -30, "percent": true, "duration": 2}],
 		"cooldown": 3
@@ -1426,7 +1504,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals 40 damage and 50% splash damage to all other enemies.",
+		"description": "Deals damage and 50% splash damage to all other enemies. Catalysis: 100% Splash Damage and applies 1 [R] stack to all enemies hit.",
 		"target_type": "Enemy",
 		"effects": [ {"effect": "splash_damage", "percent": 0.5}],
 		"cooldown": 3
@@ -1436,7 +1514,7 @@ const UNIQUE_MOVES = {
 		"power": 35,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 35 damage and increases Defense by 40% for 2 turns.",
+		"description": "Deals damage and increases Defense by 40% for 2 turns. Catalysis: Heals user for 15% Max HP.",
 		"target_type": "Enemy",
 		"effects": [ {"type": "stat_mod", "stat": "defense", "amount": 40, "percent": true, "duration": 2, "target": "Attacker"}],
 		"cooldown": 3
@@ -1446,7 +1524,7 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Special",
-		"description": "Deals 40 damage, ignoring 50% of the enemy's defense.",
+		"description": "Deals damage, ignoring 50% of the enemy's defense. Catalysis: Ignores 100% Defense and bypasses Guards/Shields.",
 		"target_type": "Enemy",
 		"effects": [],
 		"ignore_def_percent": 50.0,
@@ -1457,72 +1535,81 @@ const UNIQUE_MOVES = {
 		"power": 40,
 		"accuracy": 100,
 		"type": "Physical",
-		"description": "Deals 40 damage. 50% chance to reset move cooldowns.",
+		"description": "Deals damage. 50% chance to reset move cooldowns. Catalysis: 100% chance to reset cooldowns.",
 		"target_type": "Enemy",
 		"effects": [ {"effect": "reset_cooldowns", "chance": 0.5, "target": "Attacker"}],
 		"cooldown": 3
 	},
 	113: { # Nihonium
-		"name": "Rising Sun Strike",
+		"name": "Synthetic Shell",
 		"power": 40,
 		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals 40 damage and heals the lowest health ally (including benched) for 100% of damage dealt.",
+		"type": "Physical",
+		"description": "Deals damage and increases Defense by 20%. Reset: 25% chance to reset the Vanguard's cooldowns.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "heal_lowest_ally", "scale_stat": "damage_dealt", "scale_factor": 1.0}],
+		"effects": [
+			{"type": "stat_mod", "stat": "defense", "amount": 20, "percent": true, "duration": 3, "target": "Attacker"},
+			{"effect": "reset_vanguard_cooldowns", "chance": 0.25}
+		],
 		"cooldown": 3
 	},
 	114: { # Flerovium
-		"name": "Dense Inertia",
+		"name": "Inert-Heavy",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Grants a shield scaling with Attack to an ally. Attackers are slowed by 20% for 2 turns.",
-		"target_type": "Ally",
+		"description": "The Ultimate Heat Sink. Negates the next instance of damage and reduces Global Entropy by 20.",
+		"target_type": "Self",
 		"effects": [
-			{"effect": "add_shield", "scale_stat": "attack", "scale_factor": 1.5},
-			{"type": "status", "status": "inertia_feedback", "duration": 3}
+			{"type": "status", "status": "guarded", "duration": 3},
+			{"effect": "add_global_entropy", "amount": -20}
 		],
 		"cooldown": 3
 	},
 	115: { # Moscovium
-		"name": "Phase Shift Strike",
-		"power": 40,
+		"name": "Unstable Mass",
+		"power": 60,
 		"accuracy": 100,
-		"type": "Special",
-		"description": "Deals 40 damage. Swaps places with the lowest health ally (including benched) and heals them for 100% of damage dealt.",
+		"type": "Physical",
+		"description": "Deals heavy damage. Deals +5% extra damage for every point of Global Entropy active.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "swap_and_heal_lowest_ally", "scale_stat": "damage_dealt", "scale_factor": 1.0}],
+		"effects": [],
 		"cooldown": 3
 	},
 	116: { # Livermorium
-		"name": "Mass Stabilization",
-		"power": 0,
+		"name": "Decay Strike",
+		"power": 40,
 		"accuracy": 100,
-		"type": "Status_Friendly",
-		"description": "Heals all allies (including benched). Healing amount scales with the user's Attack.",
-		"target_type": "Self",
-		"effects": [ {"effect": "team_heal", "scale_stat": "attack", "scale_factor": 1.5, "include_bench": true}],
+		"type": "Special",
+		"description": "Deals damage and applies Radiation. The target's [R] stacks multiply by 1.5x at the end of their turn.",
+		"target_type": "Enemy",
+		"effects": [
+			{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3},
+			{"type": "status", "status": "decay_catalyst", "duration": 3}
+		],
 		"cooldown": 3
 	},
 	117: { # Tennessine
-		"name": "Singularity Halide",
-		"power": 0,
+		"name": "Relativistic Siphon",
+		"power": 60,
 		"accuracy": 100,
-		"type": "Status_Hostile",
-		"description": "Creates a singularity hazard. Attacking enemies are poisoned and slowed by 20% for 1 turn.",
+		"type": "Special",
+		"description": "Atomic Hunger: Triggers an Oxidation Burst. User gains 10% Action Gauge for every [R] stack consumed.",
 		"target_type": "Enemy",
-		"effects": [ {"effect": "team_status", "status": "singularity_hazard", "duration": 3, "message": "A singularity forms on the battlefield!"}],
+		"effects": [],
 		"cooldown": 3
 	},
 	118: { # Oganesson
-		"name": "Noble Collapse",
+		"name": "Relativistic Shell",
 		"power": 0,
 		"accuracy": 100,
 		"type": "Status_Friendly",
-		"description": "Ultimate Shield: Grants invulnerability to all damage and negative effects for 1 turn.",
+		"description": "Blocks the next 2 hits. Resets all ally move cooldowns.",
 		"target_type": "Self",
-		"effects": [ {"type": "status", "status": "invulnerable", "duration": 1}],
+		"effects": [
+			{"type": "status", "status": "guarded", "stacks": 2, "duration": 3},
+			{"effect": "team_reset_cooldowns"}
+		],
 		"cooldown": 3
 	}
 }

@@ -131,22 +131,6 @@ func _ready():
 	bench_container.position.y -= 580 # Offset above player row
 	add_child(bench_container)
 	
-	# Dynamically add the Wave Indicator if in a run
-	if CampaignManager and CampaignManager.is_rogue_run:
-		var wave_lbl = Label.new()
-		wave_lbl.text = "WAVE %d / %d" % [CampaignManager.current_run_wave, CampaignManager.max_run_waves]
-		wave_lbl.set_anchors_preset(Control.PRESET_CENTER_TOP)
-		wave_lbl.grow_horizontal = Control.GROW_DIRECTION_BOTH
-		wave_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		wave_lbl.offset_top = 40
-		wave_lbl.add_theme_font_size_override("font_size", 48)
-		wave_lbl.add_theme_color_override("font_color", Color("#60fafc"))
-		wave_lbl.add_theme_color_override("font_outline_color", Color("#010813"))
-		wave_lbl.add_theme_constant_override("outline_size", 8)
-		wave_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		wave_lbl.z_index = 50
-		add_child(wave_lbl)
-	
 	_build_ui_cache()
 
 func _process(delta):
@@ -421,7 +405,7 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		var s = str(effect.get("status", "")).to_lower()
 		if s == "": return null
 		
-		var is_debuff = effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard", "chain_reaction_mark"]
+		var is_debuff = effect.has("damage_multiplier") or s in ["poison", "stun", "silence_special", "vulnerable", "corrosion", "reactive_vapor", "radiation", "refracted", "insanity", "singularity_hazard", "chain_reaction_mark", "burn", "proton_charge", "spontaneous_fumes", "incendiary_flash", "contrast_shadow", "bio_poison", "decay_catalyst", "irradiated_lock", "smoke_detector", "law_of_octets", "mri_trace", "buff_lock", "suppressed", "inhibited"]
 		
 		# Known Debuffs
 		if is_debuff:
@@ -486,10 +470,104 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "anodic_barrier":
 			bg_color = Color("#ff9360") # Orange
 			tooltip_text = "Anodic Barrier\nIncreases Defense and applies [R] to attackers.\nDuration: %s" % dur_text
+		elif s == "processing_loop":
+			bg_color = Color("#ff69b4") # Pink
+			tooltip_text = "Processing Loop\nIncreases next Oxidation Burst multiplier by 0.1 per stack.\nDuration: %s" % dur_text
+		elif s == "halogen_hunger":
+			bg_color = Color("#802680") # Purple
+			tooltip_text = "Halogen Hunger\nTriggering an Oxidation Burst grants 20%% Action Gauge.\nDuration: %s" % dur_text
+		elif s == "half_life_cascade":
+			bg_color = Color("#adff2f") # Green-yellow
+			tooltip_text = "Half-Life Cascade\n[R] stacks double at the start of each turn.\nDuration: %s" % dur_text
+		elif s == "luminescent":
+			bg_color = Color("#ffffff") # White
+			tooltip_text = "Luminescent\nIncreases next Oxidation Burst damage by +50%%.\nDuration: %s" % dur_text
+		elif s == "burn":
+			bg_color = Color("#ff4500") # Orange Red
+			tooltip_text = "Burn\nTaking damage each turn.\nDuration: %s" % dur_text
+		elif s == "proton_charge":
+			bg_color = Color("#ff69b4") # Pink
+			tooltip_text = "Proton Charge\nTakes +10%% damage per charge on next hit.\nDuration: %s" % dur_text
+		elif s == "spontaneous_fumes":
+			bg_color = Color("#ff9360") # Orange
+			tooltip_text = "Spontaneous Fumes\nTriggers Oxidation Burst on next turn.\nDuration: %s" % dur_text
+		elif s == "excited":
+			bg_color = Color("#ffd700") # Gold
+			tooltip_text = "Excited State\nIgnores resistances and defense.\nDuration: %s" % dur_text
+		elif s == "toxic_lattice":
+			bg_color = Color("#6dc000") # Green
+			tooltip_text = "Toxic Lattice\nReduces damage and reflects [R] stacks.\nDuration: %s" % dur_text
+		elif s == "entropy_shield":
+			bg_color = Color("#e0e0e0") # Silver
+			tooltip_text = "Entropy Shield\nBlocks global Entropy increases.\nStacks: %d" % effect.get("stacks", 1)
+		elif s == "crimson_resonance":
+			bg_color = Color("#ff4d4d") # Red
+			tooltip_text = "Crimson Resonance\n50%% chance to counter-attack.\nDuration: %s" % dur_text
+		elif s == "radiant_nucleus":
+			bg_color = Color("#adff2f") # Radioactive Green
+			tooltip_text = "Radiant Nucleus\nHeals HP but generates Entropy.\nDuration: %s" % dur_text
+		elif s == "bio_poison":
+			bg_color = Color("#802680") # Purple
+			tooltip_text = "Bio-Poison\nPoison damage increases each turn.\nDuration: %s" % dur_text
+		elif s == "entropy_dampener":
+			bg_color = Color("#e0e0e0") # Silver
+			tooltip_text = "Entropy Dampener\nReduces next global Entropy gain.\nStacks: %d" % effect.get("stacks", 1)
+		elif s == "radiation_immunity":
+			bg_color = Color("#60fafc") # Cyan
+			tooltip_text = "Radiation Immunity\nImmune to radiation damage.\nDuration: %s" % dur_text
+		elif s == "entropy_reflect":
+			bg_color = Color("#ff9360") # Orange
+			tooltip_text = "Entropy Reflect\nReflects gained Entropy as damage.\nDuration: %s" % dur_text
+		elif s == "decay_catalyst":
+			bg_color = Color("#ff4d4d") # Red
+			tooltip_text = "Decay Catalyst\n[R] stacks multiply each turn.\nDuration: %s" % dur_text
+		elif s == "entropy_halver":
+			bg_color = Color("#e0e0e0") # Silver
+			tooltip_text = "Control Array\nHalves next global Entropy gain.\nStacks: %d" % effect.get("stacks", 1)
+		elif s == "vanguard_circuit":
+			bg_color = Color("#ff69b4") # Pink
+			tooltip_text = "Vanguard Circuit\nShares Vanguard properties.\nDuration: %s" % dur_text
+		elif s == "entropy_reflect_100":
+			bg_color = Color("#ff9360") # Orange
+			tooltip_text = "Thermal Barrier\nReflects 100%% of gained Entropy as damage.\nDuration: %s" % dur_text
+		elif s == "irradiated_lock":
+			bg_color = Color("#adff2f")
+			tooltip_text = "Irradiated Lock\n[R] stacks cannot be removed.\nDuration: %s" % dur_text
+		elif s == "smoke_detector":
+			bg_color = Color("#a0a0a0")
+			tooltip_text = "Smoke Detector\nIncreases next Oxidation Burst multiplier by 0.5.\nDuration: %s" % dur_text
+		elif s == "synthetic_boost":
+			bg_color = Color("#2ecc71")
+			tooltip_text = "Synthetic Boost\nReduces next recoil by 50%%.\nDuration: %s" % dur_text
+		elif s == "neutron_trap":
+			bg_color = Color("#60fafc")
+			tooltip_text = "Neutron Trap\nApplies [R] to attackers hitting the shield.\nDuration: %s" % dur_text
+		elif s == "law_of_octets":
+			bg_color = Color("#ffd700")
+			tooltip_text = "Law of Octets\nNext Oxidation Burst is doubled.\nDuration: %s" % dur_text
+		elif s == "hidden_potential":
+			bg_color = Color("#2ecc71")
+			tooltip_text = "Hidden Potential\nNext Burst multiplier +0.3.\nDuration: %s" % dur_text
+		elif s == "mri_trace":
+			bg_color = Color("#ff4d4d")
+			tooltip_text = "MRI Trace\n[R] stacks count as 1.5x.\nDuration: %s" % dur_text
+		elif s == "buff_lock":
+			bg_color = Color("#8b0000")
+			tooltip_text = "Solid-State Lock\nCannot gain buffs.\nDuration: %s" % dur_text
+		elif s == "focused":
+			bg_color = Color("#ffd700") # Gold
+			tooltip_text = "Focused\nAccuracy increased by 20%.\nDuration: %s" % dur_text
+		elif s == "suppressed":
+			bg_color = Color("#808080") # Grey
+			tooltip_text = "Suppressed\nCannot generate Global Entropy.\nDuration: %s" % dur_text
+		elif s == "inhibited":
+			bg_color = Color("#800080") # Deep Purple
+			tooltip_text = "Inhibited\nCannot use Unique moves.\nDuration: %s" % dur_text
+		elif s == "dot_block":
+			bg_color = Color("#60fafc") # Cyan
+			tooltip_text = "Radiation Shield\nBlocks the next DoT application.\nDuration: %s" % dur_text
 		
-		if s == "marked_covalent": text = "COV"
-		elif s == "unstable": text = "UNS"
-		elif s == "volatile": text = "VOL"
+		if s == "unstable": text = "UNS"
 		elif s == "carbonized": text = "CAR"
 		elif s == "guarded": text = "GRD"
 		elif s == "oxidized": text = "OXI"
@@ -519,6 +597,40 @@ func _create_status_icon(effect: Dictionary) -> Control:
 		elif s == "shield": text = "SHD"
 		elif s == "anodic_barrier": text = "ANO"
 		elif s == "reduced": text = "[R]"
+		elif s == "processing_loop": text = "PRC"
+		elif s == "halogen_hunger": text = "HUN"
+		elif s == "half_life_cascade": text = "HLC"
+		elif s == "luminescent": text = "LUM"
+		elif s == "burn": text = "BRN"
+		elif s == "proton_charge": text = "PTN"
+		elif s == "spontaneous_fumes": text = "FUM"
+		elif s == "excited": text = "EXC"
+		elif s == "toxic_lattice": text = "TOX"
+		elif s == "incendiary_flash": text = "FLS"
+		elif s == "entropy_shield": text = "ENT-S"
+		elif s == "crimson_resonance": text = "RES"
+		elif s == "contrast_shadow": text = "SHD"
+		elif s == "radiant_nucleus": text = "RAD-N"
+		elif s == "bio_poison": text = "BIO"
+		elif s == "entropy_dampener": text = "DMP"
+		elif s == "radiation_immunity": text = "RAD-I"
+		elif s == "entropy_reflect": text = "E-RFL"
+		elif s == "decay_catalyst": text = "D-CAT"
+		elif s == "entropy_halver": text = "HLV"
+		elif s == "vanguard_circuit": text = "CKT"
+		elif s == "entropy_reflect_100": text = "TRFL"
+		elif s == "irradiated_lock": text = "I-LCK"
+		elif s == "smoke_detector": text = "SMK"
+		elif s == "synthetic_boost": text = "S-BST"
+		elif s == "neutron_trap": text = "N-TRP"
+		elif s == "law_of_octets": text = "OCT"
+		elif s == "hidden_potential": text = "H-POT"
+		elif s == "mri_trace": text = "MRI"
+		elif s == "buff_lock": text = "B-LCK"
+		elif s == "focused": text = "FOC"
+		elif s == "suppressed": text = "SUP"
+		elif s == "inhibited": text = "INH"
+		elif s == "dot_block": text = "D-BLK"
 		else: text = s.substr(0, 3).to_upper()
 
 	elif type == "swap_stats":
@@ -578,6 +690,14 @@ func _update_bar_style(bar: ProgressBar, is_full: bool):
 			style.bg_color = Color("#ff9360")
 		elif style.bg_color != Color("#ff9360"):
 			style.bg_color = Color("#ff9360")
+
+func update_global_entropy(value: int):
+	var bar = find_child("EntropyBar", true, false)
+	if not bar:
+		bar = find_child("GlobalEntropyBar", true, false) # Fallback to old name just in case
+	if bar:
+		var tween = create_tween()
+		tween.tween_property(bar, "value", float(value), 0.3)
 
 func _start_pulse_tween(bar: ProgressBar, style: StyleBoxFlat):
 	var tween = bar.create_tween()

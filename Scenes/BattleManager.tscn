@@ -9,10 +9,6 @@
 [ext_resource type="Texture2D" uid="uid://cwwsh0aaj3yvn" path="res://Assets/ItemSheet2.png" id="6_hoy3w"]
 [ext_resource type="Texture2D" uid="uid://b2kh1qmltxbae" path="res://Assets/ItemSheet3.png" id="6_r3dt2"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_swlla"]
-atlas = ExtResource("5_l362f")
-region = Rect2(91.84299, 138.10745, 359.50424, 427.27286)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_qian1"]
 atlas = ExtResource("5_l362f")
 region = Rect2(862.0503, 136.28377, 362.81006, 428.92578)
@@ -21,9 +17,13 @@ region = Rect2(862.0503, 136.28377, 362.81006, 428.92578)
 atlas = ExtResource("5_l362f")
 region = Rect2(1249.8184, 138.9091, 360.90918, 425.45465)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_24cr6"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_jkk6h"]
+atlas = ExtResource("6_r3dt2")
+region = Rect2(45.44023, 67.72489, 179.60536, 214.59341)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f42mu"]
 atlas = ExtResource("5_l362f")
-region = Rect2(1250.0703, 757.2273, 360.00024, 427.27283)
+region = Rect2(476.92627, 136.28348, 360.3307, 428.09933)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_wqf2j"]
 atlas = ExtResource("5_l362f")
@@ -33,21 +33,21 @@ region = Rect2(89.12953, 1380.2819, 362.1338, 428.2495)
 atlas = ExtResource("5_l362f")
 region = Rect2(477.1406, 1381.2811, 361.15714, 428.92578)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_f42mu"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_24cr6"]
 atlas = ExtResource("5_l362f")
-region = Rect2(476.92627, 136.28348, 360.3307, 428.09933)
+region = Rect2(1250.0703, 757.2273, 360.00024, 427.27283)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6mgkg"]
 atlas = ExtResource("6_r3dt2")
 region = Rect2(239.30331, 67.91556, 179.44629, 214.8388)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_jkk6h"]
-atlas = ExtResource("6_r3dt2")
-region = Rect2(45.44023, 67.72489, 179.60536, 214.59341)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_jbp3h"]
 atlas = ExtResource("6_r3dt2")
 region = Rect2(45.296524, 378.05972, 180.9987, 214.4664)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_swlla"]
+atlas = ExtResource("5_l362f")
+region = Rect2(91.84299, 138.10745, 359.50424, 427.27286)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_kyqq8"]
 atlas = ExtResource("6_hoy3w")
@@ -129,7 +129,7 @@ bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.8156863)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kyqq8"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.8156863)
 
-[node name="BattleManager" type="Control" unique_id=806606935 node_paths=PackedStringArray("player_spawn_points", "enemy_spawn_points")]
+[node name="BattleManager" type="Control" unique_id=806606935 node_paths=PackedStringArray("battle_hud", "player_spawn_points", "enemy_spawn_points")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -138,6 +138,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_mxkao")
 monster_scene = ExtResource("2_yygwm")
+battle_hud = NodePath("BattleHUD")
 player_spawn_points = [NodePath("BattleHUD/Theater/PlayerRow/PlayerSlot1/PlayerSpawn1"), NodePath("BattleHUD/Theater/PlayerRow/PlayerSlot2/PlayerSpawn2"), NodePath("BattleHUD/Theater/PlayerRow/PlayerSlot3/PlayerSpawn3")]
 enemy_spawn_points = [NodePath("BattleHUD/Theater/EnemyRow/Enemy1/EnemySlot1/EnemySpawn1"), NodePath("BattleHUD/Theater/EnemyRow/Enemy2/EnemySlot2/EnemySpawn2"), NodePath("BattleHUD/Theater/EnemyRow/Enemy3/EnemySlot3/EnemySpawn3")]
 
@@ -183,6 +184,25 @@ anchor_right = 1.0
 anchor_bottom = 0.788
 offset_bottom = -0.36010742
 grow_horizontal = 2
+
+[node name="EntropyContainer" type="VBoxContainer" parent="BattleHUD/Theater" unique_id=80089543]
+custom_minimum_size = Vector2(700, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="EntropyLabel" type="Label" parent="BattleHUD/Theater/EntropyContainer" unique_id=514725022]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.5764706, 0.3764706, 1)
+theme_override_colors/font_outline_color = Color(0.81192327, 0, 0.23289031, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 50
+text = "GLOBAL ENTROPY"
+horizontal_alignment = 1
+
+[node name="EntropyBar" type="ProgressBar" parent="BattleHUD/Theater/EntropyContainer" unique_id=1837837540]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+show_percentage = false
 
 [node name="EnemyRow" type="HBoxContainer" parent="BattleHUD/Theater" unique_id=1783936866]
 layout_mode = 2

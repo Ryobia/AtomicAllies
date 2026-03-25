@@ -364,7 +364,7 @@ func cleanse_negative_effects():
 		var is_negative = false
 		
 		if effect.type == "status":
-			if effect.get("status") in ["stun", "corrosion", "silence_special", "marked_covalent", "vulnerable"]:
+			if effect.get("status") in ["stun", "corrosion", "silence_special", "marked_covalent", "vulnerable", "burn", "proton_charge", "spontaneous_fumes", "incendiary_flash", "contrast_shadow"]:
 				is_negative = true
 		elif effect.type == "stat_mod":
 			if effect.amount < 0:
