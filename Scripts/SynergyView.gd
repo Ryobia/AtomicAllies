@@ -229,54 +229,44 @@ func _get_synergy_text(group: int, count: int) -> String:
 	var c_lbl = "#a0a0a0" # Grey for labels
 	
 	var total = _group_totals.get(group, 0)
-	var c_fs = c_lbl
-	var fs_lbl_txt = "Full Set"
-	
-	if total > 0 and count >= total:
-		c_fs = "#ffd700"
-		fs_lbl_txt = "Full Set (ACTIVE)"
+	var c_fs = "#ffd700"
+	var fs_lbl_txt = "Mastery"
 		
 	var text = ""
 	
 	match group:
 		AtomicConfig.Group.ALKALI_METAL:
 			var val = count * 20
-			text = "[color=%s]Synergy:[/color] Enthalpy Burst deals [color=%s]+%d%%[/color] damage (20%%/elem).\n[color=%s]Passive:[/color] Hitting Vapor/Corrosion triggers an AoE Enthalpy Burst.\n[color=%s]%s:[/color] Guaranteed Critical Strike on first attack." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Enthalpy Burst deals [color=%s]+%d%%[/color] damage (20%%/elem).\n[color=%s]Passive:[/color] Hitting Vapor/Corrosion triggers an AoE Enthalpy Burst.\n[color=%s]%s (100%% Stability):[/color] Applying an [R] stack grants 5%% Action Gauge." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.ALKALINE_EARTH:
 			var val = count * 1
-			text = "[color=%s]Synergy:[/color] Incoming damage reduced by [color=%s]%d%%[/color] per [R] stack on attacker (1%%/elem).\n[color=%s]Passive:[/color] Taking damage has a 25%% chance to apply [R] to the attacker.\n[color=%s]%s:[/color] Immune to first instance of damage." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Incoming damage reduced by [color=%s]%d%%[/color] per [R] stack on attacker (1%%/elem).\n[color=%s]Passive:[/color] Taking damage has a 25%% chance to apply [R] to the attacker.\n[color=%s]%s (100%% Stability):[/color] Being hit by an enemy applies 1 [R] stack to the attacker." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.TRANSITION_METAL:
 			var val = count * 2
-			text = "[color=%s]Synergy:[/color] Catalysis deals [color=%s]+%d%%[/color] damage per tick (2%%/elem).\n[color=%s]Passive:[/color] Attacks force enemy debuffs to tick instantly.\n[color=%s]%s:[/color] Catalysis ticks twice." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Catalysis deals [color=%s]+%d%%[/color] damage per tick (2%%/elem).\n[color=%s]Passive:[/color] Attacks force enemy debuffs to tick instantly.\n[color=%s]%s (100%% Stability):[/color] Consuming a DoT has a 30%% chance to NOT consume it." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.HALOGEN:
-			text = "[color=%s]Synergy:[/color] Halogen Hunger grants Action Gauge on Bursts.\n[color=%s]Passive:[/color] Reactive Detonator (High-speed Burst triggers).\n[color=%s]%s:[/color] Starts combat poisoning a random enemy." % [c_lbl, c_lbl, c_fs, fs_lbl_txt]
+			var val = count * 10
+			text = "[color=%s]Synergy:[/color] Burst multiplier adds [color=%s]+0.%02dx[/color] per stack (0.10x/elem).\n[color=%s]Passive:[/color] Reactive Detonator (High-speed Burst triggers).\n[color=%s]%s (100%% Stability):[/color] Start combat by applying Corrosion (-10%% Def) to the highest HP enemy." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.NOBLE_GAS:
 			var val = count * 15
-			text = "[color=%s]Synergy:[/color] Team takes [color=%s]-%d%%[/color] damage from DoTs and Hazards (15%%/elem).\n[color=%s]Passive:[/color] Inert Barrier (Immune to all debuffs).\n[color=%s]%s:[/color] Entire team restores 5%% HP every turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Team takes [color=%s]-%d%%[/color] damage from DoTs and Hazards (15%%/elem).\n[color=%s]Passive:[/color] Inert Barrier (Immune to all debuffs).\n[color=%s]%s (100%% Stability):[/color] At the start of every turn, reduce Global Entropy by 5." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.LANTHANIDE:
 			var val = count * 1
-			text = "[color=%s]Synergy:[/color] Pulled debuffs last [color=%s]+%d[/color] turn(s) (1/elem).\n[color=%s]Passive:[/color] Magnetic Pull (Attacks condense all enemy debuffs onto the target).\n[color=%s]%s:[/color] +10%% All Stats to ALL elements." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Pulled debuffs last [color=%s]+%d[/color] turn(s) (1/elem).\n[color=%s]Passive:[/color] Magnetic Pull (Attacks condense all enemy debuffs onto the target).\n[color=%s]%s (100%% Stability):[/color] The \"Pull\" passive now also steals 10%% Speed from all affected targets." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.NONMETAL:
 			var mult = 0.20 + (count * 0.05)
-			if total > 0 and count >= total:
-				mult += 0.20
-			text = "[color=%s]Synergy:[/color] Burst multiplier adds [color=%s]+%.2fx[/color] per stack (0.05x/elem).\n[color=%s]Passive:[/color] Oxidation (Consumes [R] stacks for explosive damage).\n[color=%s]%s:[/color] Base multiplier +0.20x." % [c_lbl, c_val, mult, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Burst multiplier adds [color=%s]+%.2fx[/color] per stack (0.05x/elem).\n[color=%s]Passive:[/color] Oxidation (Consumes [R] stacks for explosive damage).\n[color=%s]%s (100%% Stability):[/color] Oxidation Bursts deal +25%% Critical Damage." % [c_lbl, c_val, mult, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.METALLOID:
-			text = "[color=%s]Synergy:[/color] Converts [R] stacks into Processing Loops.\n[color=%s]Passive:[/color] Semiconductor (Amplify and manipulate Burst logic).\n[color=%s]%s:[/color] Increases the chance to stun on-hit to 25%%." % [c_lbl, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Converts [R] stacks into Processing Loops.\n[color=%s]Passive:[/color] Semiconductor (Amplify and manipulate Burst logic).\n[color=%s]%s (100%% Stability):[/color] Unique moves have their cooldowns reduced by 1." % [c_lbl, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.POST_TRANSITION:
 			var val = count * 10
-			text = "[color=%s]Synergy:[/color] Buffs are [color=%s]+%d%%[/color] stronger (10%%/elem).\n[color=%s]Passive:[/color] Signal Amplification (Single-target buffs splash to the whole team).\n[color=%s]%s:[/color] Buffs last +1 turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Buffs are [color=%s]+%d%%[/color] stronger (10%%/elem).\n[color=%s]Passive:[/color] Signal Amplification (Single-target buffs splash to the whole team).\n[color=%s]%s (100%% Stability):[/color] Increases the team's Max Entropy limit by 15." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		AtomicConfig.Group.ACTINIDE:
 			var val = count * 1
-			text = "[color=%s]Synergy:[/color] Radiation base damage +[color=%s]%d%%[/color] Max HP (1%%/elem).\n[color=%s]Passive:[/color] Critical Mass (Reactions double Radiation damage).\n[color=%s]%s:[/color] Gain +3%% Speed every turn." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
+			text = "[color=%s]Synergy:[/color] Radiation base damage +[color=%s]%d%%[/color] Max HP (1%%/elem).\n[color=%s]Passive:[/color] Critical Mass (Reactions double Radiation damage).\n[color=%s]%s (100%% Stability):[/color] Radiation DoTs can now Critically Strike." % [c_lbl, c_val, val, c_lbl, c_fs, fs_lbl_txt]
 		_:
 			text = "Unknown Synergy."
 			
-	var mastery = AtomicConfig.MASTERY_BONUSES.get(group, "")
-	if mastery != "":
-		mastery = mastery.replace("Mastery: ", "")
-		text += "\n[color=#ffd700]Mastery (100% Stability):[/color] " + mastery
-		
 	return text
 
 func _on_back_pressed():

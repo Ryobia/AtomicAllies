@@ -18,10 +18,6 @@ region = Rect2(862.0503, 756.4919, 361.98364, 428.0993)
 atlas = ExtResource("2_ep4c3")
 region = Rect2(1249.5967, 756.4922, 360.3307, 429.7522)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_swlla"]
-atlas = ExtResource("3_eufrv")
-region = Rect2(91.84299, 138.10745, 359.50424, 427.27286)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_qian1"]
 atlas = ExtResource("3_eufrv")
 region = Rect2(862.0503, 136.28377, 362.81006, 428.92578)
@@ -30,9 +26,13 @@ region = Rect2(862.0503, 136.28377, 362.81006, 428.92578)
 atlas = ExtResource("3_eufrv")
 region = Rect2(1249.8184, 138.9091, 360.90918, 425.45465)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_24cr6"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_a7l7x"]
+atlas = ExtResource("4_ulgok")
+region = Rect2(45.92298, 68.28139, 179.44641, 214.21803)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_au6ga"]
 atlas = ExtResource("3_eufrv")
-region = Rect2(1250.0703, 757.2273, 360.00024, 427.27283)
+region = Rect2(474.44693, 135.45732, 364.46286, 429.7522)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_wqf2j"]
 atlas = ExtResource("3_eufrv")
@@ -42,20 +42,23 @@ region = Rect2(89.12953, 1380.2819, 362.1338, 428.2495)
 atlas = ExtResource("3_eufrv")
 region = Rect2(477.1406, 1381.2811, 361.15714, 428.92578)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_au6ga"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_24cr6"]
 atlas = ExtResource("3_eufrv")
-region = Rect2(474.44693, 135.45732, 364.46286, 429.7522)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_a7l7x"]
-atlas = ExtResource("4_ulgok")
-region = Rect2(45.92298, 68.28139, 179.44641, 214.21803)
+region = Rect2(1250.0703, 757.2273, 360.00024, 427.27283)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_0t6fx"]
 atlas = ExtResource("4_ulgok")
 region = Rect2(237.10274, 68.35866, 181.30919, 214.83894)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_swlla"]
+atlas = ExtResource("3_eufrv")
+region = Rect2(91.84299, 138.10745, 359.50424, 427.27286)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bf1td"]
 bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.35686275)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ulgok"]
+bg_color = Color(0.003921569, 0.03137255, 0.07450981, 0.9411765)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eufrv"]
 content_margin_left = 30.0
@@ -156,6 +159,7 @@ theme_override_colors/font_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_colors/font_outline_color = Color(0.3764706, 0.98039216, 0.9882353, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 90
+theme_override_styles/normal = SubResource("StyleBoxFlat_ulgok")
 text = "Rest Site"
 horizontal_alignment = 1
 

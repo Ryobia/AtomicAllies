@@ -170,7 +170,8 @@ func _populate_table(grid: GridContainer):
 	for z in range(104, 119): _add_card(grid, z) # Rf - Og
 	
 	# --- Spacing Row (Vertical Gap) ---
-	_add_spacers(grid, 18)
+	_add_secret_test_card(grid)
+	_add_spacers(grid, 17)
 	await get_tree().process_frame
 	
 	# --- Lanthanides (Row 8) ---
@@ -765,3 +766,68 @@ func _show_synergy_popup():
 	if scene:
 		var popup = scene.instantiate()
 		_ui_layer.add_child(popup)
+
+func _add_secret_test_card(grid: Container):
+	if not monster_card_scene:
+		_add_spacers(grid, 1)
+		return
+		
+	var card = monster_card_scene.instantiate()
+	grid.add_child(card)
+	card.custom_minimum_size = Vector2(100, 120)
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.1, 0.1, 0.5)
+	style.border_color = Color("#ff00ff") # Magenta border to stand out
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	card.add_theme_stylebox_override("panel", style)
+	
+	var name_lbl = card.find_child("NameLabel", true, false)
+	if name_lbl:
+		name_lbl.text = "TEST"
+		name_lbl.add_theme_color_override("font_color", Color("#ff00ff"))
+		name_lbl.visible = true
+		
+	var num_lbl = card.find_child("NumberLabel", true, false)
+	if num_lbl:
+		num_lbl.text = "???"
+		num_lbl.add_theme_color_override("font_color", Color("#ff00ff"))
+		num_lbl.visible = true
+		
+	var icon = card.find_child("IconTexture", true, false)
+	if icon:
+		icon.visible = false
+		
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.gui_input.connect(func(event):
+		if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			if not _is_dragging:
+				_start_secret_test_run()
+	)
+
+func _start_secret_test_run():
+	var enemies: Array[MonsterData] = []
+	for i in range(3):
+		var dummy = MonsterData.new()
+		dummy.monster_name = "Test Dummy " + str(i+1)
+		dummy.atomic_number = 999
+		dummy.group = AtomicConfig.Group.UNKNOWN
+		dummy.stability = 100 # Math workaround: 19,780 stability produces exactly a 100.0x multiplier, resulting in 10,000 HP.
+		
+		# Give them a harmless move so they don't instakill your team with their massive stats
+		var stare = MoveData.new()
+		stare.name = "Observe"
+		stare.power = 0
+		stare.accuracy = 100
+		stare.description = "The dummy observes you."
+		dummy.moves.append(stare)
+		
+		enemies.append(dummy)
+		
+	PlayerData.pending_enemy_team = enemies
+	
+	if CampaignManager:
+		CampaignManager.is_rogue_run = false
+		
+	GlobalManager.switch_scene("battle_prepare")

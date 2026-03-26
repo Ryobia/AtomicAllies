@@ -343,30 +343,50 @@ func update_speed_bar(is_player: bool, index: int, value: float, max_value: floa
 			if bar:
 				_update_single_bar(bar, value, max_value, is_full)
 
-func update_status_effects(is_player: bool, index: int, effects: Array):
+func update_status_effects(is_player: bool, index: int, new_effects: Array):
 	var cache = _ui_cache.player if is_player else _ui_cache.enemy
 	if index >= cache.size(): return
 	
 	# Update Slot Container (On-field)
 	var slot_container = cache[index].get("status_container")
 	if slot_container:
-		for child in slot_container.get_children():
-			child.queue_free()
-		for effect in effects:
-			var icon = _create_status_icon(effect)
-			if icon:
-				slot_container.add_child(icon)
+		_rebuild_and_animate_statuses(slot_container, new_effects)
 	
 	# Update Card Container (Dashboard - Player Only)
 	if is_player:
 		var card_container = cache[index].get("card_status_container")
 		if card_container:
-			for child in card_container.get_children():
-				child.queue_free()
-			for effect in effects:
-				var icon = _create_status_icon(effect)
-				if icon:
-					card_container.add_child(icon)
+			_rebuild_and_animate_statuses(card_container, new_effects)
+
+func _get_effect_key(effect: Dictionary) -> String:
+	# Create a unique key for an effect dictionary to track it
+	if effect.has("status"):
+		return str(effect.get("status"))
+	elif effect.has("stat"):
+		# Key should be unique for buff vs debuff of same stat
+		var sign = "+" if effect.get("amount", 0) > 0 else "-"
+		return str(effect.get("stat")) + sign
+	elif effect.has("type") and effect.get("type") == "swap_stats":
+		return "swap_stats"
+	
+	return str(effect) # Fallback
+
+func _rebuild_and_animate_statuses(container: HBoxContainer, new_effects: Array):
+	var old_keys = {}
+	for child in container.get_children():
+		var key = child.get_meta("effect_key", "")
+		if key != "":
+			old_keys[key] = true
+		child.queue_free()
+
+	for effect in new_effects:
+		var key = _get_effect_key(effect)
+		var icon = _create_status_icon(effect)
+		if icon:
+			icon.set_meta("effect_key", key)
+			container.add_child(icon)
+			if not old_keys.has(key):
+				_animate_status_icon_in(icon)
 
 func _create_status_icon(effect: Dictionary) -> Control:
 	var panel = PanelContainer.new()
@@ -653,6 +673,11 @@ func _create_status_icon(effect: Dictionary) -> Control:
 	panel.add_child(lbl)
 	return panel
 
+func _animate_status_icon_in(icon: Control):
+	icon.scale = Vector2.ZERO
+	var tween = create_tween()
+	tween.tween_property(icon, "scale", Vector2(1.0, 1.0), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 func _update_single_bar(bar: ProgressBar, value: float, max_val: float, is_full: bool):
 	bar.max_value = max_val
 	bar.value = value
@@ -691,11 +716,12 @@ func _update_bar_style(bar: ProgressBar, is_full: bool):
 		elif style.bg_color != Color("#ff9360"):
 			style.bg_color = Color("#ff9360")
 
-func update_global_entropy(value: int):
+func update_global_entropy(value: int, max_value: int = 100):
 	var bar = find_child("EntropyBar", true, false)
 	if not bar:
 		bar = find_child("GlobalEntropyBar", true, false) # Fallback to old name just in case
 	if bar:
+		bar.max_value = float(max_value)
 		var tween = create_tween()
 		tween.tween_property(bar, "value", float(value), 0.3)
 

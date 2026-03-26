@@ -79,7 +79,11 @@ func get_active_moves(monster: MonsterData) -> Array:
 	# 1. Unique Signature Move (Based on Atomic Number)
 	if AtomicConfig.UNIQUE_MOVES.has(monster.atomic_number):
 		var def = AtomicConfig.UNIQUE_MOVES[monster.atomic_number]
-		moves.append(_create_move_from_dict(def))
+		var m = _create_move_from_dict(def)
+		# Mastery: Dual Logic (Metalloids)
+		if monster.group == AtomicConfig.Group.METALLOID and monster.stability >= 100:
+			m.cooldown = max(0, m.cooldown - 1)
+		moves.append(m)
 	
 	# 2. Add Custom/Group Moves
 	if not monster.moves.is_empty():
@@ -164,7 +168,7 @@ func execute_move(attacker: BattleMonster, defender: BattleMonster, move: MoveDa
 	
 	if hit_chance < 100 and randf() * 100 > hit_chance:
 		result.success = false
-		result.messages.append("%s missed!" % attacker.data.monster_name)
+		result.messages.append("Missed!")
 		return result
 	
 	result.hit = true
@@ -265,7 +269,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	if move.name == "Resonance Strike":
 		var hp_bonus = attacker.current_hp * 0.2
 		raw_power += hp_bonus
-		result.messages.append("Resonance scaled by HP! (+%d)" % int(hp_bonus))
+		result.messages.append("Resonance HP Bonus! (+%d)" % int(hp_bonus))
 		
 	var mitigation = (100.0 / (100.0 + effective_defense))
 	var final_damage = raw_power * mitigation
@@ -292,14 +296,14 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 			var mult = move.get_meta("damage_multiplier", 1.0)
 			var bonus = (final_damage * mult) - final_damage
 			final_damage *= mult
-			result.messages.append("Bonus vs Debuffed! (+%d Dmg)" % int(bonus))
+			result.messages.append("Debuff Bonus! (+%d)" % int(bonus))
 			result.is_reaction = true
 			
 	if move.name == "Unstable Mass":
 		var multiplier = 1.0 + (current_global_entropy * 0.05)
 		var bonus = (final_damage * multiplier) - final_damage
 		final_damage *= multiplier
-		result.messages.append("Unstable Mass scales with Entropy! (+%d Dmg)" % int(bonus))
+		result.messages.append("Unstable Mass Bonus! (+%d)" % int(bonus))
 		
 	if move.name == "Hyper-Mag Crush":
 		var r_stacks = 0
@@ -311,13 +315,13 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 			var multiplier = 1.0 + (r_stacks * 0.25)
 			var bonus = (final_damage * multiplier) - final_damage
 			final_damage *= multiplier
-			result.messages.append("Permanent Magnet scales with [R] stacks! (+%d Dmg)" % int(bonus))
+			result.messages.append("Magnet Bonus! (+%d)" % int(bonus))
 
 	if move.name == "Relativistic Impact":
 		var multiplier = 1.0 + (current_global_entropy * 0.01)
 		var bonus = (final_damage * multiplier) - final_damage
 		final_damage *= multiplier
-		result.messages.append("E=mc2 scales with Entropy! (+%d Dmg)" % int(bonus))
+		result.messages.append("E=mc2 Bonus! (+%d)" % int(bonus))
 
 	if move.name == "Final Chain":
 		var multiplier = 1.0 + (current_global_entropy * 0.02)
@@ -328,7 +332,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 		if defender.has_status("reduced"):
 			var bonus = final_damage * 0.2
 			final_damage *= 1.2
-			result.messages.append("Crystalline Cry resonated! (+%d Dmg)" % int(bonus))
+			result.messages.append("Resonated! (+%d)" % int(bonus))
 			result.is_reaction = true
 	
 	# Speed Scaling (Einsteinium)
@@ -338,14 +342,12 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 			var multiplier = 1.0 + (spd_diff * 0.05) # 5% per point of speed difference
 			var bonus = (final_damage * multiplier) - final_damage
 			final_damage *= multiplier
-			result.messages.append("Relativistic Speed Bonus! (%.2fx, +%d Dmg)" % [multiplier, int(bonus)])
+			result.messages.append("Speed Bonus! (%.1fx)" % multiplier)
 			
-	var crit_mult = 1.5
-	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL and attacker.data.stability >= 100:
-		crit_mult = 1.75
 
 	# Critical Hit Calculation
 	var crit_chance = attacker.stats.get("crit_chance", 5) + move.get_meta("crit_bonus", 0.0)
+	var crit_mult = 1.5
 	
 	if move.name == "Alpha Strike":
 		var tm_has_dots = false
@@ -359,31 +361,18 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 			result.messages.append("Catalyzed Alpha Strike guarantees enhanced critical!")
 			
 	if randf() * 100.0 < crit_chance:
+		# Mastery: Reactive Burst (Nonmetals)
+		if attacker.data.group == AtomicConfig.Group.NONMETAL and attacker.data.stability >= 100:
+			var will_burst = false
+			for eff in defender.active_effects:
+				if eff.get("type") == "status" and eff.get("status") == "reduced":
+					will_burst = true
+					break
+			if will_burst:
+				crit_mult += 0.25
+				
 		final_damage *= crit_mult
 		result.is_crit = true
-	
-	# Alkali Metal Full Set Bonus: First attack is a guaranteed critical hit
-	if attacker.data.group == AtomicConfig.Group.ALKALI_METAL:
-		var alkali_count = 0
-		if PlayerData:
-			alkali_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.ALKALI_METAL)
-		var total_alkali = 0
-		if MonsterManifest:
-			for m in MonsterManifest.all_monsters:
-				if m.group == AtomicConfig.Group.ALKALI_METAL:
-					total_alkali += 1
-		
-		if alkali_count >= total_alkali and total_alkali > 0:
-			if not attacker.has_meta("full_set_crit_used"):
-				if not result.is_crit:
-					var prev = final_damage
-					final_damage *= crit_mult
-					var bonus = final_damage - prev
-					result.is_crit = true
-					result.messages.append("Full Set Critical! (+%d Dmg)" % int(bonus))
-				else:
-					result.messages.append("Full Set Critical!")
-				attacker.set_meta("full_set_crit_used", true)
 	
 	# Check for physical resistance
 	if move.type == "Physical" and not attacker.has_status("excited"):
@@ -391,7 +380,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 			if effect.get("status") == "physical_resist":
 				var reduction = effect.get("reduction_amount", 0.2)
 				final_damage *= (1.0 - reduction)
-				result.messages.append("%s resists the physical blow!" % defender.data.monster_name)
+				result.messages.append("Resisted Physical!")
 				break # Apply only once
 	
 	# Check for special resistance
@@ -400,7 +389,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 			if effect.get("status") == "special_resist":
 				var reduction = effect.get("reduction_amount", 0.2)
 				final_damage *= (1.0 - reduction)
-				result.messages.append("%s resists the energy!" % defender.data.monster_name)
+				result.messages.append("Resisted Special!")
 				break # Apply only once
 	
 	# Check for damage-multiplying status effects on the defender
@@ -581,6 +570,10 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 				result.effects.append({ "effect": "oxidation_chain", "target": defender })
 			
 			var bonus_dmg = (final_damage * burst_multiplier) - final_damage
+			
+			result["r_stacks_consumed"] = reduced_stacks
+			result["base_damage"] = int(final_damage)
+			result["burst_multiplier"] = burst_multiplier
 			final_damage *= burst_multiplier
 			
 			if move.name == "Critical Detonation":
@@ -591,7 +584,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 			if move.name == "Transuranic Decay":
 				result.effects.append({ "effect": "transuranic_decay" })
 			
-			result.messages.append("OXIDATION BURST! (Δχ: %.2f) %.2fx Dmg! (+%d)" % [delta_x, burst_multiplier, int(bonus_dmg)])
+			result.messages.append("BURST! %.1fx Dmg!" % burst_multiplier)
 			if move.name != "Peacekeeper Burst" and not defender.has_status("irradiated_lock"):
 				result.effects.append({ "target": defender, "effect": "remove_status", "status": "reduced" })
 			if processing_loops > 0:
@@ -653,23 +646,7 @@ func _calculate_damage(attacker: BattleMonster, defender: BattleMonster, move: M
 	# Variance +/- 10%
 	final_damage *= randf_range(0.9, 1.1)
 	
-	# Alkaline Earth Full Set Bonus: Immune to first instance of damage
-	if defender.data.group == AtomicConfig.Group.ALKALINE_EARTH:
-		var ae_count = PlayerData.get_combat_resonance(defender.is_player, AtomicConfig.Group.ALKALINE_EARTH)
-		var total_ae = 0
-		if MonsterManifest:
-			for m in MonsterManifest.all_monsters:
-				if m.group == AtomicConfig.Group.ALKALINE_EARTH:
-					total_ae += 1
-		
-		if ae_count >= total_ae and total_ae > 0:
-			if not defender.has_meta("full_set_immune_used"):
-				final_damage = 0.0
-				result.messages.append("Full Set Immunity!")
-				defender.set_meta("full_set_immune_used", true)
-	
 	result.damage = int(final_damage)
-	result.messages.append("It dealt %d damage!" % result.damage)
 
 func _apply_data_driven_effects(attacker: BattleMonster, defender: BattleMonster, move: MoveData, result: Dictionary):
 	for effect_def in move.effects:
@@ -720,10 +697,7 @@ func _apply_data_driven_effects(attacker: BattleMonster, defender: BattleMonster
 
 		# Apply Crit Multiplier to resolved amount if applicable
 		if effect.get("is_crit", false):
-			var eff_crit_mult = 1.5
-			if attacker.data.group == AtomicConfig.Group.ALKALI_METAL and attacker.data.stability >= 100:
-				eff_crit_mult = 1.75
-			effect["amount"] = int(effect.get("amount", 0) * eff_crit_mult)
+			effect["amount"] = int(effect.get("amount", 0) * 1.5)
 
 		# Add specific target reference for BattleManager
 		effect["target"] = target
@@ -747,12 +721,12 @@ func _generate_effect_message(target: BattleMonster, effect: Dictionary, result:
 	if type == "status":
 		var status = effect.get("status")
 		if status:
-			result.messages.append("%s applied %s!" % [target.data.monster_name, status.capitalize()])
+			result.messages.append("%s applied!" % status.capitalize().replace("_", " "))
 	elif type == "stat_mod":
 		var stat = effect.get("stat")
 		var amt = effect.get("amount")
-		var verb = "rose" if amt > 0 else "fell"
-		result.messages.append("%s's %s %s!" % [target.data.monster_name, stat.capitalize(), verb])
+		var verb = "Rose" if amt > 0 else "Fell"
+		result.messages.append("%s %s!" % [stat.capitalize(), verb])
 
 func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, move: MoveData, result: Dictionary):
 	
@@ -761,9 +735,6 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 	# Metalloid: Stun
 	if attacker.data.group == AtomicConfig.Group.METALLOID:
 		var chance = 0.10
-		# Mastery: Metalloids (100% Stability) -> Increase stun chance to 25%
-		if attacker.data.stability >= 100:
-			chance = 0.25
 			
 		if randf() < chance:
 			result.effects.append({ "target": defender, "status": "stun", "duration": 1, "type": "status" })
@@ -805,18 +776,8 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			var tm_count = 0
 			if PlayerData:
 				tm_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.TRANSITION_METAL)
-			var total_tm = 0
-			if MonsterManifest:
-				for m in MonsterManifest.all_monsters:
-					if m.group == AtomicConfig.Group.TRANSITION_METAL:
-						total_tm += 1
 			
 			var ticks = 1
-			if total_tm > 0 and tm_count >= total_tm:
-				ticks = 2
-				
-			if attacker.data.stability >= 100:
-				ticks += 1
 				
 			var dmg_mult = 1.0 + (tm_count * 0.02)
 				
@@ -978,7 +939,7 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 			"amount": 1,
 			"duration": 3
 		})
-		result.messages.append("%s primed the target! (+1 [R])" % attacker.data.monster_name)
+		result.messages.append("Primed! (+1 [R])")
 
 	# Tier 2 V.I.E. Passive: Reaction Buffer (Alkaline Earth)
 	if defender.data.group == AtomicConfig.Group.ALKALINE_EARTH and result.hit and move.power > 0:
@@ -1345,14 +1306,6 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 		if PlayerData:
 			pt_count = PlayerData.get_combat_resonance(attacker.is_player, AtomicConfig.Group.POST_TRANSITION)
 		var multiplier = 1.0 + (pt_count * 0.10)
-		
-		var total_pt = 0
-		if MonsterManifest:
-			for m in MonsterManifest.all_monsters:
-				if m.group == AtomicConfig.Group.POST_TRANSITION:
-					total_pt += 1
-		
-		var extend_duration = (pt_count >= total_pt and total_pt > 0)
 		var amplified_any = false
 		
 		for effect in result.effects:
@@ -1390,8 +1343,6 @@ func _apply_unique_effects(attacker: BattleMonster, defender: BattleMonster, mov
 				
 			if is_buff:
 				amplified_any = true
-				if extend_duration and effect.has("duration"):
-					effect["duration"] += 1
 					
 		if amplified_any:
 			result.messages.append("Signal Amplification!")

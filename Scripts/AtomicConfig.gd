@@ -69,17 +69,17 @@ const GROUP_COLORS = {
 
 # Baseline Stats (Scale 1-10) from the Design Document
 const BASELINES = {
-	Group.ALKALI_METAL: {"hp": 2, "atk": 7, "def": 2, "spd": 8, "crit": 10}, # Glass Cannons
-	Group.ALKALINE_EARTH: {"hp": 6, "atk": 4, "def": 7, "spd": 3, "crit": 5}, # Sturdy Tanks
-	Group.TRANSITION_METAL: {"hp": 6, "atk": 5, "def": 5, "spd": 4, "crit": 5}, # Bruisers
-	Group.POST_TRANSITION: {"hp": 5, "atk": 5, "def": 5, "spd": 5, "crit": 5}, # Utility
-	Group.METALLOID: {"hp": 4, "atk": 6, "def": 4, "spd": 6, "crit": 5}, # Disrupters
-	Group.NONMETAL: {"hp": 4, "atk": 4, "def": 4, "spd": 7, "crit": 5}, # Combo Primers
-	Group.HALOGEN: {"hp": 3, "atk": 5, "def": 3, "spd": 8, "crit": 10}, # DoT Assailants
-	Group.NOBLE_GAS: {"hp": 5, "atk": 1, "def": 10, "spd": 4, "crit": 0}, # Pure Walls
-	Group.ACTINIDE: {"hp": 8, "atk": 10, "def": 5, "spd": 2, "crit": 5}, # The Nukes
-	Group.LANTHANIDE: {"hp": 7, "atk": 9, "def": 5, "spd": 3, "crit": 5}, # Rare Earths (Similar to Actinides)
-	Group.UNKNOWN: {"hp": 5, "atk": 5, "def": 5, "spd": 5, "crit": 5},
+	Group.ALKALI_METAL: {"hp": 2, "atk": 6, "def": 2, "spd": 10, "crit": 5}, # Hyper-Fast Primers
+	Group.ALKALINE_EARTH: {"hp": 7, "atk": 4, "def": 8, "spd": 3, "crit": 5}, # The Static Vanguard
+	Group.TRANSITION_METAL: {"hp": 6, "atk": 6, "def": 6, "spd": 7, "crit": 5}, # The Mid-Speed Engine
+	Group.POST_TRANSITION: {"hp": 8, "atk": 5, "def": 7, "spd": 4, "crit": 5}, # Stability Chassis
+	Group.METALLOID: {"hp": 5, "atk": 6, "def": 5, "spd": 6, "crit": 10}, # Tactical Logic Gates
+	Group.NONMETAL: {"hp": 4, "atk": 7, "def": 4, "spd": 4, "crit": 5}, # Secondary Finishers
+	Group.HALOGEN: {"hp": 3, "atk": 8, "def": 3, "spd": 5, "crit": 15}, # The Apex Detonators
+	Group.NOBLE_GAS: {"hp": 6, "atk": 1, "def": 10, "spd": 4, "crit": 0}, # Inert Entropy Sinks
+	Group.ACTINIDE: {"hp": 10, "atk": 10, "def": 5, "spd": 1, "crit": 5}, # Low-Velocity Nukes
+	Group.LANTHANIDE: {"hp": 8, "atk": 9, "def": 5, "spd": 2, "crit": 5}, # The Magnetic Lens
+	Group.UNKNOWN: {"hp": 200, "atk": 5, "def": 5, "spd": 1, "crit": 5},
 	
 	# Enemy Baselines (Grunt=Low, King=Boss)
 	# Void: Balanced
@@ -120,59 +120,59 @@ const BASELINES = {
 
 # Mastery Bonus Descriptions (100% Stability)
 const MASTERY_BONUSES = {
-	Group.ALKALI_METAL: "Mastery: Critical strikes deal 1.75x damage instead of 1.5x.",
-	Group.ALKALINE_EARTH: "Mastery: Begin combat with a shield equal to 25% of Max HP.",
-	Group.TRANSITION_METAL: "Mastery: Catalysis causes debuffs to tick an additional time.",
-	Group.POST_TRANSITION: "Mastery: Healing an ally also deals that much damage to a random enemy.",
-	Group.METALLOID: "Mastery: Increases the chance to stun on-hit to 25%.",
-	Group.NONMETAL: "Mastery: Gain a free turn at the start of combat.",
-	Group.HALOGEN: "Mastery: At the start of combat, poisons a random enemy.",
-	Group.NOBLE_GAS: "Mastery: Restores 5% Max HP at the start of every turn.",
-	Group.ACTINIDE: "Mastery: Reduces passive HP decay from 10% to 5%.",
-	Group.LANTHANIDE: "Mastery: Can now absorb stats from fallen allies as well as enemies."
+	Group.ALKALI_METAL: "Hyper-Ionic: Applying an [R] stack grants 5% Action Gauge.",
+	Group.ALKALINE_EARTH: "Anode Spark: Being hit by an enemy applies 1 [R] stack to the attacker.",
+	Group.TRANSITION_METAL: "Efficient Catalyst: Consuming a DoT has a 30% chance to NOT consume it.",
+	Group.POST_TRANSITION: "Thermal Mass: Increases the team's Max Entropy limit by 15.",
+	Group.METALLOID: "Dual Logic: Unique moves have their cooldowns reduced by 1.",
+	Group.NONMETAL: "Reactive Burst: Oxidation Bursts deal +25% Critical Damage.",
+	Group.HALOGEN: "Apex Predator: Start combat by applying Corrosion (-10% Def) to the highest HP enemy.",
+	Group.NOBLE_GAS: "Cryogenic Vents: At the start of every turn, reduce Global Entropy by 5.",
+	Group.ACTINIDE: "Critical Mass: Radiation DoTs can now Critically Strike.",
+	Group.LANTHANIDE: "Magnetic Grip: The 'Pull' passive now also steals 10% Speed from all affected targets."
 }
 
 # Default Movesets based on Group
 const GROUP_MOVES = {
 	Group.ALKALI_METAL: [
-		{"name": "Valence Jettison", "power": 40, "accuracy": 90, "type": "Physical", "description": "A reckless high-speed dash that transfers mass electron density. Applies 4 Reduced [R] stacks but reduces the user's Defense by 100% for 2 turns.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": -100, "percent": true, "duration": 2, "target": "Attacker"}, {"effect": "add_status_stacks", "status": "reduced", "amount": 3, "duration": 3, "target": "Defender"}]},
-		{"name": "Ionic Surge", "power": 15, "accuracy": 100, "type": "Physical", "description": "A rhythmic strike that excites the user's atomic shell. Applies 1 Reduced [R] stack and increases the user's Speed and Attack by 10% (Stacks up to 50%).", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 99, "target": "Attacker"}, {"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 99, "target": "Attacker"}]}
+		{"name": "Valence Jettison", "power": 40, "accuracy": 90, "type": "Physical", "description": "Applies 4 [R] stacks. User loses 100% DEF for 2 turns.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": -100, "percent": true, "duration": 2, "target": "Attacker"}, {"effect": "add_status_stacks", "status": "reduced", "amount": 3, "duration": 3, "target": "Defender"}]},
+		{"name": "Ionic Surge", "power": 15, "accuracy": 100, "type": "Physical", "description": "+1 [R] stack. ATK & SPD +10% (Stacks up to 50%).", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "attack", "amount": 10, "percent": true, "duration": 99, "target": "Attacker"}, {"type": "stat_mod", "stat": "speed", "amount": 10, "percent": true, "duration": 99, "target": "Attacker"}]}
 	],
 	Group.ALKALINE_EARTH: [
-		{"name": "Anodic Barrier", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Develops a protective oxide skin. Increases Defense by 50% for 3 turns. While active, any enemy that hits the user is applied with 1 Reduced [R] stack.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 50, "percent": true, "duration": 3, "target": "Self"}, {"type": "status", "status": "anodic_barrier", "duration": 3}]},
-		{"name": "Photonic Bash", "power": 30, "accuracy": 95, "type": "Physical", "description": "A blinding shield strike. Applies 1 Reduced [R] stack. If the user has Anodic Barrier active, the target is Stunned for 1 turn.", "cooldown": 2}
+		{"name": "Anodic Barrier", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "DEF +50% (3 turns). Attackers get 1 [R] stack.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "defense", "amount": 50, "percent": true, "duration": 3, "target": "Self"}, {"type": "status", "status": "anodic_barrier", "duration": 3}]},
+		{"name": "Photonic Bash", "power": 30, "accuracy": 95, "type": "Physical", "description": "+1 [R] stack. Stuns target if Anodic Barrier is active.", "cooldown": 2}
 	],
 	Group.TRANSITION_METAL: [
-		{"name": "Catalytic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Lowers the activation energy of the squad. Reduces the target ally's cooldowns by 1 and increases their Action Gauge by 20%.", "cooldown": 3, "effects": [{"effect": "reduce_cooldowns", "amount": 1}, {"effect": "add_atb", "amount": 20.0}]},
-		{"name": "Resonance Strike", "power": 35, "accuracy": 90, "type": "Physical", "description": "A dense strike that vibrates the target's atomic structure. Applies 1 Reduced [R] stack and refreshes the duration of all existing [R] stacks on the enemy.", "cooldown": 2}
+		{"name": "Catalytic Bond", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Ally Cooldowns -1. Action Gauge +20%.", "cooldown": 3, "effects": [{"effect": "reduce_cooldowns", "amount": 1}, {"effect": "add_atb", "amount": 20.0}]},
+		{"name": "Resonance Strike", "power": 35, "accuracy": 90, "type": "Physical", "description": "+1 [R] stack. Refreshes all active [R] stacks.", "cooldown": 2}
 	],
 	Group.POST_TRANSITION: [
 		{"name": "Thermal Conduction", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Cleanses 1 debuff from target ally.", "cooldown": 3, "effects": [{"effect": "cleanse", "target": "Ally", "amount": 1}]},
 		{"name": "Alloy Reinforce", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Ally", "description": "Heals target ally, scales with attack. Excess healing becomes a shield.", "cooldown": 2}
 	],
 	Group.METALLOID: [
-		{"name": "Valence Flip", "power": 20, "accuracy": 100, "type": "Special", "description": "Toggles the unit's atomic polarity. Applies 1 Reduced [R] stack AND checks the target for an Oxidation Burst. If a burst is triggered, it deals +20% damage.", "cooldown": 2},
-		{"name": "Logic Gate", "power": 25, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Calculates the enemy's defensive pathing. Slows the target by 20% and converts all active [R] stacks into Processing Loops, increasing the multiplier of the next Oxidation Burst by 0.1 per stack.", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
+		{"name": "Valence Flip", "power": 20, "accuracy": 100, "type": "Special", "description": "+1 [R] stack. Burst: Deals +20% damage.", "cooldown": 2},
+		{"name": "Logic Gate", "power": 25, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Target SPD -20%. Converts [R] stacks to Processing Loops (+0.1 Burst Multiplier per loop).", "cooldown": 2, "effects": [{"type": "stat_mod", "stat": "speed", "amount": -20, "percent": true, "duration": 2}]}
 	],
 	Group.NONMETAL: [
-		{"name": "Oxidation Chain", "power": 25, "accuracy": 100, "type": "Special", "description": "Triggers an Oxidation Burst on the target. If a burst is triggered, the reaction jumps to all adjacent enemies with Reduced [R] stacks.", "cooldown": 2},
-		{"name": "Valence Siphon", "power": 35, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "A precise strike that rips away valence electrons. Triggers an Oxidation Burst. For every [R] stack consumed, the target's Speed is reduced by 10% for 2 turns.", "cooldown": 2}
+		{"name": "Oxidation Chain", "power": 25, "accuracy": 100, "type": "Special", "description": "Burst: Reaction jumps to adjacent enemies with [R] stacks.", "cooldown": 2},
+		{"name": "Valence Siphon", "power": 35, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Burst: Target SPD -10% per [R] consumed (2 turns).", "cooldown": 2}
 	],
 	Group.HALOGEN: [
-		{"name": "Hydrofluoric Stream", "power": 30, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "A high-pressure stream of corrosive acid. Triggers an Oxidation Burst. This move gains a +0.5 bonus to the Electronegativity Delta multiplier.", "cooldown": 2},
-		{"name": "Halogen Hunger", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "The unit enters a highly reactive state. Increases Speed by 25%. For the next 3 turns, triggering an Oxidation Burst grants the user 20% Action Gauge.", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "speed", "amount": 25, "percent": true, "duration": 3}, {"type": "status", "status": "halogen_hunger", "duration": 3}]}
+		{"name": "Hydrofluoric Stream", "power": 30, "accuracy": 100, "type": "Special", "is_snipe": true, "description": "Burst: +0.5 bonus to burst multiplier.", "cooldown": 2},
+		{"name": "Halogen Hunger", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "+25% SPD. Bursts grant +20% Action Gauge (3 turns).", "cooldown": 3, "effects": [{"type": "stat_mod", "stat": "speed", "amount": 25, "percent": true, "duration": 3}, {"type": "status", "status": "halogen_hunger", "duration": 3}]}
 	],
 	Group.NOBLE_GAS: [
-		{"name": "Perfect Configuration", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Achieves a state of perfect atomic balance. Grants Guarded (blocks the next instance of damage) and reduces Global Entropy by 20.", "cooldown": 3, "effects": [{"type": "status", "status": "guarded", "duration": 3}, {"effect": "add_global_entropy", "amount": -20}]},
-		{"name": "Stabilizing Pulse", "power": 25, "accuracy": 100, "type": "Physical", "description": "A non-reactive strike that absorbs excess kinetic energy. Increases the user's Defense by 15% and reduces the global Entropy by 10%. (Bonus: 20% reduction if in the Vanguard slot).", "effects": [{"type": "stat_mod", "stat": "defense", "amount": 15, "percent": true, "duration": 2, "target": "Attacker"}]}
+		{"name": "Perfect Configuration", "power": 0, "accuracy": 100, "type": "Status_Friendly", "target_type": "Self", "description": "Grants Guarded (blocks 1 hit). Global Entropy -20.", "cooldown": 3, "effects": [{"type": "status", "status": "guarded", "duration": 3}, {"effect": "add_global_entropy", "amount": -20}]},
+		{"name": "Stabilizing Pulse", "power": 25, "accuracy": 100, "type": "Physical", "description": "DEF +15%. Global Entropy -10 (-20 if in Vanguard).", "effects": [{"type": "stat_mod", "stat": "defense", "amount": 15, "percent": true, "duration": 2, "target": "Attacker"}]}
 	],
 	Group.ACTINIDE: [
-		{"name": "Fission Burst", "power": 100, "accuracy": 85, "type": "Special", "description": "Triggers a violent Oxidation Burst. For every [R] stack consumed, deal an additional 20% damage but increase the global Entropy by 10. Damage is doubled if Entropy is already above 50%.", "cooldown": 3},
-		{"name": "Half-Life Cascade", "power": 0, "accuracy": 100, "type": "Status_Hostile", "is_snipe": true, "description": "Irradiates the target’s atomic structure. For 3 turns, the target takes 5% Max HP damage and their current Reduced [R] stacks double at the start of their turn (up to a cap of 10).", "effects": [{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}, {"type": "status", "status": "half_life_cascade", "duration": 3}], "cooldown": 2}
+		{"name": "Fission Burst", "power": 100, "accuracy": 85, "type": "Special", "description": "Burst: +20% dmg & +10 Entropy per [R]. Dmg doubled if Entropy > 50%.", "cooldown": 3},
+		{"name": "Half-Life Cascade", "power": 0, "accuracy": 100, "type": "Status_Hostile", "is_snipe": true, "description": "Radiation + Target's [R] stacks double every turn.", "effects": [{"type": "status", "status": "radiation", "damage_percent": 0.05, "duration": 3}, {"type": "status", "status": "half_life_cascade", "duration": 3}], "cooldown": 2}
 	],
 	Group.LANTHANIDE: [
-		{"name": "Ferromagnetic Surge", "power": 30, "accuracy": 100, "type": "Physical", "description": "A heavy strike that generates an intense magnetic field. Applies 1 Reduced [R] stack. Pulls all active [R] stacks from all other enemies onto the primary target.", "cooldown": 2},
-		{"name": "Phosphor Flare", "power": 20, "accuracy": 100, "type": "Special", "description": "A blinding emission of rare-earth light. Applies 1 Reduced [R] stack and the Luminescent status. The next Oxidation Burst against this target deals +50% damage.", "cooldown": 3, "effects": [{"type": "status", "status": "luminescent", "duration": 2}]}
+		{"name": "Ferromagnetic Surge", "power": 30, "accuracy": 100, "type": "Physical", "description": "+1 [R] stack. Pulls all enemy [R] stacks to target.", "cooldown": 2},
+		{"name": "Phosphor Flare", "power": 20, "accuracy": 100, "type": "Special", "description": "+1 [R] stack. Applies Luminescent (+50% next Burst dmg).", "cooldown": 3, "effects": [{"type": "status", "status": "luminescent", "duration": 2}]}
 	],
 	Group.UNKNOWN: [],
 	
@@ -1653,20 +1653,6 @@ static func calculate_stats_with_breakdown(group: Group, atomic_number: int, sta
 		atk_mult += breakdown.atk.ship_upgrade
 		def_mult += breakdown.def.ship_upgrade
 		spd_mult += breakdown.spd.ship_upgrade
-	
-	# Lanthanide Full Set Bonus: +10% All Stats to ALL elements
-	if PlayerData:
-		var lanth_count = PlayerData.class_resonance.get(Group.LANTHANIDE, 0)
-		var total_lanth = 0
-		if MonsterManifest:
-			for m in MonsterManifest.all_monsters:
-				if m.get("group") == Group.LANTHANIDE or (m.has_method("get_group") and m.get_group() == Group.LANTHANIDE):
-					total_lanth += 1
-		
-		if lanth_count >= total_lanth and total_lanth > 0:
-			breakdown.hp.lanthanide_set = 0.10; breakdown.atk.lanthanide_set = 0.10;
-			breakdown.def.lanthanide_set = 0.10; breakdown.spd.lanthanide_set = 0.10;
-			hp_mult += 0.10; atk_mult += 0.10; def_mult += 0.10; spd_mult += 0.10
 	
 	# 2. Stability Bonus: Scales stats up to +50% at 100 stability
 	var stability_multiplier = 1.0 + (float(stability) / 200.0)
